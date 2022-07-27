@@ -96,6 +96,7 @@ func (s *GrpcServer) CreateExperiment(
 	ctx context.Context,
 	req *pb.CreateExperimentRequest,
 ) (*pb.CreateExperimentResponse, error) {
+	s.logger.Sugar().Info("Ditpanu create experiment")
 	fwk := storage.MLFrameworkFromProto(req.Framework)
 	experiment := storage.NewExperiment(
 		req.Name,
@@ -107,7 +108,7 @@ func (s *GrpcServer) CreateExperiment(
 	)
 	result, err := s.metadataStorage.CreateExperiment(ctx, experiment)
 	if err != nil {
-		return nil, err
+		return nil, s.logStorageError(err)
 	}
 	return &pb.CreateExperimentResponse{
 		ExperimentId:     result.ExperimentId,
@@ -120,9 +121,10 @@ func (s *GrpcServer) ListExperiments(
 	ctx context.Context,
 	req *pb.ListExperimentsRequest,
 ) (*pb.ListExperimentsResponse, error) {
+	s.logger.Sugar().Info("Ditpanu list experiment")
 	experiments, err := s.metadataStorage.ListExperiments(ctx, req.Namespace)
 	if err != nil {
-		return nil, fmt.Errorf("unable to get experiments from storage: %v", err)
+		return nil, s.logStorageError(fmt.Errorf("unable to get experiments from storage: %v", err))
 	}
 	experimentResponses := make([]*pb.Experiment, len(experiments))
 	for i, e := range experiments {
@@ -314,4 +316,12 @@ func (s *GrpcServer) Start() {
 
 func (s *GrpcServer) Stop() {
 	s.grpcServer.Stop()
+}
+
+func (s *GrpcServer) logStorageError(err error) error {
+	if err != nil {
+		s.logger.Sugar().Error(err)
+		s.logger.Error(err.Error())
+	}
+	return err
 }

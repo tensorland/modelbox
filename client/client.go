@@ -56,6 +56,7 @@ func NewModelBoxClient(addr string) (*ModelBoxClient, error) {
 }
 
 func (m *ModelBoxClient) CreateExperiment(name string, owner string, namespace string, framework string) (string, error) {
+	println("Diptanu client create experiment", name, owner, namespace, framework)
 	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
 	defer cancel()
 	req := &proto.CreateExperimentRequest{
@@ -65,8 +66,10 @@ func (m *ModelBoxClient) CreateExperiment(name string, owner string, namespace s
 		Framework: MLFrameworkProtoFromStr(framework),
 	}
 	resp, err := m.client.CreateExperiment(ctx, req)
+	println("client err ", err)
+	println("resp ", resp)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	return resp.ExperimentId, nil
 }

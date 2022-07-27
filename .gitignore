@@ -1,0 +1,17 @@
+debug
+target
+.vscode
+ve
+
+MNIST
+lightning_logs
+modelbox_server.toml
+modelbox_client.toml
+
+modelbox
+
+__pycache__
+dist
+modelbox.egg-info
+
+.ipynb_checkpoints/

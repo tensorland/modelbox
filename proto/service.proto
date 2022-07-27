@@ -1,0 +1,268 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/diptanu/modelbox/proto";
+
+package modelbox;
+
+/**
+ * ModelStore is the service exposed to upload trained models and training
+ * checkpoints, and manage metadata around them.
+ */
+service ModelStore {
+  // Create a new Model under a namespace. If no namespace is specified, models
+  // are created under a default namespace.
+  rpc CreateModel(CreateModelRequest) returns (CreateModelResponse);
+
+  // List Models uploaded for a namespace 
+  rpc ListModels(ListModelsRequest) returns (ListModelsResponse);
+
+  // Creates a new model version for a model
+  rpc CreateModelVersion(CreateModelVersionRequest)
+      returns (CreateModelVersionResponse);
+
+  // Lists model versions for a model.
+  rpc ListModelVersions(ListModelVersionsRequest)
+      returns (ListModelVersionsResponse);
+
+  // Creates a new experiment
+  rpc CreateExperiment(CreateExperimentRequest)
+      returns (CreateExperimentResponse);
+
+  // List Experiments
+  rpc ListExperiments(ListExperimentsRequest) returns (ListExperimentsResponse);
+
+  // Uploads a new checkpoint for an experiment
+  rpc CreateCheckpoint(CreateCheckpointRequest)
+      returns (CreateCheckpointResponse);
+
+  // Lists all the checkpoints for an experiment
+  rpc ListCheckpoints(ListCheckpointsRequest) returns (ListCheckpointsResponse);
+
+  // Gets a checkpoint from the modelstore for an experiment
+  rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse);
+
+  // UploadBlob streams a blob to ModelBox and stores the binaries to the condfigured storage
+  rpc UploadBlob(stream UploadBlobRequest) returns (UploadBlobResponse);
+
+  // DownloadBlob downloads a blob from configured storage
+  rpc DownloadBlob(DownloadBlobRequest) returns (stream DownloadBlobResponse);
+}
+
+/*
+ * BlobMetadata contains information about the blobs associated with a model version
+ * such as model binaries, other meta data files related to the model.
+ * This could either be sent as part of the model version creation request to track files
+ * already managed by another storage service, or as the first message while uploading a blob
+ * to be managed by ModelBox.
+ */
+message BlobMetadata {
+  // The ID of the checkpoint or model to which this blob belongs to
+  string parent_id = 1;
+
+  // Type of blob
+  BlobType blob_type = 2;
+
+  // checksum of the blob
+  string checksum = 3;
+
+  // path of the file
+  string path = 4;
+
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+
+}
+
+enum BlobType {
+  UNDEFINED = 0;
+  MODEL = 1;
+  CHECKPOINT = 2;
+  TEXT = 3;
+}
+
+message DownloadBlobRequest { string blob_id = 1; }
+
+message DownloadBlobResponse {
+  oneof blob {
+    BlobMetadata metadata = 1;
+    bytes chunks = 2;
+  }
+}
+
+message UploadBlobRequest {
+  oneof blob {
+    BlobMetadata metadata = 1;
+    bytes chunks = 2;
+  }
+}
+
+message UploadBlobResponse { string blob_id = 1; }
+
+/**
+ * Checkpoint is an artifact of training produced after an epoch of
+ * training run.
+ */
+message Checkpoint {
+  string id = 1;
+  uint64 epoch = 2;
+  string experiment_id = 3;
+  repeated BlobMetadata blobs = 4;
+  map<string, float> metrics = 5;
+  map<string, string> metadata = 6;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+}
+
+message CreateCheckpointRequest {
+  string experiment_id = 1;
+  uint64 epoch = 2;
+  repeated BlobMetadata blobs = 3;
+  map<string, float> metrics = 4;
+  map<string, string> metadata = 5;
+}
+
+message CreateCheckpointResponse {
+  string checkpoint_id = 1;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+}
+
+message GetCheckpointRequest {
+  string experiment_id = 1;
+  uint64 epoch = 2;
+}
+
+message GetCheckpointResponse { Checkpoint checkpoint = 1; }
+
+message ListCheckpointsRequest { string experiment_id = 1; }
+
+message ListCheckpointsResponse { repeated Checkpoint checkpoints = 1; }
+
+/*
+ * Model contains metadata about a model which solves a particular use case.
+ */
+message Model {
+  string id = 1;
+  string name = 2;
+  string owner = 3;
+  string namespace = 4;
+  string description = 5;
+  string task = 6;
+  map<string, string> metadata = 8;
+  repeated BlobMetadata blobs = 9;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+}
+
+/**
+ * Create a new Model. If the id points to an existing model a new model version
+ * is created.
+ */
+message CreateModelRequest {
+  string name = 2;
+  string owner = 3;
+  string namespace = 4;
+  string task = 5;
+  string description = 6;
+  map<string, string> metadata = 7;
+  repeated BlobMetadata blobs = 8;
+}
+
+message CreateModelResponse {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+}
+
+/*
+ * Deep Learning frameworks known to ModelBox
+ */
+enum MLFramework {
+  UNKNOWN = 0;
+  PYTORCH = 1;
+  KERAS = 2;
+}
+
+/**
+ * ModelVersion contains a trained model binary, metrics related to the mode
+ * such as accuracy on various datasets, performance on a hardware, etc. Model
+ * Versions are always linked to a model.
+ */
+message ModelVersion {
+  string id = 1;
+  string model_id = 2;
+  string name = 3;
+  string version = 4;
+  string description = 5;
+  repeated BlobMetadata blobs = 6;
+  map<string, string> metadata = 7;
+  MLFramework framework = 8;
+  repeated string unique_tags = 9;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+}
+
+message CreateModelVersionRequest { 
+  string model = 1;
+  string name = 2;
+  string version = 3;
+  string description = 4;
+  repeated BlobMetadata blobs = 5;
+  map<string, string> metadata = 6;
+  MLFramework framework = 7;
+  repeated string unique_tags = 8;
+}
+
+message CreateModelVersionResponse { 
+  string model_version = 1; 
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+}
+
+/**
+ * Experiments are the sources of Model checkpoints. They track various details
+ * related to the training runs which created the models such as hyper
+ * parameters, etc.
+ */
+message Experiment {
+  string id = 1;
+  string name = 2;
+  string namespace = 3;
+  string owner = 4;
+  MLFramework framework = 5;
+  map<string, string> metadata = 6;
+  string external_id = 7;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+}
+
+message CreateExperimentRequest {
+  string name = 1;
+  string owner = 2;
+  string namespace = 3;
+  MLFramework framework = 4;
+  string task = 5;
+  map<string, string> metadata = 6;
+  string external_id = 7;
+}
+
+message CreateExperimentResponse {
+  string experiment_id = 1;
+  bool experiment_exists = 2;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
+}
+
+message ListExperimentsRequest { string namespace= 1; }
+
+message ListExperimentsResponse { repeated Experiment experiments = 1; }
+
+
+message ListModelVersionsRequest { string model = 1; }
+
+message ListModelVersionsResponse { ModelVersion models = 1; }
+
+message ListModelsRequest { string namespace = 1; }
+
+message ListModelsResponse { repeated Model models = 1; }

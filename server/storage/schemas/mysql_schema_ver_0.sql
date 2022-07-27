@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS schema_version (
 INSERT INTO schema_version (version) VALUES(1) ON DUPLICATE KEY UPDATE version=1;
 
 CREATE TABLE IF NOT EXISTS experiments (
-   id VARCHAR(40),
+   id VARCHAR(40) PRIMARY KEY,
    external_id VARCHAR(40),
    name VARCHAR(50),
    owner VARCHAR(30),

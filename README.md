@@ -117,9 +117,14 @@ List Experiments for project
 modelbox client experiments list --project langtech
 ```
 
-Create a Model for the experiment.
+Create a Model for the experiment. The cli doesn't support adding metadata and artifacts yet, however the Python, Go SDKs does.
 ```
-modelbox client models create 
+modelbox client models create --name wav2vec --owner diptanuc@gmail.com --task asr --description English ASR --namespace langtech 
+```
+
+List Models in a namespace
+```
+modelbox client list --namespace langtech
 ```
 
 ## Logging

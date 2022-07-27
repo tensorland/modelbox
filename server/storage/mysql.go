@@ -245,9 +245,10 @@ func (m *MySqlStorage) ListModels(ctx context.Context, namespace string) ([]*Mod
 	models := make([]*Model, 0)
 	err := m.transact(ctx, func(tx *sqlx.Tx) error {
 		modelRows := []ModelSchema{}
-		if err := tx.Select(models, MODELS_NS_LIST, namespace); err != nil {
+		if err := tx.Select(&modelRows, MODELS_NS_LIST, namespace); err != nil {
 			return fmt.Errorf("can't query: %v", err)
 		}
+		m.logger.Sugar().Infof("Diptanu modelRows %v", len(modelRows))
 		for _, modelRow := range modelRows {
 			blobSet, err := m.getBlobSetForParent(tx, modelRow.Id)
 			if err != nil {

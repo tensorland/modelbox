@@ -109,24 +109,14 @@ Generate the client config
 modelbox client init-config
 ```
 
-Create a Project
-```
-modelbox client projects create --name langtech --owner your@email.com
-```
-
-List Projects
-```
-modelbox client projects list
-```
-
 Create an experiment. Experiments are usually created programatically via the modelbox SDK which integrates with deep learning frameworks.
 ```
-modelbox client experiments create --project-id langtech --owner your@email.com --name wav2vec-lid
+modelbox client experiments create --namespace langtech --owner your@email.com --name wav2vec-lid --framework pytorch
 ```
 
-List Experiments for project 
+List Experiments for a namespace
 ```
-modelbox client experiments list --project langtech
+modelbox client experiments list --namespace langtech
 ```
 
 Create a Model for the experiment.

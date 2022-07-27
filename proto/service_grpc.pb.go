@@ -41,7 +41,9 @@ type ModelStoreClient interface {
 	ListCheckpoints(ctx context.Context, in *ListCheckpointsRequest, opts ...grpc.CallOption) (*ListCheckpointsResponse, error)
 	// Gets a checkpoint from the modelstore for an experiment
 	GetCheckpoint(ctx context.Context, in *GetCheckpointRequest, opts ...grpc.CallOption) (*GetCheckpointResponse, error)
+	// UploadBlob streams a blob to ModelBox and stores the binaries to the condfigured storage
 	UploadBlob(ctx context.Context, opts ...grpc.CallOption) (ModelStore_UploadBlobClient, error)
+	// DownloadBlob downloads a blob from configured storage
 	DownloadBlob(ctx context.Context, in *DownloadBlobRequest, opts ...grpc.CallOption) (ModelStore_DownloadBlobClient, error)
 }
 
@@ -223,7 +225,9 @@ type ModelStoreServer interface {
 	ListCheckpoints(context.Context, *ListCheckpointsRequest) (*ListCheckpointsResponse, error)
 	// Gets a checkpoint from the modelstore for an experiment
 	GetCheckpoint(context.Context, *GetCheckpointRequest) (*GetCheckpointResponse, error)
+	// UploadBlob streams a blob to ModelBox and stores the binaries to the condfigured storage
 	UploadBlob(ModelStore_UploadBlobServer) error
+	// DownloadBlob downloads a blob from configured storage
 	DownloadBlob(*DownloadBlobRequest, ModelStore_DownloadBlobServer) error
 	mustEmbedUnimplementedModelStoreServer()
 }

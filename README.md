@@ -1,6 +1,6 @@
 # ModelBox - A Machine Learning model management service
 
-ModelBox is a model management, instrumentation and transformation service. It can integrate with Deep Learning frameworks to provide model checkpoint and artifact tracking and optional features such as transforming models to optimize them for inference, serving them to inference engines, measuring performance, and exposing neural network architecture.
+ModelBox is a model management service. It can integrate with Deep Learning frameworks to provide model checkpoint and artifact tracking and optional features such as serving them to inference engines, measuring performance. It provides a pluggable storage interface to track metadata and artifacts related to models and experiments producing checkpoints. We are working towards developing a flexible worker interface to build model transformation, benchmarking and other model operations utilities.
 
 ## Features
 - Model versioning and lineage tracking of Models in relation to Experiments which created them.
@@ -14,6 +14,9 @@ ModelBox is a model management, instrumentation and transformation service. It c
 - Add RBAC based access control for models and checkpoints for compliance.
 - Create a worker infrastructure which automatically transforms models, benchmarks for performance on inference hardware, etc, and update the model metadata.
 - Make the worker architecture pluggable such that users can write custom workers any langugage while the model, metrics and other metadata are available to the runtime, abstracting the storage and other infrastructure primitives.
+- Build Model Explainability features, such as exctracting information about shape of input and output tensors, types of layers used by the model, parameter counts, etc.
+- Build infrastructure to run known recipes for model optimazation for inference such as Layer Fusion, replacing transformer layers with more optimized implemenations such as Faster Transformer, quantization, model compression, etc.
+- Beyond being able to stream a model binary using the streaming api, build exporters which are more native to model deployment.
 
 ## Concepts and Understanding the ModelBox API
 ![Model Box Concepts!](docs/images/API_Concepts.png "Model Box API Concepts")
@@ -123,8 +126,10 @@ modelbox client models create
 ```
 
 ## Logging
+TODO
 
 ## Monitoring
+TODO
 
 ## Demos 
 - [Pytorch Lightning Integration](docs/lightning/train.py)

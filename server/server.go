@@ -37,8 +37,8 @@ func (s *GrpcServer) CreateModel(
 		req.Task,
 		req.Description,
 		req.Metadata,
-		storage.NewBlobSetFromProto(req.Name, req.Blobs),
 	)
+	model.SetBlobs(storage.NewBlobSetFromProto(model.Id, req.Blobs))
 	if _, err := s.metadataStorage.CreateModel(ctx, model); err != nil {
 		return nil, err
 	}

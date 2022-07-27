@@ -43,3 +43,24 @@ model_version = self._client.create_model_version(
 
 client.close()
 ```
+
+
+## Local Development and Installation
+The modelbox client library can be installed locally in the following way -
+```
+cd <project-root>/client-py/
+pip install .
+```
+This installs the version of the client checked out with the repo.
+
+Build the client and create distribution packages
+```
+cd <project-root>/client-py/
+python -m build .
+```
+
+Run Tests 
+```
+cd <project-root>/client-py/
+python tests/test_modelbox_api.py
+```

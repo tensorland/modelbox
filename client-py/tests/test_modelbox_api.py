@@ -92,7 +92,7 @@ class TestModelBoxApi(unittest.TestCase):
             {"meta": "foo"},
         )
         model_version = self._client.create_model_version(
-            model.id, "yolo4_v1", "v1", "mv_description", [], {}, service_pb2.PYTORCH, ["prod"], ["pii-sensitive"],
+            model.id, "yolo4_v1", "v1", "mv_description", [], {}, service_pb2.PYTORCH, ["prod"],
         )
         self.assertNotEqual(model_version.id, "")
         pass

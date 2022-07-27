@@ -355,7 +355,7 @@ type Model struct {
 }
 
 func NewModel(name, owner, namespace, task, description string,
-	meta map[string]string, blobs []*BlobInfo) *Model {
+	meta map[string]string) *Model {
 	currentTime := time.Now().Unix()
 	model := &Model{
 		Name:        name,
@@ -363,7 +363,7 @@ func NewModel(name, owner, namespace, task, description string,
 		Namespace:   namespace,
 		Task:        task,
 		Description: description,
-		Blobs:       blobs,
+		Meta:        meta,
 		CreatedAt:   currentTime,
 		UpdatedAt:   currentTime,
 	}
@@ -376,6 +376,10 @@ func (m *Model) CreateId() {
 	hashString(h, m.Name)
 	hashString(h, m.Namespace)
 	m.Id = fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func (m *Model) SetBlobs(blobs BlobSet) {
+	m.Blobs = blobs
 }
 
 type ModelVersion struct {

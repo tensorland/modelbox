@@ -39,6 +39,10 @@ type BlobUploadResponse struct {
 	Checksum string
 }
 
+type CreateModelApiResponse struct {
+	Id string
+}
+
 type ModelBoxClient struct {
 	conn   *grpc.ClientConn
 	client proto.ModelStoreClient
@@ -56,7 +60,6 @@ func NewModelBoxClient(addr string) (*ModelBoxClient, error) {
 }
 
 func (m *ModelBoxClient) CreateExperiment(name string, owner string, namespace string, framework string) (string, error) {
-	println("Diptanu client create experiment", name, owner, namespace, framework)
 	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
 	defer cancel()
 	req := &proto.CreateExperimentRequest{
@@ -66,8 +69,6 @@ func (m *ModelBoxClient) CreateExperiment(name string, owner string, namespace s
 		Framework: MLFrameworkProtoFromStr(framework),
 	}
 	resp, err := m.client.CreateExperiment(ctx, req)
-	println("client err ", err)
-	println("resp ", resp)
 	if err != nil {
 		return "", err
 	}
@@ -86,6 +87,40 @@ func (m *ModelBoxClient) ListCheckpoints(experimentId string) (*proto.ListCheckp
 	defer cancel()
 	req := &proto.ListCheckpointsRequest{ExperimentId: experimentId}
 	return m.client.ListCheckpoints(ctx, req)
+}
+
+func (m *ModelBoxClient) CreateModel(name, owner, namespace, task, description string, metadata map[string]string, blobs []*proto.BlobMetadata) (*CreateModelApiResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
+	defer cancel()
+	req := &proto.CreateModelRequest{
+		Name:        name,
+		Owner:       owner,
+		Namespace:   namespace,
+		Task:        task,
+		Description: description,
+		Metadata:    metadata,
+		Blobs:       blobs,
+	}
+
+	resp, err := m.client.CreateModel(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create model: %v", err)
+	}
+	return &CreateModelApiResponse{Id: resp.Id}, nil
+}
+
+func (m *ModelBoxClient) ListModels(namespace string) ([]*proto.Model, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
+	defer cancel()
+	req := &proto.ListModelsRequest{
+		Namespace: namespace,
+	}
+
+	resp, err := m.client.ListModels(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Models, nil
 }
 
 type ApiCreateCheckpoint struct {
@@ -187,7 +222,6 @@ func (m *ModelBoxClient) DownloadBlob(id string, path string) (*CheckpointDownlo
 	if err != nil {
 		return nil, err
 	}
-	println(resp.GetMetadata().ParentId)
 	for {
 		chunks, err := stream.Recv()
 		if err == io.EOF {

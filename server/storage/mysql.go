@@ -71,8 +71,7 @@ func (m *MySqlStorage) CreateExperiment(
 		schema,
 	)
 	if err != nil {
-		if driverErr, ok := err.(*mysql.MySQLError); ok &&
-			driverErr.Number == mysqlerr.ER_DUP_ENTRY {
+		if m.isDuplicateError(err) {
 			return &CreateExperimentResult{ExperimentId: experiment.Id, Exists: true}, nil
 		}
 		return nil, fmt.Errorf("unable to write experiment to db: %v", err)
@@ -88,11 +87,8 @@ func (m *MySqlStorage) CreateCheckpoint(
 		cs := ToCheckpointSchema(c)
 		_, err := tx.NamedExec(CHECKPOINTS_CREATE, cs)
 		if err != nil {
-			if driverErr, ok := err.(*mysql.MySQLError); ok {
-				if driverErr.Number == mysqlerr.ER_DUP_ENTRY {
-					return fmt.Errorf("duplicate experiment: %v", c.Id)
-				}
-				return err
+			if m.isDuplicateError(err) {
+				return nil
 			}
 			return fmt.Errorf("unable to write checkpoint: %v", err)
 		}
@@ -398,4 +394,13 @@ func (e *MySqlStorage) CreateSchema(path string) error {
 		}
 	}
 	return nil
+}
+
+func (s *MySqlStorage) isDuplicateError(err error) bool {
+	if driverErr, ok := err.(*mysql.MySQLError); ok {
+		if driverErr.Number == mysqlerr.ER_DUP_ENTRY {
+			return true
+		}
+	}
+	return false
 }

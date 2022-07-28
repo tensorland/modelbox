@@ -52,6 +52,25 @@ func (s *StorageInterfaceTestSuite) TestCreateCheckpoint() {
 	assert.Equal(s.t, metrics, checkpoints[0].Metrics)
 }
 
+func (s *StorageInterfaceTestSuite) TestObjectCreateIdempotency() {
+	ctx := context.Background()
+	meta := SerializableMeta(map[string]string{"foo": "bar"})
+	metrics := SerializableMetrics(map[string]float32{"val_loss": 0.041, "train_accu": 98.01})
+	e := NewExperiment("quartznet-lid", "owner@email", "langtech", "xyz", Pytorch, meta)
+	result1, err := s.storageIf.CreateExperiment(ctx, e)
+	assert.Nil(s.t, err)
+	result2, err := s.storageIf.CreateExperiment(ctx, e)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, result1.ExperimentId, result2.ExperimentId)
+
+	c := NewCheckpoint(e.Id, 45, meta, metrics)
+	chk1, err := s.storageIf.CreateCheckpoint(ctx, c)
+	assert.Nil(s.t, err)
+	chk2, err := s.storageIf.CreateCheckpoint(ctx, c)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, chk1.CheckpointId, chk2.CheckpointId)
+}
+
 func (s *StorageInterfaceTestSuite) TestCreateModel() {
 	meta := map[string]string{"model": "gpt3"}
 	description := "a large translation model based on gpt3"

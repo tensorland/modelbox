@@ -1,3 +1,4 @@
+from argparse import Namespace
 import unittest
 import grpc
 import sys
@@ -7,8 +8,7 @@ from random import randrange
 from faker import Faker
 from concurrent import futures
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../modelbox")
-from modelbox import ModelBoxClient, MLFramework
+from modelbox.modelbox import ModelBoxClient, MLFramework
 from modelbox import service_pb2_grpc
 from modelbox import service_pb2
 
@@ -32,8 +32,7 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
 
     def CreateExperiment(self, request, context):
         experiment_resp = service_pb2.CreateExperimentResponse(
-            experiment_id=self._fake.uuid4(),
-            experiment_exists=True,
+            experiment_id=self._fake.uuid4(), experiment_exists=True,
         )
         return experiment_resp
 
@@ -48,6 +47,32 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
             model_version=self._fake.uuid4()
         )
         return model_version
+
+    def ListCheckpoints(self, request, context):
+        c1 = service_pb2.Checkpoint(
+            id=self._fake.uuid4(), epoch=23, experiment_id=self._fake.uuid4()
+        )
+        c2 = service_pb2.Checkpoint(
+            id=self._fake.uuid4(), epoch=24, experiment_id=self._fake.uuid4()
+        )
+        resp = service_pb2.ListCheckpointsResponse(checkpoints=[c1, c2],)
+        return resp
+
+    def ListExperiments(self, request, context):
+        e1 = service_pb2.Experiment(
+            id=self._fake.uuid4(),
+            name="exp1",
+            namespace="langtech",
+            owner="owner@owner.org",
+        )
+        e2 = service_pb2.Experiment(
+            id=self._fake.uuid4(),
+            name="exp2",
+            namespace="langtech",
+            owner="owner@owner.org",
+        )
+        resp = service_pb2.ListExperimentsResponse(experiments=[e1, e2],)
+        return resp
 
 
 # We are really testing whether the client actually works against the current version
@@ -92,13 +117,49 @@ class TestModelBoxApi(unittest.TestCase):
             {"meta": "foo"},
         )
         model_version = self._client.create_model_version(
-            model.id, "yolo4_v1", "v1", "mv_description", [], {}, service_pb2.PYTORCH, ["prod"],
+            model.id,
+            "yolo4_v1",
+            "v1",
+            "mv_description",
+            [],
+            {},
+            service_pb2.PYTORCH,
+            ["prod"],
         )
         self.assertNotEqual(model_version.id, "")
-        pass
+
+    def test_list_checkpoints(self):
+        resp = self._client.list_checkpoints("exp1")
+        self.assertEqual(2, len(resp.checkpoints))
+
+    def test_list_experiments(self):
+        resp = self._client.list_experiments("langtech")
+        self.assertEqual(2, len(resp.experiments))
 
     def test_create_model(self):
-        pass
+        resp = resp = self._client.create_model(
+            name="asr_en",
+            owner="owner@owner.org",
+            namespace="langtech",
+            task="asr",
+            description="ASR for english",
+            metadata={"x": "y"},
+        )
+        self.assertNotEqual("", resp.id)
+
+    def test_create_model_version(self):
+        tags = ["test"]
+        resp = self._client.create_model_version(
+            model_id="abc",
+            name="asr_en_july",
+            version="1",
+            description="ASR for english",
+            metadata={"x": "y"},
+            unique_tags=tags,
+            blobs=[],
+            framework=MLFramework.PYTORCH.to_proto(),
+        )
+        self.assertNotEqual("", resp.id)
 
 
 if __name__ == "__main__":

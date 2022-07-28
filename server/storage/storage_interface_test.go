@@ -69,6 +69,14 @@ func (s *StorageInterfaceTestSuite) TestObjectCreateIdempotency() {
 	chk2, err := s.storageIf.CreateCheckpoint(ctx, c)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, chk1.CheckpointId, chk2.CheckpointId)
+
+	m1 := NewModel(MODEL_NAME, e.Owner, NAMESPACE, TASK, "description", meta)
+	resp1, err := s.storageIf.CreateModel(ctx, m1)
+	assert.Nil(s.t, err)
+	m2 := NewModel(MODEL_NAME, e.Owner, NAMESPACE, TASK, "description", meta)
+	resp2, err := s.storageIf.CreateModel(ctx, m2)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, resp1.ModelId, resp2.ModelId)
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateModel() {

@@ -18,6 +18,13 @@ ModelBox is a model management service. It can integrate with Deep Learning fram
 - Build infrastructure to run known recipes for model optimazation for inference such as Layer Fusion, replacing transformer layers with more optimized implemenations such as Faster Transformer, quantization, model compression, etc.
 - Beyond being able to stream a model binary using the streaming api, build exporters which are more native to model deployment.
 
+
+## Tutorials and Demos
+If you would like to jump straight in, we have some notebooks which demonstrates the usage of the Python SDK independently and with Pytorch and Pytorch Lightning.
+- [Pytorch SDK Tutorial](tutorials/Tutorial_Python_SDK.ipynb) 
+- [Pytorch Tutorial](tutorials/Tutorial_Pytorch.ipynb) 
+- [Pytorch Lightning Integration](docs/lightning/train.py)
+
 ## Concepts and Understanding the ModelBox API
 ![Model Box Concepts!](docs/images/API_Concepts.png "Model Box API Concepts")
 
@@ -134,6 +141,3 @@ TODO
 
 ## Monitoring
 TODO
-
-## Demos 
-- [Pytorch Lightning Integration](docs/lightning/train.py)

@@ -73,114 +73,27 @@ class ListExperimentsResponse:
 class UploadArtifactResponse:
     id: str
 
-
+@dataclass
 class Model:
-    def __init__(
-        self,
-        id: str,
-        name: str,
-        owner: str,
-        namespace: str,
-        task: str,
-        description: str,
-        metadata: Dict,
-    ) -> Self:
-        self._id = id
-        self._name = name
-        self._owner = owner
-        self._namespace = namespace
-        self._task = task
-        self._description = description
-        self._metadata = metadata
+    id: str
+    name: str
+    owner: str
+    namespace: str
+    task: str
+    description: str
+    metadata: str
 
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def owner(self):
-        return self._owner
-
-    @property
-    def namespace(self):
-        return self._namespace
-
-    @property
-    def task(self):
-        return self._task
-
-    @property
-    def description(self):
-        return self._description
-
-    @property
-    def metadata(self):
-        return self._metadata
-
-
+@dataclass
 class ModelVersion:
-    def __init__(
-        self,
-        id: str,
-        model_id: str,
-        name: str,
-        version: str,
-        description: str,
-        blobs: List,
-        metadata: Dict,
-        unique_tags: List,
-        framework: MLFramework,
-    ) -> Self:
-        self._id = id
-        self._model_id = model_id
-        self._name = name
-        self._version = version
-        self._description = description
-        self._blobs = blobs
-        self._metadata = metadata
-        self._framework = framework
-        self._unique_tags = unique_tags
-
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def model_id(self):
-        return self._model_id
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def version(self):
-        return self._version
-
-    @property
-    def description(self):
-        return self._description
-
-    @property
-    def blobs(self):
-        return self._blobs
-
-    @property
-    def metadata(self):
-        return self._metadata
-
-    @property
-    def framework(self):
-        return self._framework
-
-    @property
-    def unique_tags(self):
-        return self._unique_tags
-
+    id: str
+    model_id: str
+    name: str
+    version: str
+    description: str
+    blobs: List
+    metadata: Dict
+    unique_tags: List
+    framework: MLFramework
 
 class ModelBoxClient:
     def __init__(self, addr):

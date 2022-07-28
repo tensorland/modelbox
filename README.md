@@ -22,8 +22,8 @@ ModelBox is a model management service. It can integrate with Deep Learning fram
 ## Tutorials and Demos
 If you would like to jump straight in, we have some notebooks which demonstrates the usage of the Python SDK independently and with Pytorch and Pytorch Lightning.
 - [Pytorch SDK Tutorial](tutorials/Tutorial_Python_SDK.ipynb) 
-- [Pytorch Tutorial](tutorials/Tutorial_Pytorch.ipynb) 
-- [Pytorch Lightning Integration](docs/lightning/train.py)
+- [Pytorch Tutorial](tutorials/Tutorial_Pytorch.ipynb) * Work In Progress * 
+- [Pytorch Lightning Integration](docs/lightning/train.py) 
 
 ## Concepts and Understanding the ModelBox API
 ![Model Box Concepts!](docs/images/API_Concepts.png "Model Box API Concepts")

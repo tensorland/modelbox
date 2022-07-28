@@ -7,8 +7,7 @@ from random import randrange
 from faker import Faker
 from concurrent import futures
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)) + "/../modelbox")
-from modelbox import ModelBoxClient, MLFramework
+from modelbox.modelbox import ModelBoxClient, MLFramework
 from modelbox import service_pb2_grpc
 from modelbox import service_pb2
 

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"crypto/sha1"
+	"database/sql/driver"
 	"encoding/json"
 	"fmt"
 	"hash"
@@ -34,73 +35,74 @@ const (
 
 type SerializableMeta map[string]string
 
-func (s *SerializableMeta) SerializeToJson() (string, error) {
-	b, err := json.Marshal(s)
-	if err != nil {
-		return "", err
+func (s *SerializableMeta) Scan(val interface{}) error {
+	switch v := val.(type) {
+	case []byte:
+		json.Unmarshal(v, &s)
+		return nil
+	case string:
+		json.Unmarshal([]byte(v), &s)
+		return nil
+	default:
+		return fmt.Errorf("unsupported type: %v", v)
 	}
-	return string(b), nil
 }
 
-func NewSerializableMeta(bytes []byte) (SerializableMeta, error) {
-	meta := make(map[string]string)
-	if err := json.Unmarshal(bytes, &meta); err != nil {
-		return nil, fmt.Errorf("unable to convert json to meta: %v", err)
-	}
-	return meta, nil
+func (s SerializableMeta) Value() (driver.Value, error) {
+	return json.Marshal(s)
 }
 
 type SerializableTags []string
 
-func (s *SerializableTags) SerializeToJson() (string, error) {
-	b, err := json.Marshal(s)
-	if err != nil {
-		return "", err
+func (s *SerializableTags) Scan(val interface{}) error {
+	switch v := val.(type) {
+	case []byte:
+		json.Unmarshal(v, &s)
+		return nil
+	case string:
+		json.Unmarshal([]byte(v), &s)
+		return nil
+	default:
+		return fmt.Errorf("unsupported type: %v", v)
 	}
-	return string(b), nil
 }
 
-func SerializableTagsFromBytes(bytes []uint8) (SerializableTags, error) {
-	b := []string{}
-	if err := json.Unmarshal(bytes, &b); err != nil {
-		return nil, fmt.Errorf("unable to convert json to tags: %v", err)
+func (s SerializableTags) Value() (driver.Value, error) {
+	return json.Marshal(s)
+}
+
+type SerializableMetrics map[string]float32
+
+func (s *SerializableMetrics) Scan(val interface{}) error {
+	switch v := val.(type) {
+	case []byte:
+		json.Unmarshal(v, &s)
+		return nil
+	case string:
+		json.Unmarshal([]byte(v), &s)
+		return nil
+	default:
+		return fmt.Errorf("unsupported type: %v", v)
 	}
-	return b, nil
+}
+
+func (s SerializableMetrics) Value() (driver.Value, error) {
+	return json.Marshal(s)
 }
 
 type BlobSet []*BlobInfo
 
-func (b *BlobSet) ToJson() ([]byte, error) {
-	bytes, err := json.Marshal(b)
-	if err != nil {
-		return nil, err
-	}
-	return bytes, nil
-}
-
-func NewBlobSetFromBytes(bytes []byte) (BlobSet, error) {
-	b := make([]*BlobInfo, 0)
-	if err := json.Unmarshal(bytes, &b); err != nil {
-		return nil, fmt.Errorf("unable to convert json to blobset: %v", err)
-	}
-	return b, nil
-}
-
-func NewBlobFromProto(parent string, pbBlob *proto.BlobMetadata) *BlobInfo {
-	return NewBlobInfo(
-		parent,
-		pbBlob.Path,
-		pbBlob.Checksum,
-		BlobType(pbBlob.BlobType),
-		pbBlob.CreatedAt.AsTime().Unix(),
-		pbBlob.UpdatedAt.AsTime().Unix(),
-	)
-}
-
 func NewBlobSetFromProto(parent string, pb []*proto.BlobMetadata) BlobSet {
 	blobs := make([]*BlobInfo, len(pb))
 	for i, b := range pb {
-		blobs[i] = NewBlobFromProto(parent, b)
+		blobs[i] = NewBlobInfo(
+			parent,
+			b.Path,
+			b.Checksum,
+			BlobType(b.BlobType),
+			b.CreatedAt.AsTime().Unix(),
+			b.UpdatedAt.AsTime().Unix(),
+		)
 	}
 	return blobs
 }
@@ -292,8 +294,8 @@ type Checkpoint struct {
 	ExperimentId string
 	Epoch        uint64
 	Blobs        BlobSet
-	Meta         map[string]string
-	Metrics      map[string]float32
+	Meta         SerializableMeta
+	Metrics      SerializableMetrics
 	CreatedAt    int64
 	UpdtedAt     int64
 }
@@ -301,14 +303,12 @@ type Checkpoint struct {
 func NewCheckpoint(
 	experimentId string,
 	epoch uint64,
-	blobs BlobSet,
 	meta map[string]string,
 	metrics map[string]float32) *Checkpoint {
 	currentTime := time.Now().Unix()
 	chk := &Checkpoint{
 		ExperimentId: experimentId,
 		Epoch:        epoch,
-		Blobs:        blobs,
 		Meta:         meta,
 		Metrics:      metrics,
 		CreatedAt:    currentTime,
@@ -318,27 +318,15 @@ func NewCheckpoint(
 	return chk
 }
 
+func (c *Checkpoint) SetBlobs(blobs BlobSet) {
+	c.Blobs = blobs
+}
+
 func (c *Checkpoint) CreateId() {
 	h := sha1.New()
 	hashString(h, c.ExperimentId)
 	hashUint64(h, c.Epoch)
 	c.Id = fmt.Sprintf("%x", h.Sum(nil))
-}
-
-func (c *Checkpoint) SerializeMetrics() (string, error) {
-	b, err := json.Marshal(c.Metrics)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
-}
-
-func (c *Checkpoint) SerialializeMeta() (string, error) {
-	b, err := json.Marshal(c.Meta)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
 }
 
 type Model struct {

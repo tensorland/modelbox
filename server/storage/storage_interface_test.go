@@ -21,7 +21,7 @@ type StorageInterfaceTestSuite struct {
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateExperiment() {
-	meta := map[string]string{"foo": "bar"}
+	meta := SerializableMeta(map[string]string{"foo": "bar"})
 	e := NewExperiment(MODEL_NAME, OWNER, NAMESPACE, "xyz", Pytorch, meta)
 	_, err := s.storageIf.CreateExperiment(context.Background(), e)
 	assert.Nil(s.t, err)
@@ -35,10 +35,10 @@ func (s *StorageInterfaceTestSuite) TestCreateExperiment() {
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateCheckpoint() {
-	meta := map[string]string{"foo": "bar"}
-	metrics := map[string]float32{"val_loss": 0.041, "train_accu": 98.01}
+	meta := SerializableMeta(map[string]string{"foo": "bar"})
+	metrics := SerializableMetrics(map[string]float32{"val_loss": 0.041, "train_accu": 98.01})
 	e := NewExperiment("quartznet-lid", "owner@email", "langtech", "xyz", Pytorch, meta)
-	c := NewCheckpoint(e.Id, 45, nil, meta, metrics)
+	c := NewCheckpoint(e.Id, 45, meta, metrics)
 	chk, err := s.storageIf.CreateCheckpoint(context.Background(), c)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, c.Id, chk.CheckpointId)

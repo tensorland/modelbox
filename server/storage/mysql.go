@@ -16,7 +16,7 @@ import (
 const (
 	MYSQL_DRIVER = "mysql"
 
-	EXPERIMENT_CREATE = "insert into experiments(id, name, owner, namespace, external_id, ml_framework, metadata, created_at, updated_at) values(?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	EXPERIMENT_CREATE = "insert into experiments(id, name, owner, namespace, external_id, ml_framework, metadata, created_at, updated_at) values(:id, :name, :owner, :namespace, :external_id, :ml_framework, :metadata, :created_at, :updated_at)"
 
 	EXPERIMENTS_LIST = "SELECT id, name, owner, namespace, external_id, ml_framework, metadata, created_at, updated_at from experiments where namespace = ?"
 
@@ -24,22 +24,20 @@ const (
 
 	EXPERIMENTS_DELETE = "delete from experiments where id=?"
 
-	CHECKPOINTS_CREATE = "insert into checkpoints(id, experiment, epoch, metrics, metadata, created_at, updated_at) values(?, ?, ?, ?, ?, ?, ?)"
+	CHECKPOINTS_CREATE = "insert into checkpoints(id, experiment, epoch, metrics, metadata, created_at, updated_at) values(:id, :experiment, :epoch, :metrics, :metadata, :created_at, :updated_at)"
 
 	CHECKPOINTS_LIST = `select id, experiment, epoch, metrics, metadata, created_at, updated_at from checkpoints 
-	                      where experiment = ?`
-	CHECKPOINTS_GET = `select id, experiment, epoch, metrics, metadata, created_at, updated_at from checkpoints 
 	                      where experiment = ?`
 
 	CHECKPOINT_UPDATE_PATH = "update checkpoints set path = ? where id = ?"
 
-	MODEL_CREATE = "insert into models(id, name, owner, namespace, task, metadata, description, created_at, updated_at) values(?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	MODEL_CREATE = "insert into models(id, name, owner, namespace, task, metadata, description, created_at, updated_at) values(:id, :name, :owner, :namespace, :task, :metadata, :description, :created_at, :updated_at)"
 
 	MODEL_GET = "select id, name, owner, namespace, task, metadata, description, created_at, updated_at from models where id = ?"
 
 	MODELS_NS_LIST = "select id, name, owner, namespace, task, metadata, description, created_at, updated_at from models where namespace = ?"
 
-	MODEL_VERSION_CREATE = `insert into model_versions(id, name, model_id, version, description, ml_framework, metadata, unique_tags, created_at, updated_at) values(?, ?, ?, ?, ?, ?,?, ?, ?, ?)`
+	MODEL_VERSION_CREATE = `insert into model_versions(id, name, model_id, version, description, ml_framework, metadata, unique_tags, created_at, updated_at) values(:id, :name, :model_id, :version, :description, :ml_framework, :metadata, :unique_tags, :created_at, :updated_at)`
 
 	MODEL_VERSION_GET = "select name, model_id, version, description, ml_framework, metadata, unique_tags, created_at, updated_at from model_versions where id = ?"
 
@@ -67,28 +65,17 @@ func (m *MySqlStorage) CreateExperiment(
 	ctx context.Context,
 	experiment *Experiment,
 ) (*CreateExperimentResult, error) {
-	meta, err := experiment.SerialializeMeta()
-	if err != nil {
-		return nil, fmt.Errorf("unable to serialize experiment meta: %v", err)
-	}
-	_, err = m.db.Exec(
+	schema := FromExperimentToSchema(experiment)
+	_, err := m.db.NamedExec(
 		EXPERIMENT_CREATE,
-		experiment.Id,
-		experiment.Name,
-		experiment.Owner,
-		experiment.Namespace,
-		experiment.ExternalId,
-		experiment.Framework,
-		meta,
-		experiment.CreatedAt,
-		experiment.UpdatedAt,
+		schema,
 	)
 	if err != nil {
 		if driverErr, ok := err.(*mysql.MySQLError); ok &&
 			driverErr.Number == mysqlerr.ER_DUP_ENTRY {
 			return &CreateExperimentResult{ExperimentId: experiment.Id, Exists: true}, nil
 		}
-		return nil, err
+		return nil, fmt.Errorf("unable to write experiment to db: %v", err)
 	}
 	return &CreateExperimentResult{ExperimentId: experiment.Id, Exists: false}, nil
 }
@@ -97,23 +84,19 @@ func (m *MySqlStorage) CreateCheckpoint(
 	ctx context.Context,
 	c *Checkpoint,
 ) (*CreateCheckpointResult, error) {
-	meta, err := c.SerialializeMeta()
-	if err != nil {
-		return nil, fmt.Errorf("unable to serialize checkpoint meta %v", err)
-	}
-	metrics, err := c.SerializeMetrics()
-	if err != nil {
-		return nil, fmt.Errorf("unable to serialize checkpoints metrics %v", err)
-	}
-	err = m.transact(ctx, func(tx *sqlx.Tx) error {
-		_, err = tx.Exec(CHECKPOINTS_CREATE, c.Id, c.ExperimentId, c.Epoch,
-			metrics, meta, c.CreatedAt, c.UpdtedAt)
-		if driverErr, ok := err.(*mysql.MySQLError); ok {
-			if driverErr.Number == mysqlerr.ER_DUP_ENTRY {
-				return fmt.Errorf("duplicate experiment: %v", c.Id)
+	err := m.transact(ctx, func(tx *sqlx.Tx) error {
+		cs := ToCheckpointSchema(c)
+		_, err := tx.NamedExec(CHECKPOINTS_CREATE, cs)
+		if err != nil {
+			if driverErr, ok := err.(*mysql.MySQLError); ok {
+				if driverErr.Number == mysqlerr.ER_DUP_ENTRY {
+					return fmt.Errorf("duplicate experiment: %v", c.Id)
+				}
+				return err
 			}
-			return err
+			return fmt.Errorf("unable to write checkpoint: %v", err)
 		}
+
 		return m.writeBlobSet(tx, c.Blobs)
 	})
 	return &CreateCheckpointResult{CheckpointId: c.Id}, err
@@ -130,12 +113,7 @@ func (m *MySqlStorage) ListExperiments(
 			return err
 		}
 		for _, row := range rows {
-
-			experiment, err := row.ToExperiment()
-			if err != nil {
-				return err
-			}
-			experiments = append(experiments, experiment)
+			experiments = append(experiments, row.ToExperiment())
 		}
 		return nil
 	})
@@ -157,11 +135,7 @@ func (m *MySqlStorage) ListCheckpoints(
 			if err != nil {
 				return err
 			}
-			checkpoint, err := row.ToCheckpoint(blobs)
-			if err != nil {
-				return err
-			}
-			checkpoints = append(checkpoints, checkpoint)
+			checkpoints = append(checkpoints, row.ToCheckpoint(blobs))
 		}
 		return nil
 	})
@@ -187,11 +161,7 @@ func (m *MySqlStorage) GetCheckpoint(
 		if err != nil {
 			return err
 		}
-		chk, err := checkpointSchema.ToCheckpoint(blobs)
-		if err != nil {
-			return err
-		}
-		checkpoint = chk
+		checkpoint = checkpointSchema.ToCheckpoint(blobs)
 		return nil
 	})
 	return checkpoint, err
@@ -199,12 +169,8 @@ func (m *MySqlStorage) GetCheckpoint(
 
 func (m *MySqlStorage) CreateModel(ctx context.Context, model *Model) (*CreateModelResult, error) {
 	err := m.transact(ctx, func(tx *sqlx.Tx) error {
-		meta, err := model.Meta.SerializeToJson()
-		if err != nil {
-			return fmt.Errorf("unable to serialize checkpoint meta %v", err)
-		}
-		if _, err = tx.Exec(MODEL_CREATE, model.Id, model.Name, model.Owner, model.Namespace,
-			model.Task, meta, model.Description, model.CreatedAt, model.UpdatedAt); err != nil {
+		schema := ModelToSchema(model)
+		if _, err := tx.NamedExec(MODEL_CREATE, schema); err != nil {
 			return fmt.Errorf("unable to create model: %v", err)
 		}
 		return m.writeBlobSet(tx, model.Blobs)
@@ -223,8 +189,8 @@ func (m *MySqlStorage) GetModel(ctx context.Context, id string) (*Model, error) 
 		if err != nil {
 			return fmt.Errorf("unable to get query blobset: %v", err)
 		}
-		model, err = modelSchema.ToModel(blobSet)
-		return err
+		model = modelSchema.ToModel(blobSet)
+		return nil
 	})
 	return model, err
 }
@@ -248,17 +214,12 @@ func (m *MySqlStorage) ListModels(ctx context.Context, namespace string) ([]*Mod
 		if err := tx.Select(&modelRows, MODELS_NS_LIST, namespace); err != nil {
 			return fmt.Errorf("can't query: %v", err)
 		}
-		m.logger.Sugar().Infof("Diptanu modelRows %v", len(modelRows))
 		for _, modelRow := range modelRows {
 			blobSet, err := m.getBlobSetForParent(tx, modelRow.Id)
 			if err != nil {
 				return err
 			}
-			model, err := modelRow.ToModel(blobSet)
-			if err != nil {
-				return err
-			}
-			models = append(models, model)
+			models = append(models, modelRow.ToModel(blobSet))
 		}
 		return nil
 	})
@@ -274,26 +235,10 @@ func (m *MySqlStorage) CreateModelVersion(
 	modelVersion *ModelVersion,
 ) (*CreateModelVersionResult, error) {
 	err := m.transact(ctx, func(tx *sqlx.Tx) error {
-		meta, err := modelVersion.Meta.SerializeToJson()
-		if err != nil {
-			return fmt.Errorf("unable to serialize checkpoint meta %v", err)
-		}
-		uniqueTags, err := modelVersion.UniqueTags.SerializeToJson()
-		if err != nil {
-			return err
-		}
-		if _, err = tx.Exec(
+		schema := ModelVersionToSchema(modelVersion)
+		if _, err := tx.NamedExec(
 			MODEL_VERSION_CREATE,
-			modelVersion.Id,
-			modelVersion.Name,
-			modelVersion.ModelId,
-			modelVersion.Version,
-			modelVersion.Description,
-			modelVersion.Framework,
-			meta,
-			uniqueTags,
-			modelVersion.CreatedAt,
-			modelVersion.UpdatedAt,
+			schema,
 		); err != nil {
 			return fmt.Errorf("unable to create model version: %v", err)
 		}
@@ -313,8 +258,7 @@ func (m *MySqlStorage) GetModelVersion(ctx context.Context, id string) (*ModelVe
 		if err != nil {
 			return err
 		}
-		mv, err := modelVersionSchema.ToModelVersion(blobSet)
-		modelVersion = mv
+		modelVersion = modelVersionSchema.ToModelVersion(blobSet)
 		return err
 	})
 	return modelVersion, err

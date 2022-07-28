@@ -148,11 +148,10 @@ func (s *GrpcServer) CreateCheckpoint(
 	checkpoint := storage.NewCheckpoint(
 		req.ExperimentId,
 		req.Epoch,
-		nil,
 		req.Metadata,
 		req.Metrics,
 	)
-	checkpoint.Blobs = storage.NewBlobSetFromProto(checkpoint.Id, req.Blobs)
+	checkpoint.SetBlobs(storage.NewBlobSetFromProto(checkpoint.Id, req.Blobs))
 	if _, err := s.metadataStorage.CreateCheckpoint(ctx, checkpoint); err != nil {
 		return nil, fmt.Errorf("unable to create checkpoint: %v", err)
 	}

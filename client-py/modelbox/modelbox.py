@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import grpc
 from grpc_status import rpc_status
 from numpy import float32, uint, uint64
+from regex import W
 from . import service_pb2
 from . import service_pb2_grpc
 
@@ -28,23 +29,16 @@ class MLFramework(Enum):
         return service_pb2.UNKNOWN
 
 
+@dataclass
 class Checkpoint:
-    def __init__(self, id: str, experiment_id: str, epoch: uint64) -> None:
-        self._id = id
-        self._experiment_id = experiment_id
-        self._epoch = epoch
+    id: str
+    experiment_id: str
+    epoch: str
 
-    @property
-    def id(self) -> str:
-        return self._id
 
-    @property
-    def experiment_id(self) -> str:
-        return self._experiment_id
-
-    @property
-    def epoch(self) -> uint64:
-        return self._epoch
+@dataclass
+class ListCheckpointsResponse:
+    checkpoints: List[Checkpoint]
 
 
 @dataclass
@@ -60,41 +54,24 @@ class CreateCheckpointResponse:
 
 
 @dataclass
+class Experiment:
+    id: str
+    name: str
+    owner: str
+    namespace: str
+    external_id: str
+    created_at: int
+    updated_at: int
+
+
+@dataclass
+class ListExperimentsResponse:
+    experiments: List[Experiment]
+
+
+@dataclass
 class UploadArtifactResponse:
     id: str
-
-
-class Experiment:
-    def __init__(
-        self, id, name, owner, namespace, external_id, created_at, updated_at
-    ) -> Self:
-        self._id = id
-        self._name = name
-        self._owner = owner
-        self._namespace = namespace
-        self._external_id = external_id
-        self._created_at = created_at
-        self._updated_at = updated_at
-
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def external_id(self) -> str:
-        return self._external_id
-
-    @property
-    def created_at(self) -> datetime:
-        return self._created_at
-
-    @property
-    def updated_at(self) -> datetime:
-        return self._updated_at
 
 
 class Model:
@@ -300,6 +277,32 @@ class ModelBoxClient:
         )
         response = self._client.CreateCheckpoint(req)
         return CreateCheckpointResponse(response.checkpoint_id, False)
+
+    def list_checkpoints(self, experiment_id: str) -> ListCheckpointsResponse:
+        req = service_pb2.ListCheckpointsRequest(experiment_id=experiment_id)
+        response = self._client.ListCheckpoints(req)
+        checkpoints = []
+        for c in response.checkpoints:
+            chk = Checkpoint(id=c.id, experiment_id=c.experiment_id, epoch=c.epoch)
+            checkpoints.append(chk)
+        return ListCheckpointsResponse(checkpoints=checkpoints)
+
+    def list_experiments(self, namespace: str) -> ListExperimentsResponse:
+        req = service_pb2.ListExperimentsRequest(namespace=namespace)
+        response = self._client.ListExperiments(req)
+        experiments = []
+        for exp in response.experiments:
+            e = Experiment(
+                id=exp.id,
+                name=exp.name,
+                owner=exp.owner,
+                namespace=exp.namespace,
+                external_id=exp.external_id,
+                created_at=exp.created_at,
+                updated_at=exp.updated_at,
+            )
+            experiments.append(e)
+        return ListExperimentsResponse(experiments=experiments)
 
     def upload_artifact(self, parent: str, path: str) -> UploadArtifactResponse:
         pass

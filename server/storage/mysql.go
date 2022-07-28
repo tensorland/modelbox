@@ -167,6 +167,9 @@ func (m *MySqlStorage) CreateModel(ctx context.Context, model *Model) (*CreateMo
 	err := m.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := ModelToSchema(model)
 		if _, err := tx.NamedExec(MODEL_CREATE, schema); err != nil {
+			if m.isDuplicateError(err) {
+				return nil
+			}
 			return fmt.Errorf("unable to create model: %v", err)
 		}
 		return m.writeBlobSet(tx, model.Blobs)
@@ -236,6 +239,9 @@ func (m *MySqlStorage) CreateModelVersion(
 			MODEL_VERSION_CREATE,
 			schema,
 		); err != nil {
+			if m.isDuplicateError(err) {
+				return nil
+			}
 			return fmt.Errorf("unable to create model version: %v", err)
 		}
 		return m.writeBlobSet(tx, modelVersion.Blobs)

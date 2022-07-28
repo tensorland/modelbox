@@ -167,7 +167,7 @@ func (e *EphemeralStorage) GetCheckpoint(_ context.Context, id string) (*Checkpo
 }
 
 func (e *EphemeralStorage) CreateModel(_ context.Context, model *Model) (*CreateModelResult, error) {
-	return nil, e.writeBytes(model, model.Id, MODELS)
+	return &CreateModelResult{ModelId: model.Id}, e.writeBytes(model, model.Id, MODELS)
 }
 
 func (e *EphemeralStorage) GetModel(_ context.Context, id string) (*Model, error) {
@@ -207,7 +207,7 @@ func (e *EphemeralStorage) ListModels(_ context.Context, namespace string) ([]*M
 }
 
 func (e *EphemeralStorage) CreateModelVersion(_ context.Context, modelVersion *ModelVersion) (*CreateModelVersionResult, error) {
-	return nil, e.writeBytes(modelVersion, modelVersion.Id, MODEL_VERSIONS)
+	return &CreateModelVersionResult{ModelVersionId: modelVersion.Id}, e.writeBytes(modelVersion, modelVersion.Id, MODEL_VERSIONS)
 }
 
 func (e *EphemeralStorage) GetModelVersion(ctx context.Context, id string) (*ModelVersion, error) {

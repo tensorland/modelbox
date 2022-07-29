@@ -44,6 +44,8 @@ const (
 	BLOB_MULTI_WRITE = "insert into blobs(id, parent_id, metadata) VALUES "
 
 	BLOBSET_GET = "select id, parent_id, metadata from blobs where parent_id=?"
+
+	BLOB_GET = "select id, parent_id, metadata from blobs where id=?"
 )
 
 type MySqlStorage struct {
@@ -347,6 +349,27 @@ func (e *MySqlStorage) GetBlobs(ctx context.Context, parentId string) (BlobSet, 
 		return err
 	})
 	return blobs, err
+}
+
+func (m *MySqlStorage) GetBlob(ctx context.Context, id string) (*BlobInfo, error) {
+	var blob BlobInfo
+	err := m.transact(ctx, func(tx *sqlx.Tx) error {
+		var blobRow BlobSchema
+		if err := tx.Get(&blobRow, BLOB_GET, id); err != nil {
+			return fmt.Errorf("unable to get query blobs: %v", err)
+		}
+
+		b, err := blobRow.ToBlob()
+		if err != nil {
+			return fmt.Errorf("unable to convert blobschema to blob: %v", err)
+		}
+		blob = *b
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("unable to retreieve blob: %v", err)
+	}
+	return &blob, nil
 }
 
 func (m *MySqlStorage) transact(ctx context.Context, fn func(*sqlx.Tx) error) error {

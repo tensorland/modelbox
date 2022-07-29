@@ -241,7 +241,7 @@ func (m *ModelBoxClient) DownloadBlob(id string, path string) (*CheckpointDownlo
 	checksum := fmt.Sprintf("%x", h.Sum(nil))
 	serverChecksum := resp.GetMetadata().GetChecksum()
 	if checksum != serverChecksum {
-		return nil, fmt.Errorf("actual checksum %v, calculated checksum %v", checksum, serverChecksum)
+		return nil, fmt.Errorf("actual checksum %v, calculated checksum %v", serverChecksum, checksum)
 	}
 	return &CheckpointDownloadResponse{Checksum: checksum, ServerChecksum: serverChecksum}, nil
 }

@@ -172,6 +172,7 @@ func (s *GrpcServer) ListCheckpoints(
 		apiBlobs := make([]*pb.BlobMetadata, len(p.Blobs))
 		for i, b := range p.Blobs {
 			apiBlobs[i] = &pb.BlobMetadata{
+				Id:        b.Id,
 				ParentId:  b.ParentId,
 				Path:      b.Path,
 				Checksum:  b.Checksum,
@@ -204,25 +205,20 @@ func (s *GrpcServer) UploadBlob(stream pb.ModelStore_UploadBlobServer) error {
 		return fmt.Errorf("the first message needs to be checkpoint metadata")
 	}
 
-	blobInfo := &storage.BlobInfo{
-		ParentId: meta.ParentId,
-		Type:     storage.BlobTypeFromProto(meta.GetBlobType()),
-		Checksum: meta.Checksum,
-	}
-	blobInfo.CreateId()
-
-	blob := s.blobStorageBuilder.Build()
-	if err := blob.Open(blobInfo.Id, storage.Write); err != nil {
+	blobInfo := storage.NewBlobInfo(meta.ParentId, "", meta.Checksum, storage.BlobTypeFromProto(meta.BlobType), 0, 0)
+	blobStorage := s.blobStorageBuilder.Build()
+	if err := blobStorage.Open(blobInfo, storage.Write); err != nil {
 		return err
 	}
-	defer blob.Close()
+	defer blobStorage.Close()
 
-	path, err := blob.GetPath()
+	path, err := blobStorage.GetPath()
 	if err != nil {
 		return fmt.Errorf("unable to update blob info for checkpoint")
 	}
-	if err := s.metadataStorage.UpdateBlobPath(stream.Context(), path, blobInfo.ParentId, blobInfo.Type); err != nil {
-		return fmt.Errorf("unable to update blob path: %v", err)
+	blobInfo.Path = path
+	if err := s.metadataStorage.WriteBlobs(stream.Context(), storage.BlobSet{blobInfo}); err != nil {
+		return fmt.Errorf("unable to create blob metadata: %v", err)
 	}
 	var totalBytes uint64 = 0
 	for {
@@ -234,7 +230,7 @@ func (s *GrpcServer) UploadBlob(stream pb.ModelStore_UploadBlobServer) error {
 			return err
 		}
 		bytes := req.GetChunks()
-		n, err := blob.Write(bytes)
+		n, err := blobStorage.Write(bytes)
 		if err != nil {
 			return err
 		}
@@ -249,14 +245,23 @@ func (s *GrpcServer) DownloadBlob(
 	req *pb.DownloadBlobRequest,
 	stream pb.ModelStore_DownloadBlobServer,
 ) error {
-	blob := s.blobStorageBuilder.Build()
-	if err := blob.Open(req.BlobId, storage.Read); err != nil {
-		return err
+	blobInfo, err := s.metadataStorage.GetBlob(stream.Context(), req.BlobId)
+	if err != nil {
+		return fmt.Errorf("unable to retreive blob metadata: %v", err)
 	}
-	defer blob.Close()
+	blobStorage := s.blobStorageBuilder.Build()
+	if err := blobStorage.Open(blobInfo, storage.Read); err != nil {
+		return fmt.Errorf("unable to create blob storage intf: %v", err)
+	}
+	defer blobStorage.Close()
 	blobMeta := pb.DownloadBlobResponse{
 		Blob: &pb.DownloadBlobResponse_Metadata{
-			Metadata: &pb.BlobMetadata{},
+			Metadata: &pb.BlobMetadata{
+				Id:       blobInfo.Id,
+				ParentId: blobInfo.ParentId,
+				Checksum: blobInfo.Checksum,
+				Path:     blobInfo.Path,
+			},
 		},
 	}
 	if err := stream.Send(&blobMeta); err != nil {
@@ -265,7 +270,7 @@ func (s *GrpcServer) DownloadBlob(
 	buf := make([]byte, 1024)
 	totalBytes := 0
 	for {
-		n, err := blob.Read(buf)
+		n, err := blobStorage.Read(buf)
 		if err != nil && err != io.EOF {
 			return fmt.Errorf("error reading blob for id %v: %v", req.BlobId, err)
 		}

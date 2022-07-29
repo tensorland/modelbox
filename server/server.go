@@ -257,10 +257,12 @@ func (s *GrpcServer) DownloadBlob(
 	blobMeta := pb.DownloadBlobResponse{
 		Blob: &pb.DownloadBlobResponse_Metadata{
 			Metadata: &pb.BlobMetadata{
-				Id:       blobInfo.Id,
-				ParentId: blobInfo.ParentId,
-				Checksum: blobInfo.Checksum,
-				Path:     blobInfo.Path,
+				Id:        blobInfo.Id,
+				ParentId:  blobInfo.ParentId,
+				Checksum:  blobInfo.Checksum,
+				Path:      blobInfo.Path,
+				CreatedAt: timestamppb.New(time.Unix(blobInfo.CreatedAt, 0)),
+				UpdatedAt: timestamppb.New(time.Unix(blobInfo.UpdatedAt, 0)),
 			},
 		},
 	}

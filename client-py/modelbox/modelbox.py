@@ -73,6 +73,7 @@ class ListExperimentsResponse:
 class UploadArtifactResponse:
     id: str
 
+
 @dataclass
 class Model:
     id: str
@@ -82,6 +83,7 @@ class Model:
     task: str
     description: str
     metadata: str
+
 
 @dataclass
 class ModelVersion:
@@ -94,6 +96,7 @@ class ModelVersion:
     metadata: Dict
     unique_tags: List
     framework: MLFramework
+
 
 class ModelBoxClient:
     def __init__(self, addr):

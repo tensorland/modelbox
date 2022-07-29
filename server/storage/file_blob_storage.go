@@ -19,19 +19,22 @@ func NewFileBlobStorage(baseDir string, log *zap.Logger) *FileBlobStorage {
 	return &FileBlobStorage{baseDir: baseDir, log: log}
 }
 
-func (f *FileBlobStorage) Open(id string, mode BlobOpenMode) error {
+func (f *FileBlobStorage) Open(blobInfo *BlobInfo, mode BlobOpenMode) error {
 	var err error
-	path := path.Join(f.baseDir, id)
 	if mode == Read {
-		if f.file, err = os.Open(path); err != nil {
-			return fmt.Errorf("couldn't open %v to read: %v", id, err)
+		if f.file, err = os.Open(blobInfo.Path); err != nil {
+			return fmt.Errorf("couldn't open %v to read: %v", blobInfo.Path, err)
 		}
 		return nil
 	}
 
+	// If we have to create this file we need to construct a path first.
+	path := path.Join(f.baseDir, blobInfo.Id)
+
 	if f.file, err = os.Create(path); err != nil {
-		return fmt.Errorf("couldn't open %v to read: %v", id, err)
+		return fmt.Errorf("couldn't open %v to read: %v", path, err)
 	}
+	blobInfo.Path = path
 	return nil
 }
 

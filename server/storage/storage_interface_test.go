@@ -150,9 +150,15 @@ func (s *StorageInterfaceTestSuite) TestWriteBlobs() {
 	err := s.storageIf.WriteBlobs(ctx, blobs)
 	assert.Nil(s.t, err)
 
+	// Test Get Blobs for ParentID
 	blobsOut, err := s.storageIf.GetBlobs(ctx, MODEL_NAME)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, 2, len(blobsOut))
 	assert.Equal(s.t, "/foo/bar", blobsOut[0].Path)
 	assert.Equal(s.t, "/foo/pipe", blobsOut[1].Path)
+
+	// Test Get Blob with ID
+	blob3, err := s.storageIf.GetBlob(ctx, blob1.Id)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, blob1.Id, blob3.Id)
 }

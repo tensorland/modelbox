@@ -270,3 +270,17 @@ func (e *EphemeralStorage) UpdateBlobPath(_ context.Context, path string, parent
 func (e *EphemeralStorage) DeleteExperiment(_ context.Context, id string) error {
 	return nil
 }
+
+func (e *EphemeralStorage) GetBlob(ctx context.Context, id string) (*BlobInfo, error) {
+	blob := BlobInfo{}
+	err := e.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(BLOBS)
+		out := b.Get([]byte(id))
+		if out == nil {
+			return fmt.Errorf("blob with id: %v not present", id)
+		}
+		decoder := codec.NewDecoderBytes(out, new(codec.MsgpackHandle))
+		return decoder.Decode(&blob)
+	})
+	return &blob, err
+}

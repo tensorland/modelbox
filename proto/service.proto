@@ -57,17 +57,18 @@ service ModelStore {
  * to be managed by ModelBox.
  */
 message BlobMetadata {
+  string id = 1;
   // The ID of the checkpoint or model to which this blob belongs to
-  string parent_id = 1;
+  string parent_id = 2;
 
   // Type of blob
-  BlobType blob_type = 2;
+  BlobType blob_type = 3;
 
   // checksum of the blob
-  string checksum = 3;
+  string checksum = 4;
 
   // path of the file
-  string path = 4;
+  string path = 5;
 
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;

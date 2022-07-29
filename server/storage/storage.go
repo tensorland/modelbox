@@ -483,6 +483,8 @@ type MetadataStorage interface {
 
 	GetBlobs(ctx context.Context, parentId string) (BlobSet, error)
 
+	GetBlob(ctx context.Context, id string) (*BlobInfo, error)
+
 	UpdateBlobPath(ctx context.Context, path string, parentId string, t BlobType) error
 
 	DeleteExperiment(ctx context.Context, id string) error
@@ -525,7 +527,7 @@ func NewBlobStorageBuilder(
 }
 
 type BlobStorage interface {
-	Open(id string, mode BlobOpenMode) error
+	Open(blob *BlobInfo, mode BlobOpenMode) error
 
 	GetPath() (string, error)
 

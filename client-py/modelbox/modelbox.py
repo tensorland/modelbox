@@ -5,6 +5,7 @@ from typing import Dict, List
 from typing_extensions import Self
 from enum import Enum
 from dataclasses import dataclass
+from hashlib import md5
 
 import grpc
 from grpc_status import rpc_status
@@ -14,6 +15,9 @@ from . import service_pb2
 from . import service_pb2_grpc
 
 DEFAULT_NAMESPACE = "default"
+
+# The chunk size at which files are being read.
+CHUNK_SZ = 1024
 
 
 class MLFramework(Enum):
@@ -72,6 +76,13 @@ class ListExperimentsResponse:
 @dataclass
 class UploadArtifactResponse:
     id: str
+
+
+@dataclass
+class DownloadArtifactResponse:
+    id: str
+    path: str
+    checksum: str
 
 
 @dataclass
@@ -220,8 +231,43 @@ class ModelBoxClient:
             experiments.append(e)
         return ListExperimentsResponse(experiments=experiments)
 
+    def _artifact_iterator(self, parent, path):
+        checksum = ""
+        with open(path, "rb") as f:
+            checksum = md5(f.read()).hexdigest()
+
+        blob_meta = service_pb2.BlobMetadata(
+            parent_id=parent,
+            checksum=checksum,
+            blob_type=service_pb2.CHECKPOINT,
+            path=path,
+        )
+        yield service_pb2.UploadBlobRequest(metadata=blob_meta)
+        with open(path, "rb") as f:
+            while True:
+                data = f.read(CHUNK_SZ)
+                if not data:
+                    break
+                yield service_pb2.UploadBlobRequest(chunks=data)
+
     def upload_artifact(self, parent: str, path: str) -> UploadArtifactResponse:
-        pass
+        itr = self._artifact_iterator(parent, path)
+        resp = self._client.UploadBlob(itr)
+        return UploadArtifactResponse(id=resp.blob_id)
+
+    def download_artifact(self, id: str, path: str) -> DownloadArtifactResponse:
+        req = service_pb2.DownloadBlobRequest(blob_id=id)
+        resp_itr = self._client.DownloadBlob(req)
+        ret = DownloadArtifactResponse
+        with open(path, 'wb') as f:
+            for resp in resp_itr:
+                if resp.HasField("chunks"):
+                    f.write(resp.chunks)
+                if resp.HasField("metadata"):
+                    ret.id = resp.metadata.id
+                    ret.checksum = resp.metadata.checksum
+                    ret.path = path
+        return ret
 
     def close(self):
         if self._channel is not None:

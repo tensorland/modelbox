@@ -8,7 +8,7 @@ lightning_logs
 modelbox_server.toml
 modelbox_client.toml
 
-modelbox
+build
 
 __pycache__
 dist

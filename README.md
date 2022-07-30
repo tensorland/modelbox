@@ -136,6 +136,21 @@ List Models in a namespace
 modelbox client list --namespace langtech
 ```
 
+## Development
+Build the modelbox control plane and cli locally -
+```
+go install ./cmd/modelbox/
+```
+or 
+```
+go build -o /path/to/binary ./cmd/modelbox/
+```
+Install the python SDK locally for development -
+```
+cd client-py
+pip install .
+```
+
 ## Logging
 TODO
 

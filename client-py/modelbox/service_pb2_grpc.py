@@ -71,6 +71,16 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.DownloadBlobRequest.SerializeToString,
                 response_deserializer=service__pb2.DownloadBlobResponse.FromString,
                 )
+        self.UpdateMetadata = channel.unary_unary(
+                '/modelbox.ModelStore/UpdateMetadata',
+                request_serializer=service__pb2.UpdateMetadataRequest.SerializeToString,
+                response_deserializer=service__pb2.UpdateMetadataResponse.FromString,
+                )
+        self.ListMetadata = channel.unary_unary(
+                '/modelbox.ModelStore/ListMetadata',
+                request_serializer=service__pb2.ListMetadataRequest.SerializeToString,
+                response_deserializer=service__pb2.ListMetadataResponse.FromString,
+                )
 
 
 class ModelStoreServicer(object):
@@ -157,6 +167,20 @@ class ModelStoreServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def UpdateMetadata(self, request, context):
+        """Persists a set of metadata related to objects
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListMetadata(self, request, context):
+        """Lists metadata associated with an object
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ModelStoreServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -214,6 +238,16 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     servicer.DownloadBlob,
                     request_deserializer=service__pb2.DownloadBlobRequest.FromString,
                     response_serializer=service__pb2.DownloadBlobResponse.SerializeToString,
+            ),
+            'UpdateMetadata': grpc.unary_unary_rpc_method_handler(
+                    servicer.UpdateMetadata,
+                    request_deserializer=service__pb2.UpdateMetadataRequest.FromString,
+                    response_serializer=service__pb2.UpdateMetadataResponse.SerializeToString,
+            ),
+            'ListMetadata': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListMetadata,
+                    request_deserializer=service__pb2.ListMetadataRequest.FromString,
+                    response_serializer=service__pb2.ListMetadataResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -412,5 +446,39 @@ class ModelStore(object):
         return grpc.experimental.unary_stream(request, target, '/modelbox.ModelStore/DownloadBlob',
             service__pb2.DownloadBlobRequest.SerializeToString,
             service__pb2.DownloadBlobResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def UpdateMetadata(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/UpdateMetadata',
+            service__pb2.UpdateMetadataRequest.SerializeToString,
+            service__pb2.UpdateMetadataResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ListMetadata(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/ListMetadata',
+            service__pb2.ListMetadataRequest.SerializeToString,
+            service__pb2.ListMetadataResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

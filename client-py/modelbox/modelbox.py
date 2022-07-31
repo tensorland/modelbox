@@ -13,6 +13,8 @@ from numpy import float32, uint, uint64
 from regex import W
 from . import service_pb2
 from . import service_pb2_grpc
+from google.protobuf.struct_pb2 import Struct
+from google.protobuf.timestamp_pb2 import Timestamp
 
 DEFAULT_NAMESPACE = "default"
 
@@ -31,6 +33,16 @@ class MLFramework(Enum):
         if self == self.TENSORFLOW:
             return service_pb2.KERAS
         return service_pb2.UNKNOWN
+
+
+@dataclass
+class UpdateMetadataResponse:
+    updated_at: Timestamp
+
+
+@dataclass
+class ListMetadataResponse:
+    metadata: Dict
 
 
 @dataclass
@@ -259,7 +271,7 @@ class ModelBoxClient:
         req = service_pb2.DownloadBlobRequest(blob_id=id)
         resp_itr = self._client.DownloadBlob(req)
         ret = DownloadArtifactResponse
-        with open(path, 'wb') as f:
+        with open(path, "wb") as f:
             for resp in resp_itr:
                 if resp.HasField("chunks"):
                     f.write(resp.chunks)
@@ -268,6 +280,24 @@ class ModelBoxClient:
                     ret.checksum = resp.metadata.checksum
                     ret.path = path
         return ret
+
+    def update_metadata(
+        self, parent_id: str, key: str, val: str
+    ) -> UpdateMetadataResponse:
+        payload = Struct()
+        payload.update({key: val})
+        meta = service_pb2.Metadata(parent_id=parent_id, payload=payload)
+        req = service_pb2.UpdateMetadataRequest(metadata=[meta])
+        resp = self._client.UpdateMetadata(req)
+        return UpdateMetadataResponse(updated_at=resp.updated_at)
+
+    def list_metadata(self, id: str) -> ListMetadataResponse:
+        req = service_pb2.ListMetadataRequest(parent_id=id)
+        resp = self._client.ListMetadata(req)
+        meta_resp = ListMetadataResponse(metadata={})
+        for k, v in resp.payload.items():
+            meta_resp.metadata[k] = v
+        return meta_resp
 
     def close(self):
         if self._channel is not None:

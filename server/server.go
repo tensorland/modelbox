@@ -11,6 +11,7 @@ import (
 	"github.com/diptanu/modelbox/server/storage"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -293,6 +294,40 @@ func (s *GrpcServer) DownloadBlob(
 		fmt.Sprintf("checkpoint chunks sent for id: %v tot bytes: %v", req.BlobId, totalBytes),
 	)
 	return nil
+}
+
+func (s *GrpcServer) UpdateMetadata(ctx context.Context, req *pb.UpdateMetadataRequest) (*pb.UpdateMetadataResponse, error) {
+	metadataList := []*storage.Metadata{}
+	for _, meta := range req.Metadata {
+		for k, v := range meta.Payload.AsMap() {
+			metadataList = append(metadataList, storage.NewMetadata(meta.ParentId, k, v))
+		}
+	}
+	if err := s.metadataStorage.UpdateMetadata(ctx, metadataList); err != nil {
+		return nil, err
+	}
+	updatedAt := timestamppb.New(time.Now())
+	resp := &pb.UpdateMetadataResponse{
+		UpdatedAt: updatedAt,
+	}
+	return resp, nil
+}
+
+func (s *GrpcServer) ListMetadata(ctx context.Context, req *pb.ListMetadataRequest) (*pb.ListMetadataResponse, error) {
+	metadataList, err := s.metadataStorage.ListMetadata(ctx, req.ParentId)
+	if err != nil {
+		return nil, err
+	}
+
+	m := make(map[string]interface{})
+	for _, meta := range metadataList {
+		m[meta.Key] = meta.Value
+	}
+	payload, err := structpb.NewStruct(m)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create structspb: %v", err)
+	}
+	return &pb.ListMetadataResponse{Payload: payload}, nil
 }
 
 func NewGrpcServer(

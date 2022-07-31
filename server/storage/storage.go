@@ -33,6 +33,26 @@ const (
 	File
 )
 
+type Metadata struct {
+	Id       string
+	ParentId string
+	Key      string
+	Value    interface{}
+}
+
+func NewMetadata(parentId string, k string, v interface{}) *Metadata {
+	m := Metadata{
+		ParentId: parentId,
+		Key:      k,
+		Value:    v,
+	}
+	h := sha1.New()
+	hashString(h, m.ParentId)
+	hashString(h, m.Key)
+	m.Id = fmt.Sprintf("%x", h.Sum(nil))
+	return &m
+}
+
 type SerializableMeta map[string]string
 
 func (s *SerializableMeta) Scan(val interface{}) error {
@@ -488,6 +508,10 @@ type MetadataStorage interface {
 	UpdateBlobPath(ctx context.Context, path string, parentId string, t BlobType) error
 
 	DeleteExperiment(ctx context.Context, id string) error
+
+	UpdateMetadata(context.Context, []*Metadata) error
+
+	ListMetadata(ctx context.Context, parentId string) ([]*Metadata, error)
 
 	Close() error
 }

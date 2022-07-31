@@ -99,6 +99,9 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
                     break
                 yield service_pb2.DownloadBlobResponse(chunks=data)
 
+        def UpdateMetadata(self, req, context):
+            return service_pb2.UpdateMetadataResponse(updated_at=1260)
+
 
 # We are really testing whether the client actually works against the current version
 # of the grpc server definition. Tests related to logic in server based on what the

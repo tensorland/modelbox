@@ -2,6 +2,7 @@ package storage
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/jmoiron/sqlx/types"
 )
@@ -214,4 +215,37 @@ func ToCheckpointSchema(c *Checkpoint) *CheckpointSchema {
 		CreatedAt:  c.CreatedAt,
 		UpdatedAt:  c.UpdtedAt,
 	}
+}
+
+type MetadataSchema struct {
+	Id       string
+	ParentId string `db:"parent_id"`
+	Metadata types.JSONText
+}
+
+func (c *MetadataSchema) toMetadata() (*Metadata, error) {
+	var m map[string]interface{}
+	json.Unmarshal(c.Metadata, &m)
+	k, _ := m["key"].(string)
+	v := m["value"]
+	return &Metadata{
+		Id:       c.Id,
+		ParentId: c.ParentId,
+		Key:      k,
+		Value:    v,
+	}, nil
+}
+
+func toMetadataSchema(m *Metadata) (*MetadataSchema, error) {
+	meta := map[string]interface{}{"key": m.Key, "value": m.Value}
+	b, err := json.Marshal(meta)
+	if err != nil {
+		return nil, fmt.Errorf("unable to convert to json: %v", err)
+	}
+
+	return &MetadataSchema{
+		Id:       m.Id,
+		ParentId: m.ParentId,
+		Metadata: b,
+	}, nil
 }

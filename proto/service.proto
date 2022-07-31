@@ -1,5 +1,6 @@
 syntax = "proto3";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
 
 option go_package = "github.com/diptanu/modelbox/proto";
 
@@ -47,6 +48,12 @@ service ModelStore {
 
   // DownloadBlob downloads a blob from configured storage
   rpc DownloadBlob(DownloadBlobRequest) returns (stream DownloadBlobResponse);
+
+  // Persists a set of metadata related to objects
+  rpc UpdateMetadata(UpdateMetadataRequest) returns (UpdateMetadataResponse);
+
+  // Lists metadata associated with an object
+  rpc ListMetadata(ListMetadataRequest) returns (ListMetadataResponse);
 }
 
 /*
@@ -267,3 +274,25 @@ message ListModelVersionsResponse { ModelVersion models = 1; }
 message ListModelsRequest { string namespace = 1; }
 
 message ListModelsResponse { repeated Model models = 1; }
+
+message Metadata {
+  string parent_id = 1;
+  google.protobuf.Struct payload = 2;
+}
+
+message UpdateMetadataRequest {
+  repeated Metadata metadata = 1;
+}
+
+message UpdateMetadataResponse {
+  int32 num_keys_written = 1;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message ListMetadataRequest {
+  string parent_id = 1;
+}
+
+message ListMetadataResponse {
+  google.protobuf.Struct payload = 1;
+}

@@ -57,3 +57,9 @@ CREATE TABLE IF NOT EXISTS blobs (
    parent_id VARCHAR(40),
    metadata JSON
 );
+
+CREATE TABLE IF NOT EXISTS metadata (
+   id VARCHAR(40) PRIMARY KEY,
+   parent_id VARCHAR(40),
+   metadata JSON
+);

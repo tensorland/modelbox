@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 const (
@@ -161,4 +162,26 @@ func (s *StorageInterfaceTestSuite) TestWriteBlobs() {
 	blob3, err := s.storageIf.GetBlob(ctx, blob1.Id)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, blob1.Id, blob3.Id)
+}
+
+func (s *StorageInterfaceTestSuite) TestUpdateMetadata() {
+	ctx := context.Background()
+
+	// Write Metadata
+	scalerVal, err := structpb.NewValue(map[string]interface{}{"/foo/bar": interface{}(1)})
+	assert.Nil(s.t, err)
+	m := NewMetadata("parent-id1", "/foo/bar", scalerVal)
+	err = s.storageIf.UpdateMetadata(ctx, []*Metadata{m})
+	assert.Nil(s.t, err)
+
+	complexVal, err1 := structpb.NewValue(map[string]interface{}{"/tmp/hola": map[string]interface{}{"name1": "val1", "name2": 5}})
+	assert.Nil(s.t, err1)
+	m2 := NewMetadata("parent-id1", "/foo/bar1", complexVal)
+	err = s.storageIf.UpdateMetadata(ctx, []*Metadata{m2})
+	assert.Nil(s.t, err)
+
+	// Get Metadata
+	meta, err := s.storageIf.ListMetadata(ctx, "parent-id1")
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, 2, len(meta))
 }

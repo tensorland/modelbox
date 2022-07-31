@@ -45,6 +45,10 @@ type ModelStoreClient interface {
 	UploadBlob(ctx context.Context, opts ...grpc.CallOption) (ModelStore_UploadBlobClient, error)
 	// DownloadBlob downloads a blob from configured storage
 	DownloadBlob(ctx context.Context, in *DownloadBlobRequest, opts ...grpc.CallOption) (ModelStore_DownloadBlobClient, error)
+	// Persists a set of metadata related to objects
+	UpdateMetadata(ctx context.Context, in *UpdateMetadataRequest, opts ...grpc.CallOption) (*UpdateMetadataResponse, error)
+	// Lists metadata associated with an object
+	ListMetadata(ctx context.Context, in *ListMetadataRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
 }
 
 type modelStoreClient struct {
@@ -202,6 +206,24 @@ func (x *modelStoreDownloadBlobClient) Recv() (*DownloadBlobResponse, error) {
 	return m, nil
 }
 
+func (c *modelStoreClient) UpdateMetadata(ctx context.Context, in *UpdateMetadataRequest, opts ...grpc.CallOption) (*UpdateMetadataResponse, error) {
+	out := new(UpdateMetadataResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/UpdateMetadata", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *modelStoreClient) ListMetadata(ctx context.Context, in *ListMetadataRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error) {
+	out := new(ListMetadataResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/ListMetadata", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ModelStoreServer is the server API for ModelStore service.
 // All implementations must embed UnimplementedModelStoreServer
 // for forward compatibility
@@ -229,6 +251,10 @@ type ModelStoreServer interface {
 	UploadBlob(ModelStore_UploadBlobServer) error
 	// DownloadBlob downloads a blob from configured storage
 	DownloadBlob(*DownloadBlobRequest, ModelStore_DownloadBlobServer) error
+	// Persists a set of metadata related to objects
+	UpdateMetadata(context.Context, *UpdateMetadataRequest) (*UpdateMetadataResponse, error)
+	// Lists metadata associated with an object
+	ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error)
 	mustEmbedUnimplementedModelStoreServer()
 }
 
@@ -268,6 +294,12 @@ func (UnimplementedModelStoreServer) UploadBlob(ModelStore_UploadBlobServer) err
 }
 func (UnimplementedModelStoreServer) DownloadBlob(*DownloadBlobRequest, ModelStore_DownloadBlobServer) error {
 	return status.Errorf(codes.Unimplemented, "method DownloadBlob not implemented")
+}
+func (UnimplementedModelStoreServer) UpdateMetadata(context.Context, *UpdateMetadataRequest) (*UpdateMetadataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateMetadata not implemented")
+}
+func (UnimplementedModelStoreServer) ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListMetadata not implemented")
 }
 func (UnimplementedModelStoreServer) mustEmbedUnimplementedModelStoreServer() {}
 
@@ -491,6 +523,42 @@ func (x *modelStoreDownloadBlobServer) Send(m *DownloadBlobResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _ModelStore_UpdateMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateMetadataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).UpdateMetadata(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/UpdateMetadata",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).UpdateMetadata(ctx, req.(*UpdateMetadataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ModelStore_ListMetadata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListMetadataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).ListMetadata(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/ListMetadata",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).ListMetadata(ctx, req.(*ListMetadataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ModelStore_ServiceDesc is the grpc.ServiceDesc for ModelStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -533,6 +601,14 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetCheckpoint",
 			Handler:    _ModelStore_GetCheckpoint_Handler,
+		},
+		{
+			MethodName: "UpdateMetadata",
+			Handler:    _ModelStore_UpdateMetadata_Handler,
+		},
+		{
+			MethodName: "ListMetadata",
+			Handler:    _ModelStore_ListMetadata_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

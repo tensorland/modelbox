@@ -46,6 +46,10 @@ const (
 	BLOBSET_GET = "select id, parent_id, metadata from blobs where parent_id=?"
 
 	BLOB_GET = "select id, parent_id, metadata from blobs where id=?"
+
+	METADATA_UPDATE = "INSERT INTO metadata (id, parent_id, metadata) VALUES(:id, :parent_id, :metadata) ON DUPLICATE KEY UPDATE id=VALUES(`id`), parent_id=VALUES(`parent_id`), metadata=VALUES(`metadata`)"
+
+	METADATA_LIST = "select id, parent_id, metadata from metadata where parent_id=?"
 )
 
 type MySqlStorage struct {
@@ -432,4 +436,39 @@ func (s *MySqlStorage) isDuplicateError(err error) bool {
 		}
 	}
 	return false
+}
+
+func (m *MySqlStorage) UpdateMetadata(ctx context.Context, metadata []*Metadata) error {
+	err := m.transact(ctx, func(tx *sqlx.Tx) error {
+		for _, m := range metadata {
+			schema, err := toMetadataSchema(m)
+			if err != nil {
+				return fmt.Errorf("unable to convert to schema: %v", err)
+			}
+			if _, err := tx.NamedExec(METADATA_UPDATE, schema); err != nil {
+				return fmt.Errorf("unable to write to db: %v", err)
+			}
+		}
+		return nil
+	})
+	return err
+}
+
+func (m *MySqlStorage) ListMetadata(ctx context.Context, parentId string) ([]*Metadata, error) {
+	meta := []*Metadata{}
+	err := m.transact(ctx, func(tx *sqlx.Tx) error {
+		rows := []MetadataSchema{}
+		if err := m.db.Select(&rows, METADATA_LIST, parentId); err != nil {
+			return err
+		}
+		for _, row := range rows {
+			m, err := row.toMetadata()
+			if err != nil {
+				return fmt.Errorf("unable to convert persisted metadata to struct: %v", err)
+			}
+			meta = append(meta, m)
+		}
+		return nil
+	})
+	return meta, err
 }

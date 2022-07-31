@@ -15,6 +15,7 @@ var (
 	MODELS         = []byte("models")
 	MODEL_VERSIONS = []byte("model_versions")
 	BLOBS          = []byte("blobs")
+	METADATA       = []byte("metadata")
 )
 
 type EphemeralStorage struct {
@@ -283,4 +284,34 @@ func (e *EphemeralStorage) GetBlob(ctx context.Context, id string) (*BlobInfo, e
 		return decoder.Decode(&blob)
 	})
 	return &blob, err
+}
+
+func (e *EphemeralStorage) UpdateMetadata(_ context.Context, metadataList []*Metadata) error {
+	for _, m := range metadataList {
+		if err := e.writeBytes(m, m.Id, METADATA); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (e *EphemeralStorage) ListMetadata(ctx context.Context, parentId string) ([]*Metadata, error) {
+	metadataList := []*Metadata{}
+	err := e.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(METADATA)
+		c := b.Cursor()
+		handle := new(codec.MsgpackHandle)
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var metadata Metadata
+			decoder := codec.NewDecoderBytes(v, handle)
+			if err := decoder.Decode(&metadata); err != nil {
+				return err
+			}
+			if metadata.ParentId == parentId {
+				metadataList = append(metadataList, &metadata)
+			}
+		}
+		return nil
+	})
+	return metadataList, err
 }

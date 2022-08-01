@@ -196,7 +196,7 @@ func (s *GrpcServer) ListCheckpoints(
 	return &pb.ListCheckpointsResponse{Checkpoints: apiCheckpoints}, nil
 }
 
-func (s *GrpcServer) UploadBlob(stream pb.ModelStore_UploadFileServer) error {
+func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 	req, err := stream.Recv()
 	if err != nil {
 		return fmt.Errorf("unable to receive blob stream %v", err)
@@ -242,7 +242,7 @@ func (s *GrpcServer) UploadBlob(stream pb.ModelStore_UploadFileServer) error {
 	return nil
 }
 
-func (s *GrpcServer) DownloadBlob(
+func (s *GrpcServer) DownloadFile(
 	req *pb.DownloadFileRequest,
 	stream pb.ModelStore_DownloadFileServer,
 ) error {
@@ -328,6 +328,25 @@ func (s *GrpcServer) ListMetadata(ctx context.Context, req *pb.ListMetadataReque
 		return nil, fmt.Errorf("unable to create structspb: %v", err)
 	}
 	return &pb.ListMetadataResponse{Payload: payload}, nil
+}
+
+func (s *GrpcServer) GetCheckpoint(ctx context.Context, req *pb.GetCheckpointRequest) (*pb.GetCheckpointResponse, error) {
+	id := storage.GetCheckpointID(req.ExperimentId, req.Epoch)
+	chk, err := s.metadataStorage.GetCheckpoint(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.GetCheckpointResponse{
+		Checkpoint: &pb.Checkpoint{
+			Id:           chk.Id,
+			Epoch:        chk.Epoch,
+			ExperimentId: chk.ExperimentId,
+			Metrics:      chk.Metrics,
+			Metadata:     chk.Meta,
+			CreatedAt:    &timestamppb.Timestamp{},
+			UpdatedAt:    &timestamppb.Timestamp{},
+		},
+	}, nil
 }
 
 func NewGrpcServer(

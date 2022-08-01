@@ -338,6 +338,13 @@ func (c *Checkpoint) SetFiles(files FileSet) {
 	c.Files = files
 }
 
+func GetCheckpointID(experiment string, epoch uint64) string {
+	h := sha1.New()
+	hashString(h, experiment)
+	hashUint64(h, epoch)
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
 func (c *Checkpoint) CreateId() {
 	h := sha1.New()
 	hashString(h, c.ExperimentId)

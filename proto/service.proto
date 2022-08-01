@@ -2,7 +2,7 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 
-option go_package = "github.com/diptanu/modelbox/proto";
+option go_package = "github.com/diptanu/modelbox/client/proto";
 
 package modelbox;
 

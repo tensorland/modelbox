@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/diptanu/modelbox/proto"
+	"github.com/diptanu/modelbox/client/proto"
 	"github.com/diptanu/modelbox/server/config"
 	"go.uber.org/zap"
 )

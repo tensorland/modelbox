@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"time"
 
 	pb "github.com/diptanu/modelbox/client-go/proto"
@@ -219,6 +220,12 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 	}
 	blobInfo.Path = path
 	if err := s.metadataStorage.WriteFiles(stream.Context(), storage.FileSet{blobInfo}); err != nil {
+		//TODO This is not great, we should create a new error type and throw and check on the error type
+		// or code.
+		if strings.HasPrefix(err.Error(), "unable to create blobs for model: Error 1062") {
+			stream.SendAndClose(&pb.UploadFileResponse{FileId: blobInfo.Id})
+			return nil
+		}
 		return fmt.Errorf("unable to create blob metadata: %v", err)
 	}
 	var totalBytes uint64 = 0

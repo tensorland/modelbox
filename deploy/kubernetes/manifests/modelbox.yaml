@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: modelbox
+---
+apiVersion: v1
+data:
+  modelbox.toml: |-
+    blob_storage = "filesystem"
+    metadata_storage = "integrated"
+    listen_addr = ":8085"
+
+    [blob_storage_filesystem]
+    base_dir = "/tmp/modelboxblobs"
+
+    [metadata_storage_integrated]
+    path = "/tmp/modelbox.dat"
+
+    [metadata_storage_postgres]
+    host = "172.17.0.2"
+    port = 5432
+    user = "postgres"
+kind: ConfigMap
+metadata:
+  name: config
+  namespace: modelbox
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: modelbox
+  name: modelbox
+  namespace: modelbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: modelbox
+  template:
+    metadata:
+      labels:
+        app: modelbox
+    spec:
+      containers:
+      - image: diptanu/modelbox:0.1
+        name: modelbox
+        ports:
+        - containerPort: 8085
+        args:
+          - server
+          - start
+          - --config-path=/modelbox/config.toml
+        volumeMounts:
+          - name: config
+            mountPath: /modelbox
+      volumes:
+        - name: config
+          configMap:
+            name: config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: modelbox
+  namespace: modelbox
+  labels:
+    app: modelbox
+spec:
+  ports:
+  - port: 8085
+    protocol: TCP
+  selector:
+    app: modelbox

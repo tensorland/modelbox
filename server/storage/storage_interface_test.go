@@ -84,9 +84,9 @@ func (s *StorageInterfaceTestSuite) TestCreateModel() {
 	meta := map[string]string{"model": "gpt3"}
 	description := "a large translation model based on gpt3"
 	m := NewModel("blender", OWNER, NAMESPACE, TASK, description, meta)
-	blob1 := NewBlobInfo(m.Id, "/foo/bar", "checksum123", File, 0, 0)
-	blob2 := NewBlobInfo(m.Id, "/foo/pipe", "checksum345", ModelBlob, 0, 0)
-	m.SetBlobs([]*BlobInfo{blob1, blob2})
+	blob1 := NewFileMetadata(m.Id, "/foo/bar", "checksum123", TextFile, 0, 0)
+	blob2 := NewFileMetadata(m.Id, "/foo/pipe", "checksum345", ModelFile, 0, 0)
+	m.SetFiles([]*FileMetadata{blob1, blob2})
 	ctx := context.Background()
 	_, err := s.storageIf.CreateModel(ctx, m)
 	assert.Nil(s.t, err)
@@ -102,9 +102,9 @@ func (s *StorageInterfaceTestSuite) TestListModels() {
 	description := "a large translation model based on gpt3"
 	namespace := "namespace-x"
 	m := NewModel("blender", OWNER, namespace, TASK, description, meta)
-	blob1 := NewBlobInfo(m.Id, "/foo/bar", "checksum123", File, 0, 0)
-	blob2 := NewBlobInfo(m.Id, "/foo/pipe", "checksum345", ModelBlob, 0, 0)
-	m.SetBlobs([]*BlobInfo{blob1, blob2})
+	blob1 := NewFileMetadata(m.Id, "/foo/bar", "checksum123", TextFile, 0, 0)
+	blob2 := NewFileMetadata(m.Id, "/foo/pipe", "checksum345", ModelFile, 0, 0)
+	m.SetFiles([]*FileMetadata{blob1, blob2})
 	ctx := context.Background()
 	_, err := s.storageIf.CreateModel(ctx, m)
 	assert.Nil(s.t, err)
@@ -112,12 +112,12 @@ func (s *StorageInterfaceTestSuite) TestListModels() {
 	models, err := s.storageIf.ListModels(ctx, namespace)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, 1, len(models))
-	assert.Equal(s.t, 2, len(models[0].Blobs))
+	assert.Equal(s.t, 2, len(models[0].Files))
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateModelVersion() {
 	meta := map[string]string{"bar": "foo"}
-	blobs := []*BlobInfo{}
+	blobs := []*FileMetadata{}
 	mvName := "test-version"
 	version := "1"
 	description := "testing"
@@ -145,21 +145,21 @@ func (s *StorageInterfaceTestSuite) TestCreateModelVersion() {
 
 func (s *StorageInterfaceTestSuite) TestWriteBlobs() {
 	ctx := context.Background()
-	blob1 := NewBlobInfo(MODEL_NAME, "/foo/bar", "checksum123", File, 0, 0)
-	blob2 := NewBlobInfo(MODEL_NAME, "/foo/pipe", "checksum345", ModelBlob, 0, 0)
-	blobs := []*BlobInfo{blob1, blob2}
-	err := s.storageIf.WriteBlobs(ctx, blobs)
+	blob1 := NewFileMetadata(MODEL_NAME, "/foo/bar", "checksum123", TextFile, 0, 0)
+	blob2 := NewFileMetadata(MODEL_NAME, "/foo/pipe", "checksum345", ModelFile, 0, 0)
+	blobs := []*FileMetadata{blob1, blob2}
+	err := s.storageIf.WriteFiles(ctx, blobs)
 	assert.Nil(s.t, err)
 
 	// Test Get Blobs for ParentID
-	blobsOut, err := s.storageIf.GetBlobs(ctx, MODEL_NAME)
+	blobsOut, err := s.storageIf.GetFiles(ctx, MODEL_NAME)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, 2, len(blobsOut))
 	assert.Equal(s.t, "/foo/bar", blobsOut[0].Path)
 	assert.Equal(s.t, "/foo/pipe", blobsOut[1].Path)
 
 	// Test Get Blob with ID
-	blob3, err := s.storageIf.GetBlob(ctx, blob1.Id)
+	blob3, err := s.storageIf.GetFile(ctx, blob1.Id)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, blob1.Id, blob3.Id)
 }

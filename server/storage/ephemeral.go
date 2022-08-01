@@ -14,7 +14,7 @@ var (
 	CHECKPOINTS    = []byte("checkpoints")
 	MODELS         = []byte("models")
 	MODEL_VERSIONS = []byte("model_versions")
-	BLOBS          = []byte("blobs")
+	FILES          = []byte("files")
 	METADATA       = []byte("metadata")
 )
 
@@ -43,7 +43,7 @@ func NewEphemeralStorage(path string, logger *zap.Logger) (*EphemeralStorage, er
 		if _, err := tx.CreateBucketIfNotExists(MODEL_VERSIONS); err != nil {
 			return err
 		}
-		if _, err := tx.CreateBucketIfNotExists(BLOBS); err != nil {
+		if _, err := tx.CreateBucketIfNotExists(FILES); err != nil {
 			return err
 		}
 		return nil
@@ -222,34 +222,34 @@ func (e *EphemeralStorage) GetModelVersion(ctx context.Context, id string) (*Mod
 	return &modelVersion, err
 }
 
-func (e *EphemeralStorage) WriteBlobs(_ context.Context, blobs BlobSet) error {
-	for _, blob := range blobs {
-		if err := e.writeBytes(blob, blob.Id, BLOBS); err != nil {
+func (e *EphemeralStorage) WriteFiles(_ context.Context, files FileSet) error {
+	for _, file := range files {
+		if err := e.writeBytes(file, file.Id, FILES); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (e *EphemeralStorage) GetBlobs(ctx context.Context, parentId string) (BlobSet, error) {
-	blobs := []*BlobInfo{}
+func (e *EphemeralStorage) GetFiles(ctx context.Context, parentId string) (FileSet, error) {
+	files := []*FileMetadata{}
 	err := e.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(BLOBS)
+		b := tx.Bucket(FILES)
 		c := b.Cursor()
 		handle := new(codec.MsgpackHandle)
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			var blob BlobInfo
+			var file FileMetadata
 			decoder := codec.NewDecoderBytes(v, handle)
-			if err := decoder.Decode(&blob); err != nil {
+			if err := decoder.Decode(&file); err != nil {
 				return err
 			}
-			if blob.ParentId == parentId {
-				blobs = append(blobs, &blob)
+			if file.ParentId == parentId {
+				files = append(files, &file)
 			}
 		}
 		return nil
 	})
-	return blobs, err
+	return files, err
 }
 
 func (e *EphemeralStorage) Ping() error {
@@ -264,7 +264,7 @@ func (e *EphemeralStorage) Backend() *BackendInfo {
 	return &BackendInfo{Name: "boltdb"}
 }
 
-func (e *EphemeralStorage) UpdateBlobPath(_ context.Context, path string, parentId string, t BlobType) error {
+func (e *EphemeralStorage) UpdateBlobPath(_ context.Context, path string, parentId string, t FileMIMEType) error {
 	return nil
 }
 
@@ -272,18 +272,18 @@ func (e *EphemeralStorage) DeleteExperiment(_ context.Context, id string) error 
 	return nil
 }
 
-func (e *EphemeralStorage) GetBlob(ctx context.Context, id string) (*BlobInfo, error) {
-	blob := BlobInfo{}
+func (e *EphemeralStorage) GetFile(ctx context.Context, id string) (*FileMetadata, error) {
+	file := FileMetadata{}
 	err := e.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(BLOBS)
+		b := tx.Bucket(FILES)
 		out := b.Get([]byte(id))
 		if out == nil {
 			return fmt.Errorf("blob with id: %v not present", id)
 		}
 		decoder := codec.NewDecoderBytes(out, new(codec.MsgpackHandle))
-		return decoder.Decode(&blob)
+		return decoder.Decode(&file)
 	})
-	return &blob, err
+	return &file, err
 }
 
 func (e *EphemeralStorage) UpdateMetadata(_ context.Context, metadataList []*Metadata) error {

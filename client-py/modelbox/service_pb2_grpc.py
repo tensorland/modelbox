@@ -61,15 +61,15 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.GetCheckpointRequest.SerializeToString,
                 response_deserializer=service__pb2.GetCheckpointResponse.FromString,
                 )
-        self.UploadBlob = channel.stream_unary(
-                '/modelbox.ModelStore/UploadBlob',
-                request_serializer=service__pb2.UploadBlobRequest.SerializeToString,
-                response_deserializer=service__pb2.UploadBlobResponse.FromString,
+        self.UploadFile = channel.stream_unary(
+                '/modelbox.ModelStore/UploadFile',
+                request_serializer=service__pb2.UploadFileRequest.SerializeToString,
+                response_deserializer=service__pb2.UploadFileResponse.FromString,
                 )
-        self.DownloadBlob = channel.unary_stream(
-                '/modelbox.ModelStore/DownloadBlob',
-                request_serializer=service__pb2.DownloadBlobRequest.SerializeToString,
-                response_deserializer=service__pb2.DownloadBlobResponse.FromString,
+        self.DownloadFile = channel.unary_stream(
+                '/modelbox.ModelStore/DownloadFile',
+                request_serializer=service__pb2.DownloadFileRequest.SerializeToString,
+                response_deserializer=service__pb2.DownloadFileResponse.FromString,
                 )
         self.UpdateMetadata = channel.unary_unary(
                 '/modelbox.ModelStore/UpdateMetadata',
@@ -153,15 +153,15 @@ class ModelStoreServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def UploadBlob(self, request_iterator, context):
-        """UploadBlob streams a blob to ModelBox and stores the binaries to the condfigured storage
+    def UploadFile(self, request_iterator, context):
+        """UploadFile streams a files to ModelBox and stores the binaries to the condfigured storage
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def DownloadBlob(self, request, context):
-        """DownloadBlob downloads a blob from configured storage
+    def DownloadFile(self, request, context):
+        """DownloadFile downloads a file from configured storage
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -229,15 +229,15 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     request_deserializer=service__pb2.GetCheckpointRequest.FromString,
                     response_serializer=service__pb2.GetCheckpointResponse.SerializeToString,
             ),
-            'UploadBlob': grpc.stream_unary_rpc_method_handler(
-                    servicer.UploadBlob,
-                    request_deserializer=service__pb2.UploadBlobRequest.FromString,
-                    response_serializer=service__pb2.UploadBlobResponse.SerializeToString,
+            'UploadFile': grpc.stream_unary_rpc_method_handler(
+                    servicer.UploadFile,
+                    request_deserializer=service__pb2.UploadFileRequest.FromString,
+                    response_serializer=service__pb2.UploadFileResponse.SerializeToString,
             ),
-            'DownloadBlob': grpc.unary_stream_rpc_method_handler(
-                    servicer.DownloadBlob,
-                    request_deserializer=service__pb2.DownloadBlobRequest.FromString,
-                    response_serializer=service__pb2.DownloadBlobResponse.SerializeToString,
+            'DownloadFile': grpc.unary_stream_rpc_method_handler(
+                    servicer.DownloadFile,
+                    request_deserializer=service__pb2.DownloadFileRequest.FromString,
+                    response_serializer=service__pb2.DownloadFileResponse.SerializeToString,
             ),
             'UpdateMetadata': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateMetadata,
@@ -416,7 +416,7 @@ class ModelStore(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def UploadBlob(request_iterator,
+    def UploadFile(request_iterator,
             target,
             options=(),
             channel_credentials=None,
@@ -426,14 +426,14 @@ class ModelStore(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.stream_unary(request_iterator, target, '/modelbox.ModelStore/UploadBlob',
-            service__pb2.UploadBlobRequest.SerializeToString,
-            service__pb2.UploadBlobResponse.FromString,
+        return grpc.experimental.stream_unary(request_iterator, target, '/modelbox.ModelStore/UploadFile',
+            service__pb2.UploadFileRequest.SerializeToString,
+            service__pb2.UploadFileResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def DownloadBlob(request,
+    def DownloadFile(request,
             target,
             options=(),
             channel_credentials=None,
@@ -443,9 +443,9 @@ class ModelStore(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/modelbox.ModelStore/DownloadBlob',
-            service__pb2.DownloadBlobRequest.SerializeToString,
-            service__pb2.DownloadBlobResponse.FromString,
+        return grpc.experimental.unary_stream(request, target, '/modelbox.ModelStore/DownloadFile',
+            service__pb2.DownloadFileRequest.SerializeToString,
+            service__pb2.DownloadFileResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

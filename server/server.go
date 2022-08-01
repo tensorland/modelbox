@@ -39,7 +39,7 @@ func (s *GrpcServer) CreateModel(
 		req.Description,
 		req.Metadata,
 	)
-	model.SetBlobs(storage.NewBlobSetFromProto(model.Id, req.Blobs))
+	model.SetFiles(storage.NewFileSetFromProto(model.Id, req.Files))
 	if _, err := s.metadataStorage.CreateModel(ctx, model); err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (s *GrpcServer) CreateModelVersion(
 		req.Description,
 		storage.MLFramework(req.Framework),
 		req.Metadata,
-		storage.NewBlobSetFromProto(req.Model, req.Blobs),
+		storage.NewFileSetFromProto(req.Model, req.Files),
 		req.UniqueTags,
 	)
 	if _, err := s.metadataStorage.CreateModelVersion(ctx, modelVersion); err != nil {
@@ -152,7 +152,7 @@ func (s *GrpcServer) CreateCheckpoint(
 		req.Metadata,
 		req.Metrics,
 	)
-	checkpoint.SetBlobs(storage.NewBlobSetFromProto(checkpoint.Id, req.Blobs))
+	checkpoint.SetFiles(storage.NewFileSetFromProto(checkpoint.Id, req.Files))
 	if _, err := s.metadataStorage.CreateCheckpoint(ctx, checkpoint); err != nil {
 		return nil, fmt.Errorf("unable to create checkpoint: %v", err)
 	}
@@ -170,14 +170,14 @@ func (s *GrpcServer) ListCheckpoints(
 	}
 	apiCheckpoints := make([]*pb.Checkpoint, len(checkpoints))
 	for i, p := range checkpoints {
-		apiBlobs := make([]*pb.BlobMetadata, len(p.Blobs))
-		for i, b := range p.Blobs {
-			apiBlobs[i] = &pb.BlobMetadata{
+		apiFiles := make([]*pb.FileMetadata, len(p.Files))
+		for i, b := range p.Files {
+			apiFiles[i] = &pb.FileMetadata{
 				Id:        b.Id,
 				ParentId:  b.ParentId,
 				Path:      b.Path,
 				Checksum:  b.Checksum,
-				BlobType:  pb.BlobType(b.Type),
+				FileType:  pb.FileType(b.Type),
 				CreatedAt: timestamppb.New(time.Unix(b.CreatedAt, 0)),
 				UpdatedAt: timestamppb.New(time.Unix(b.UpdatedAt, 0)),
 			}
@@ -186,7 +186,7 @@ func (s *GrpcServer) ListCheckpoints(
 			Id:           p.Id,
 			ExperimentId: req.ExperimentId,
 			Epoch:        p.Epoch,
-			Blobs:        apiBlobs,
+			Files:        apiFiles,
 			Metrics:      p.Metrics,
 			Metadata:     p.Meta,
 			CreatedAt:    timestamppb.New(time.Unix(p.CreatedAt, 0)),
@@ -196,7 +196,7 @@ func (s *GrpcServer) ListCheckpoints(
 	return &pb.ListCheckpointsResponse{Checkpoints: apiCheckpoints}, nil
 }
 
-func (s *GrpcServer) UploadBlob(stream pb.ModelStore_UploadBlobServer) error {
+func (s *GrpcServer) UploadBlob(stream pb.ModelStore_UploadFileServer) error {
 	req, err := stream.Recv()
 	if err != nil {
 		return fmt.Errorf("unable to receive blob stream %v", err)
@@ -206,7 +206,7 @@ func (s *GrpcServer) UploadBlob(stream pb.ModelStore_UploadBlobServer) error {
 		return fmt.Errorf("the first message needs to be checkpoint metadata")
 	}
 
-	blobInfo := storage.NewBlobInfo(meta.ParentId, "", meta.Checksum, storage.BlobTypeFromProto(meta.BlobType), 0, 0)
+	blobInfo := storage.NewFileMetadata(meta.ParentId, "", meta.Checksum, storage.FileTypeFromProto(meta.FileType), 0, 0)
 	blobStorage := s.blobStorageBuilder.Build()
 	if err := blobStorage.Open(blobInfo, storage.Write); err != nil {
 		return err
@@ -218,7 +218,7 @@ func (s *GrpcServer) UploadBlob(stream pb.ModelStore_UploadBlobServer) error {
 		return fmt.Errorf("unable to update blob info for checkpoint")
 	}
 	blobInfo.Path = path
-	if err := s.metadataStorage.WriteBlobs(stream.Context(), storage.BlobSet{blobInfo}); err != nil {
+	if err := s.metadataStorage.WriteFiles(stream.Context(), storage.FileSet{blobInfo}); err != nil {
 		return fmt.Errorf("unable to create blob metadata: %v", err)
 	}
 	var totalBytes uint64 = 0
@@ -237,16 +237,16 @@ func (s *GrpcServer) UploadBlob(stream pb.ModelStore_UploadBlobServer) error {
 		}
 		totalBytes += uint64(n)
 	}
-	stream.SendAndClose(&pb.UploadBlobResponse{BlobId: blobInfo.Id})
+	stream.SendAndClose(&pb.UploadFileResponse{FileId: blobInfo.Id})
 	s.logger.Info(fmt.Sprintf("checkpoint with id: %v tot bytes: %v", blobInfo.Id, totalBytes))
 	return nil
 }
 
 func (s *GrpcServer) DownloadBlob(
-	req *pb.DownloadBlobRequest,
-	stream pb.ModelStore_DownloadBlobServer,
+	req *pb.DownloadFileRequest,
+	stream pb.ModelStore_DownloadFileServer,
 ) error {
-	blobInfo, err := s.metadataStorage.GetBlob(stream.Context(), req.BlobId)
+	blobInfo, err := s.metadataStorage.GetFile(stream.Context(), req.FileId)
 	if err != nil {
 		return fmt.Errorf("unable to retreive blob metadata: %v", err)
 	}
@@ -255,9 +255,9 @@ func (s *GrpcServer) DownloadBlob(
 		return fmt.Errorf("unable to create blob storage intf: %v", err)
 	}
 	defer blobStorage.Close()
-	blobMeta := pb.DownloadBlobResponse{
-		Blob: &pb.DownloadBlobResponse_Metadata{
-			Metadata: &pb.BlobMetadata{
+	blobMeta := pb.DownloadFileResponse{
+		StreamFrame: &pb.DownloadFileResponse_Metadata{
+			Metadata: &pb.FileMetadata{
 				Id:        blobInfo.Id,
 				ParentId:  blobInfo.ParentId,
 				Checksum:  blobInfo.Checksum,
@@ -275,15 +275,15 @@ func (s *GrpcServer) DownloadBlob(
 	for {
 		n, err := blobStorage.Read(buf)
 		if err != nil && err != io.EOF {
-			return fmt.Errorf("error reading blob for id %v: %v", req.BlobId, err)
+			return fmt.Errorf("error reading blob for id %v: %v", req.FileId, err)
 		}
-		blobChunk := pb.DownloadBlobResponse{
-			Blob: &pb.DownloadBlobResponse_Chunks{
+		blobChunk := pb.DownloadFileResponse{
+			StreamFrame: &pb.DownloadFileResponse_Chunks{
 				Chunks: buf[:n],
 			},
 		}
 		if err := stream.Send(&blobChunk); err != nil {
-			return fmt.Errorf("unable to stream chunks for id: %v, err: %v", req.BlobId, err)
+			return fmt.Errorf("unable to stream chunks for id: %v, err: %v", req.FileId, err)
 		}
 		totalBytes += n
 		if err == io.EOF {
@@ -291,7 +291,7 @@ func (s *GrpcServer) DownloadBlob(
 		}
 	}
 	s.logger.Info(
-		fmt.Sprintf("checkpoint chunks sent for id: %v tot bytes: %v", req.BlobId, totalBytes),
+		fmt.Sprintf("checkpoint chunks sent for id: %v tot bytes: %v", req.FileId, totalBytes),
 	)
 	return nil
 }

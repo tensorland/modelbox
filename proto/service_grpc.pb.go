@@ -41,10 +41,10 @@ type ModelStoreClient interface {
 	ListCheckpoints(ctx context.Context, in *ListCheckpointsRequest, opts ...grpc.CallOption) (*ListCheckpointsResponse, error)
 	// Gets a checkpoint from the modelstore for an experiment
 	GetCheckpoint(ctx context.Context, in *GetCheckpointRequest, opts ...grpc.CallOption) (*GetCheckpointResponse, error)
-	// UploadBlob streams a blob to ModelBox and stores the binaries to the condfigured storage
-	UploadBlob(ctx context.Context, opts ...grpc.CallOption) (ModelStore_UploadBlobClient, error)
-	// DownloadBlob downloads a blob from configured storage
-	DownloadBlob(ctx context.Context, in *DownloadBlobRequest, opts ...grpc.CallOption) (ModelStore_DownloadBlobClient, error)
+	// UploadFile streams a files to ModelBox and stores the binaries to the condfigured storage
+	UploadFile(ctx context.Context, opts ...grpc.CallOption) (ModelStore_UploadFileClient, error)
+	// DownloadFile downloads a file from configured storage
+	DownloadFile(ctx context.Context, in *DownloadFileRequest, opts ...grpc.CallOption) (ModelStore_DownloadFileClient, error)
 	// Persists a set of metadata related to objects
 	UpdateMetadata(ctx context.Context, in *UpdateMetadataRequest, opts ...grpc.CallOption) (*UpdateMetadataResponse, error)
 	// Lists metadata associated with an object
@@ -140,46 +140,46 @@ func (c *modelStoreClient) GetCheckpoint(ctx context.Context, in *GetCheckpointR
 	return out, nil
 }
 
-func (c *modelStoreClient) UploadBlob(ctx context.Context, opts ...grpc.CallOption) (ModelStore_UploadBlobClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ModelStore_ServiceDesc.Streams[0], "/modelbox.ModelStore/UploadBlob", opts...)
+func (c *modelStoreClient) UploadFile(ctx context.Context, opts ...grpc.CallOption) (ModelStore_UploadFileClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ModelStore_ServiceDesc.Streams[0], "/modelbox.ModelStore/UploadFile", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &modelStoreUploadBlobClient{stream}
+	x := &modelStoreUploadFileClient{stream}
 	return x, nil
 }
 
-type ModelStore_UploadBlobClient interface {
-	Send(*UploadBlobRequest) error
-	CloseAndRecv() (*UploadBlobResponse, error)
+type ModelStore_UploadFileClient interface {
+	Send(*UploadFileRequest) error
+	CloseAndRecv() (*UploadFileResponse, error)
 	grpc.ClientStream
 }
 
-type modelStoreUploadBlobClient struct {
+type modelStoreUploadFileClient struct {
 	grpc.ClientStream
 }
 
-func (x *modelStoreUploadBlobClient) Send(m *UploadBlobRequest) error {
+func (x *modelStoreUploadFileClient) Send(m *UploadFileRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *modelStoreUploadBlobClient) CloseAndRecv() (*UploadBlobResponse, error) {
+func (x *modelStoreUploadFileClient) CloseAndRecv() (*UploadFileResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(UploadBlobResponse)
+	m := new(UploadFileResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func (c *modelStoreClient) DownloadBlob(ctx context.Context, in *DownloadBlobRequest, opts ...grpc.CallOption) (ModelStore_DownloadBlobClient, error) {
-	stream, err := c.cc.NewStream(ctx, &ModelStore_ServiceDesc.Streams[1], "/modelbox.ModelStore/DownloadBlob", opts...)
+func (c *modelStoreClient) DownloadFile(ctx context.Context, in *DownloadFileRequest, opts ...grpc.CallOption) (ModelStore_DownloadFileClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ModelStore_ServiceDesc.Streams[1], "/modelbox.ModelStore/DownloadFile", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &modelStoreDownloadBlobClient{stream}
+	x := &modelStoreDownloadFileClient{stream}
 	if err := x.ClientStream.SendMsg(in); err != nil {
 		return nil, err
 	}
@@ -189,17 +189,17 @@ func (c *modelStoreClient) DownloadBlob(ctx context.Context, in *DownloadBlobReq
 	return x, nil
 }
 
-type ModelStore_DownloadBlobClient interface {
-	Recv() (*DownloadBlobResponse, error)
+type ModelStore_DownloadFileClient interface {
+	Recv() (*DownloadFileResponse, error)
 	grpc.ClientStream
 }
 
-type modelStoreDownloadBlobClient struct {
+type modelStoreDownloadFileClient struct {
 	grpc.ClientStream
 }
 
-func (x *modelStoreDownloadBlobClient) Recv() (*DownloadBlobResponse, error) {
-	m := new(DownloadBlobResponse)
+func (x *modelStoreDownloadFileClient) Recv() (*DownloadFileResponse, error) {
+	m := new(DownloadFileResponse)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -247,10 +247,10 @@ type ModelStoreServer interface {
 	ListCheckpoints(context.Context, *ListCheckpointsRequest) (*ListCheckpointsResponse, error)
 	// Gets a checkpoint from the modelstore for an experiment
 	GetCheckpoint(context.Context, *GetCheckpointRequest) (*GetCheckpointResponse, error)
-	// UploadBlob streams a blob to ModelBox and stores the binaries to the condfigured storage
-	UploadBlob(ModelStore_UploadBlobServer) error
-	// DownloadBlob downloads a blob from configured storage
-	DownloadBlob(*DownloadBlobRequest, ModelStore_DownloadBlobServer) error
+	// UploadFile streams a files to ModelBox and stores the binaries to the condfigured storage
+	UploadFile(ModelStore_UploadFileServer) error
+	// DownloadFile downloads a file from configured storage
+	DownloadFile(*DownloadFileRequest, ModelStore_DownloadFileServer) error
 	// Persists a set of metadata related to objects
 	UpdateMetadata(context.Context, *UpdateMetadataRequest) (*UpdateMetadataResponse, error)
 	// Lists metadata associated with an object
@@ -289,11 +289,11 @@ func (UnimplementedModelStoreServer) ListCheckpoints(context.Context, *ListCheck
 func (UnimplementedModelStoreServer) GetCheckpoint(context.Context, *GetCheckpointRequest) (*GetCheckpointResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetCheckpoint not implemented")
 }
-func (UnimplementedModelStoreServer) UploadBlob(ModelStore_UploadBlobServer) error {
-	return status.Errorf(codes.Unimplemented, "method UploadBlob not implemented")
+func (UnimplementedModelStoreServer) UploadFile(ModelStore_UploadFileServer) error {
+	return status.Errorf(codes.Unimplemented, "method UploadFile not implemented")
 }
-func (UnimplementedModelStoreServer) DownloadBlob(*DownloadBlobRequest, ModelStore_DownloadBlobServer) error {
-	return status.Errorf(codes.Unimplemented, "method DownloadBlob not implemented")
+func (UnimplementedModelStoreServer) DownloadFile(*DownloadFileRequest, ModelStore_DownloadFileServer) error {
+	return status.Errorf(codes.Unimplemented, "method DownloadFile not implemented")
 }
 func (UnimplementedModelStoreServer) UpdateMetadata(context.Context, *UpdateMetadataRequest) (*UpdateMetadataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateMetadata not implemented")
@@ -476,50 +476,50 @@ func _ModelStore_GetCheckpoint_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ModelStore_UploadBlob_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(ModelStoreServer).UploadBlob(&modelStoreUploadBlobServer{stream})
+func _ModelStore_UploadFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ModelStoreServer).UploadFile(&modelStoreUploadFileServer{stream})
 }
 
-type ModelStore_UploadBlobServer interface {
-	SendAndClose(*UploadBlobResponse) error
-	Recv() (*UploadBlobRequest, error)
+type ModelStore_UploadFileServer interface {
+	SendAndClose(*UploadFileResponse) error
+	Recv() (*UploadFileRequest, error)
 	grpc.ServerStream
 }
 
-type modelStoreUploadBlobServer struct {
+type modelStoreUploadFileServer struct {
 	grpc.ServerStream
 }
 
-func (x *modelStoreUploadBlobServer) SendAndClose(m *UploadBlobResponse) error {
+func (x *modelStoreUploadFileServer) SendAndClose(m *UploadFileResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *modelStoreUploadBlobServer) Recv() (*UploadBlobRequest, error) {
-	m := new(UploadBlobRequest)
+func (x *modelStoreUploadFileServer) Recv() (*UploadFileRequest, error) {
+	m := new(UploadFileRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
 	return m, nil
 }
 
-func _ModelStore_DownloadBlob_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(DownloadBlobRequest)
+func _ModelStore_DownloadFile_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(DownloadFileRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(ModelStoreServer).DownloadBlob(m, &modelStoreDownloadBlobServer{stream})
+	return srv.(ModelStoreServer).DownloadFile(m, &modelStoreDownloadFileServer{stream})
 }
 
-type ModelStore_DownloadBlobServer interface {
-	Send(*DownloadBlobResponse) error
+type ModelStore_DownloadFileServer interface {
+	Send(*DownloadFileResponse) error
 	grpc.ServerStream
 }
 
-type modelStoreDownloadBlobServer struct {
+type modelStoreDownloadFileServer struct {
 	grpc.ServerStream
 }
 
-func (x *modelStoreDownloadBlobServer) Send(m *DownloadBlobResponse) error {
+func (x *modelStoreDownloadFileServer) Send(m *DownloadFileResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
@@ -613,13 +613,13 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 	},
 	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "UploadBlob",
-			Handler:       _ModelStore_UploadBlob_Handler,
+			StreamName:    "UploadFile",
+			Handler:       _ModelStore_UploadFile_Handler,
 			ClientStreams: true,
 		},
 		{
-			StreamName:    "DownloadBlob",
-			Handler:       _ModelStore_DownloadBlob_Handler,
+			StreamName:    "DownloadFile",
+			Handler:       _ModelStore_DownloadFile_Handler,
 			ServerStreams: true,
 		},
 	},

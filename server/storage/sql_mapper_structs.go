@@ -19,7 +19,7 @@ type ModelSchema struct {
 	UpdatedAt int64            `db:"updated_at"`
 }
 
-func (m *ModelSchema) ToModel(blobs BlobSet) *Model {
+func (m *ModelSchema) ToModel(files FileSet) *Model {
 	model := &Model{
 		Id:          m.Id,
 		Name:        m.Name,
@@ -28,12 +28,12 @@ func (m *ModelSchema) ToModel(blobs BlobSet) *Model {
 		Task:        m.Task,
 		Meta:        m.Meta,
 		Description: m.Desc,
-		Blobs:       []*BlobInfo{},
+		Files:       []*FileMetadata{},
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 	}
-	if blobs != nil {
-		model.Blobs = blobs
+	if files != nil {
+		model.Files = files
 	}
 	return model
 }
@@ -66,7 +66,7 @@ type ModelVersionSchema struct {
 	UpdatedAt  int64            `db:"updated_at"`
 }
 
-func (m *ModelVersionSchema) ToModelVersion(blobs BlobSet) *ModelVersion {
+func (m *ModelVersionSchema) ToModelVersion(files FileSet) *ModelVersion {
 	modelVersion := &ModelVersion{
 		Id:          m.Id,
 		Name:        m.Name,
@@ -75,7 +75,7 @@ func (m *ModelVersionSchema) ToModelVersion(blobs BlobSet) *ModelVersion {
 		Description: m.Desc,
 		Framework:   MLFramework(m.Framework),
 		Meta:        m.Meta,
-		Blobs:       blobs,
+		Files:       files,
 		UniqueTags:  m.UniqueTags,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
@@ -98,27 +98,27 @@ func ModelVersionToSchema(mv *ModelVersion) *ModelVersionSchema {
 	}
 }
 
-func ToBlobSet(rows []BlobSchema) ([]*BlobInfo, error) {
-	blobSet := make([]*BlobInfo, len(rows))
+func ToFileSet(rows []FileSchema) ([]*FileMetadata, error) {
+	fileSet := make([]*FileMetadata, len(rows))
 	for i, row := range rows {
-		blob, err := row.ToBlob()
+		file, err := row.ToFile()
 		if err != nil {
 			return nil, err
 		}
-		blobSet[i] = blob
+		fileSet[i] = file
 	}
-	return blobSet, nil
+	return fileSet, nil
 }
 
-type BlobSchema struct {
+type FileSchema struct {
 	Id       string
 	ParentId string         `db:"parent_id"`
 	Meta     types.JSONText `db:"metadata"`
 }
 
-func (b *BlobSchema) ToBlob() (*BlobInfo, error) {
+func (b *FileSchema) ToFile() (*FileMetadata, error) {
 	type BlobMeta struct {
-		Type      BlobType
+		Type      FileMIMEType
 		Path      string
 		Checksum  string
 		CreatedAt int64
@@ -129,7 +129,7 @@ func (b *BlobSchema) ToBlob() (*BlobInfo, error) {
 		return nil, err
 	}
 
-	return &BlobInfo{
+	return &FileMetadata{
 		Id:        b.Id,
 		ParentId:  b.ParentId,
 		Type:      meta.Type,
@@ -192,12 +192,12 @@ type CheckpointSchema struct {
 	UpdatedAt  int64            `db:"updated_at"`
 }
 
-func (c *CheckpointSchema) ToCheckpoint(blobs BlobSet) *Checkpoint {
+func (c *CheckpointSchema) ToCheckpoint(files FileSet) *Checkpoint {
 	return &Checkpoint{
 		Id:           c.Id,
 		ExperimentId: c.Experiment,
 		Epoch:        c.Epoch,
-		Blobs:        blobs,
+		Files:        files,
 		Meta:         c.Meta,
 		Metrics:      c.Metrics,
 		CreatedAt:    c.CreatedAt,

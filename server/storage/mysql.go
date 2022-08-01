@@ -99,7 +99,7 @@ func (m *MySqlStorage) CreateCheckpoint(
 			return fmt.Errorf("unable to write checkpoint: %v", err)
 		}
 
-		return m.writeBlobSet(tx, c.Blobs)
+		return m.writeFileSet(tx, c.Files)
 	})
 	return &CreateCheckpointResult{CheckpointId: c.Id}, err
 }
@@ -133,11 +133,11 @@ func (m *MySqlStorage) ListCheckpoints(
 			return err
 		}
 		for _, row := range rows {
-			blobs, err := m.getBlobSetForParent(tx, row.Id)
+			files, err := m.getFileSetForParent(tx, row.Id)
 			if err != nil {
 				return err
 			}
-			checkpoints = append(checkpoints, row.ToCheckpoint(blobs))
+			checkpoints = append(checkpoints, row.ToCheckpoint(files))
 		}
 		return nil
 	})
@@ -155,15 +155,15 @@ func (m *MySqlStorage) GetCheckpoint(
 		if err := tx.Select(&checkpointSchema, CHECKPOINTS_LIST, checkpointId); err != nil {
 			return err
 		}
-		rows := []BlobSchema{}
+		rows := []FileSchema{}
 		if err := tx.Select(&rows, BLOBSET_GET, checkpointSchema.Id); err != nil {
 			return err
 		}
-		blobs, err := ToBlobSet(rows)
+		files, err := ToFileSet(rows)
 		if err != nil {
 			return err
 		}
-		checkpoint = checkpointSchema.ToCheckpoint(blobs)
+		checkpoint = checkpointSchema.ToCheckpoint(files)
 		return nil
 	})
 	return checkpoint, err
@@ -178,7 +178,7 @@ func (m *MySqlStorage) CreateModel(ctx context.Context, model *Model) (*CreateMo
 			}
 			return fmt.Errorf("unable to create model: %v", err)
 		}
-		return m.writeBlobSet(tx, model.Blobs)
+		return m.writeFileSet(tx, model.Files)
 	})
 	return &CreateModelResult{ModelId: model.Id}, err
 }
@@ -190,22 +190,22 @@ func (m *MySqlStorage) GetModel(ctx context.Context, id string) (*Model, error) 
 		if err := tx.Get(&modelSchema, MODEL_GET, id); err != nil {
 			return err
 		}
-		blobSet, err := m.getBlobSetForParent(tx, id)
+		fileSet, err := m.getFileSetForParent(tx, id)
 		if err != nil {
-			return fmt.Errorf("unable to get query blobset: %v", err)
+			return fmt.Errorf("unable to get query fileset: %v", err)
 		}
-		model = modelSchema.ToModel(blobSet)
+		model = modelSchema.ToModel(fileSet)
 		return nil
 	})
 	return model, err
 }
 
-func (m *MySqlStorage) getBlobSetForParent(tx *sqlx.Tx, parentId string) (BlobSet, error) {
-	blobRows := []BlobSchema{}
+func (m *MySqlStorage) getFileSetForParent(tx *sqlx.Tx, parentId string) (FileSet, error) {
+	blobRows := []FileSchema{}
 	if err := tx.Select(&blobRows, BLOBSET_GET, parentId); err != nil {
 		return nil, fmt.Errorf("unable to get query blobset: %v", err)
 	}
-	blobSet, err := ToBlobSet(blobRows)
+	blobSet, err := ToFileSet(blobRows)
 	if err != nil {
 		return nil, err
 	}
@@ -220,11 +220,11 @@ func (m *MySqlStorage) ListModels(ctx context.Context, namespace string) ([]*Mod
 			return fmt.Errorf("can't query: %v", err)
 		}
 		for _, modelRow := range modelRows {
-			blobSet, err := m.getBlobSetForParent(tx, modelRow.Id)
+			fileSet, err := m.getFileSetForParent(tx, modelRow.Id)
 			if err != nil {
 				return err
 			}
-			models = append(models, modelRow.ToModel(blobSet))
+			models = append(models, modelRow.ToModel(fileSet))
 		}
 		return nil
 	})
@@ -250,7 +250,7 @@ func (m *MySqlStorage) CreateModelVersion(
 			}
 			return fmt.Errorf("unable to create model version: %v", err)
 		}
-		return m.writeBlobSet(tx, modelVersion.Blobs)
+		return m.writeFileSet(tx, modelVersion.Files)
 	})
 	return &CreateModelVersionResult{ModelVersionId: modelVersion.Id}, err
 }
@@ -262,11 +262,11 @@ func (m *MySqlStorage) GetModelVersion(ctx context.Context, id string) (*ModelVe
 		if err := tx.Get(&modelVersionSchema, MODEL_VERSION_GET, id); err != nil {
 			return err
 		}
-		blobSet, err := m.getBlobSetForParent(tx, id)
+		fileSet, err := m.getFileSetForParent(tx, id)
 		if err != nil {
 			return err
 		}
-		modelVersion = modelVersionSchema.ToModelVersion(blobSet)
+		modelVersion = modelVersionSchema.ToModelVersion(fileSet)
 		return err
 	})
 	return modelVersion, err
@@ -292,15 +292,15 @@ func (e *MySqlStorage) UpdateBlobPath(
 	_ context.Context,
 	path string,
 	parentId string,
-	t BlobType,
+	t FileMIMEType,
 ) error {
 	switch t {
-	case CheckpointBlob:
+	case CheckpointFile:
 		if _, err := e.db.Exec(CHECKPOINT_UPDATE_PATH, path, parentId); err != nil {
 			e.logger.Sugar().Errorf("unable to updat path for blobinfo %v :%v", path, err)
 			return err
 		}
-	case ModelBlob:
+	case ModelFile:
 		return fmt.Errorf("model path update not implemented yet")
 
 	}
@@ -315,22 +315,22 @@ func (e *MySqlStorage) DeleteExperiment(_ context.Context, id string) error {
 	return err
 }
 
-func (m *MySqlStorage) writeBlobSet(tx *sqlx.Tx, blobs BlobSet) error {
-	if blobs == nil {
+func (m *MySqlStorage) writeFileSet(tx *sqlx.Tx, files FileSet) error {
+	if files == nil {
 		return nil
 	}
 	vals := []interface{}{}
 	sqlStr := BLOB_MULTI_WRITE
-	for _, blob := range blobs {
-		bJson, err := blob.ToJson()
+	for _, file := range files {
+		bJson, err := file.ToJson()
 		if err != nil {
 			return fmt.Errorf("can't serialize blob to json :%v", err)
 		}
 		sqlStr += "(?, ?, ?),"
-		vals = append(vals, blob.Id, blob.ParentId, bJson)
+		vals = append(vals, file.Id, file.ParentId, bJson)
 	}
 	sqlStr = sqlStr[0 : len(sqlStr)-1]
-	if len(blobs) > 0 {
+	if len(files) > 0 {
 		if _, err := tx.Exec(sqlStr, vals...); err != nil {
 			return fmt.Errorf("unable to create blobs for model: %v", err)
 		}
@@ -339,31 +339,31 @@ func (m *MySqlStorage) writeBlobSet(tx *sqlx.Tx, blobs BlobSet) error {
 	return nil
 }
 
-func (e *MySqlStorage) WriteBlobs(ctx context.Context, blobs BlobSet) error {
+func (e *MySqlStorage) WriteFiles(ctx context.Context, blobs FileSet) error {
 	return e.transact(ctx, func(tx *sqlx.Tx) error {
-		return e.writeBlobSet(tx, blobs)
+		return e.writeFileSet(tx, blobs)
 	})
 }
 
-func (e *MySqlStorage) GetBlobs(ctx context.Context, parentId string) (BlobSet, error) {
-	var blobs BlobSet
+func (e *MySqlStorage) GetFiles(ctx context.Context, parentId string) (FileSet, error) {
+	var blobs FileSet
 	err := e.transact(ctx, func(tx *sqlx.Tx) error {
-		blobSet, err := e.getBlobSetForParent(tx, parentId)
+		blobSet, err := e.getFileSetForParent(tx, parentId)
 		blobs = blobSet
 		return err
 	})
 	return blobs, err
 }
 
-func (m *MySqlStorage) GetBlob(ctx context.Context, id string) (*BlobInfo, error) {
-	var blob BlobInfo
+func (m *MySqlStorage) GetFile(ctx context.Context, id string) (*FileMetadata, error) {
+	var blob FileMetadata
 	err := m.transact(ctx, func(tx *sqlx.Tx) error {
-		var blobRow BlobSchema
+		var blobRow FileSchema
 		if err := tx.Get(&blobRow, BLOB_GET, id); err != nil {
 			return fmt.Errorf("unable to get query blobs: %v", err)
 		}
 
-		b, err := blobRow.ToBlob()
+		b, err := blobRow.ToFile()
 		if err != nil {
 			return fmt.Errorf("unable to convert blobschema to blob: %v", err)
 		}

@@ -24,13 +24,16 @@ const (
 	Keras
 )
 
-type BlobType uint8
+type FileMIMEType uint8
 
 const (
-	UnknownBlob BlobType = iota
-	CheckpointBlob
-	ModelBlob
-	File
+	UnknownFile FileMIMEType = iota
+	CheckpointFile
+	ModelFile
+	TextFile
+	ImageFile
+	AudioFile
+	VideoFile
 )
 
 type Metadata struct {
@@ -110,16 +113,16 @@ func (s SerializableMetrics) Value() (driver.Value, error) {
 	return json.Marshal(s)
 }
 
-type BlobSet []*BlobInfo
+type FileSet []*FileMetadata
 
-func NewBlobSetFromProto(parent string, pb []*proto.BlobMetadata) BlobSet {
-	blobs := make([]*BlobInfo, len(pb))
+func NewFileSetFromProto(parent string, pb []*proto.FileMetadata) FileSet {
+	blobs := make([]*FileMetadata, len(pb))
 	for i, b := range pb {
-		blobs[i] = NewBlobInfo(
+		blobs[i] = NewFileMetadata(
 			parent,
 			b.Path,
 			b.Checksum,
-			BlobType(b.BlobType),
+			FileMIMEType(b.FileType),
 			b.CreatedAt.AsTime().Unix(),
 			b.UpdatedAt.AsTime().Unix(),
 		)
@@ -128,20 +131,20 @@ func NewBlobSetFromProto(parent string, pb []*proto.BlobMetadata) BlobSet {
 }
 
 /*
- * BlobInfo are metadata about files and other blobs such as models.
+ * FileMetadata are metadata about files and other blobs such as models.
  * They can be associated with any modelbox object.
  */
-type BlobInfo struct {
+type FileMetadata struct {
 	Id        string
 	ParentId  string
-	Type      BlobType
+	Type      FileMIMEType
 	Path      string
 	Checksum  string
 	CreatedAt int64
 	UpdatedAt int64
 }
 
-func (b *BlobInfo) CreateId() {
+func (b *FileMetadata) CreateId() {
 	h := sha1.New()
 	hashString(h, b.ParentId)
 	hashInt(h, int(b.Type))
@@ -149,7 +152,7 @@ func (b *BlobInfo) CreateId() {
 	b.Id = fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (b *BlobInfo) ToJson() ([]byte, error) {
+func (b *FileMetadata) ToJson() ([]byte, error) {
 	bytes, err := json.Marshal(b)
 	if err != nil {
 		return nil, err
@@ -165,11 +168,11 @@ func (b BackendInfo) String() string {
 	return b.Name
 }
 
-func NewBlobInfo(
+func NewFileMetadata(
 	parent, path, checksum string,
-	blobType BlobType,
+	blobType FileMIMEType,
 	createdAt, updatedAt int64,
-) *BlobInfo {
+) *FileMetadata {
 	currentTime := time.Now().Unix()
 	if createdAt == 0 {
 		createdAt = currentTime
@@ -177,7 +180,7 @@ func NewBlobInfo(
 	if updatedAt == 0 {
 		updatedAt = currentTime
 	}
-	blob := &BlobInfo{
+	blob := &FileMetadata{
 		ParentId:  parent,
 		Path:      path,
 		Checksum:  checksum,
@@ -209,30 +212,30 @@ func MLFrameworkToProto(fwk MLFramework) proto.MLFramework {
 	return proto.MLFramework_UNKNOWN
 }
 
-func BlobTypeFromProto(t proto.BlobType) BlobType {
+func FileTypeFromProto(t proto.FileType) FileMIMEType {
 	switch t {
-	case proto.BlobType_CHECKPOINT:
-		return CheckpointBlob
-	case proto.BlobType_MODEL:
-		return ModelBlob
+	case proto.FileType_CHECKPOINT:
+		return CheckpointFile
+	case proto.FileType_MODEL:
+		return ModelFile
 	}
-	return UnknownBlob
+	return UnknownFile
 }
 
-func BlobTypeToProto(t BlobType) proto.BlobType {
+func FileTypeToProto(t FileMIMEType) proto.FileType {
 	switch t {
-	case CheckpointBlob:
-		return proto.BlobType_CHECKPOINT
-	case ModelBlob:
-		return proto.BlobType_MODEL
+	case CheckpointFile:
+		return proto.FileType_CHECKPOINT
+	case ModelFile:
+		return proto.FileType_MODEL
 	}
-	return proto.BlobType_UNDEFINED
+	return proto.FileType_UNDEFINED
 }
 
-type BlobOpenMode uint8
+type FileOpenMode uint8
 
 const (
-	Read BlobOpenMode = iota
+	Read FileOpenMode = iota
 	Write
 )
 
@@ -241,13 +244,6 @@ type CheckpointState int
 const (
 	CheckpointInitalized CheckpointState = iota
 	CheckpointReady
-)
-
-type ModelVersionState uint8
-
-const (
-	ModelVersionInitialized ModelVersionState = iota
-	ModelVersionBlobsCommitted
 )
 
 func hashString(h hash.Hash, s string) {
@@ -313,7 +309,7 @@ type Checkpoint struct {
 	Id           string
 	ExperimentId string
 	Epoch        uint64
-	Blobs        BlobSet
+	Files        FileSet
 	Meta         SerializableMeta
 	Metrics      SerializableMetrics
 	CreatedAt    int64
@@ -338,8 +334,8 @@ func NewCheckpoint(
 	return chk
 }
 
-func (c *Checkpoint) SetBlobs(blobs BlobSet) {
-	c.Blobs = blobs
+func (c *Checkpoint) SetFiles(files FileSet) {
+	c.Files = files
 }
 
 func (c *Checkpoint) CreateId() {
@@ -357,7 +353,7 @@ type Model struct {
 	Task        string
 	Meta        SerializableMeta
 	Description string
-	Blobs       BlobSet
+	Files       FileSet
 	CreatedAt   int64
 	UpdatedAt   int64
 }
@@ -386,8 +382,8 @@ func (m *Model) CreateId() {
 	m.Id = fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (m *Model) SetBlobs(blobs BlobSet) {
-	m.Blobs = blobs
+func (m *Model) SetFiles(files FileSet) {
+	m.Files = files
 }
 
 type ModelVersion struct {
@@ -398,7 +394,7 @@ type ModelVersion struct {
 	Description string
 	Framework   MLFramework
 	Meta        SerializableMeta
-	Blobs       BlobSet
+	Files       FileSet
 	UniqueTags  SerializableTags
 	CreatedAt   int64
 	UpdatedAt   int64
@@ -407,7 +403,7 @@ type ModelVersion struct {
 func NewModelVersion(name, model, version, description string,
 	framework MLFramework,
 	meta map[string]string,
-	blobs []*BlobInfo,
+	files []*FileMetadata,
 	uniqueTags []string) *ModelVersion {
 	currentTime := time.Now().Unix()
 	mv := &ModelVersion{
@@ -417,7 +413,7 @@ func NewModelVersion(name, model, version, description string,
 		Description: description,
 		Framework:   framework,
 		Meta:        meta,
-		Blobs:       blobs,
+		Files:       files,
 		UniqueTags:  uniqueTags,
 		CreatedAt:   currentTime,
 		UpdatedAt:   currentTime,
@@ -499,13 +495,13 @@ type MetadataStorage interface {
 
 	Backend() *BackendInfo
 
-	WriteBlobs(context.Context, BlobSet) error
+	WriteFiles(context.Context, FileSet) error
 
-	GetBlobs(ctx context.Context, parentId string) (BlobSet, error)
+	GetFiles(ctx context.Context, parentId string) (FileSet, error)
 
-	GetBlob(ctx context.Context, id string) (*BlobInfo, error)
+	GetFile(ctx context.Context, id string) (*FileMetadata, error)
 
-	UpdateBlobPath(ctx context.Context, path string, parentId string, t BlobType) error
+	UpdateBlobPath(ctx context.Context, path string, parentId string, t FileMIMEType) error
 
 	DeleteExperiment(ctx context.Context, id string) error
 
@@ -551,7 +547,7 @@ func NewBlobStorageBuilder(
 }
 
 type BlobStorage interface {
-	Open(blob *BlobInfo, mode BlobOpenMode) error
+	Open(blob *FileMetadata, mode FileOpenMode) error
 
 	GetPath() (string, error)
 

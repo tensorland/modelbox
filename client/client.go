@@ -34,7 +34,7 @@ type CheckpointDownloadResponse struct {
 	ServerChecksum string
 }
 
-type BlobUploadResponse struct {
+type FileUploadResponse struct {
 	Id       string
 	Checksum string
 }
@@ -89,7 +89,7 @@ func (m *ModelBoxClient) ListCheckpoints(experimentId string) (*proto.ListCheckp
 	return m.client.ListCheckpoints(ctx, req)
 }
 
-func (m *ModelBoxClient) CreateModel(name, owner, namespace, task, description string, metadata map[string]string, blobs []*proto.BlobMetadata) (*CreateModelApiResponse, error) {
+func (m *ModelBoxClient) CreateModel(name, owner, namespace, task, description string, metadata map[string]string, files []*proto.FileMetadata) (*CreateModelApiResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
 	defer cancel()
 	req := &proto.CreateModelRequest{
@@ -99,7 +99,7 @@ func (m *ModelBoxClient) CreateModel(name, owner, namespace, task, description s
 		Task:        task,
 		Description: description,
 		Metadata:    metadata,
-		Blobs:       blobs,
+		Files:       files,
 	}
 
 	resp, err := m.client.CreateModel(ctx, req)
@@ -133,7 +133,7 @@ func (m *ModelBoxClient) CreateCheckpoint(chk *ApiCreateCheckpoint) (*proto.Crea
 	checkpointRequest := proto.CreateCheckpointRequest{
 		ExperimentId: chk.ExperimentId,
 		Epoch:        chk.Epoch,
-		Blobs: []*proto.BlobMetadata{{
+		Files: []*proto.FileMetadata{{
 			ParentId: chk.ExperimentId,
 			Path:     chk.Path,
 		}},
@@ -145,7 +145,7 @@ func (m *ModelBoxClient) CreateCheckpoint(chk *ApiCreateCheckpoint) (*proto.Crea
 	return response, nil
 }
 
-func (m *ModelBoxClient) UploadBlob(path string, parentId string, t storage.BlobType) (*BlobUploadResponse, error) {
+func (m *ModelBoxClient) UploadFile(path string, parentId string, t storage.FileMIMEType) (*FileUploadResponse, error) {
 	// This makes us read the file twice, this could be simplified
 	// if we do bidirectional stream and send the
 	// checkpoint at the end of the strem to the server to validate the file
@@ -160,16 +160,16 @@ func (m *ModelBoxClient) UploadBlob(path string, parentId string, t storage.Blob
 	defer f.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
 	defer cancel()
-	req := &proto.UploadBlobRequest{
-		Blob: &proto.UploadBlobRequest_Metadata{
-			Metadata: &proto.BlobMetadata{
+	req := &proto.UploadFileRequest{
+		StreamFrame: &proto.UploadFileRequest_Metadata{
+			Metadata: &proto.FileMetadata{
 				ParentId: parentId,
-				BlobType: storage.BlobTypeToProto(t),
+				FileType: storage.FileTypeToProto(t),
 				Checksum: checksum,
 			},
 		},
 	}
-	stream, err := m.client.UploadBlob(ctx)
+	stream, err := m.client.UploadFile(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -183,8 +183,8 @@ func (m *ModelBoxClient) UploadBlob(path string, parentId string, t storage.Blob
 		if e != nil && e != io.EOF {
 			return nil, err
 		}
-		req := &proto.UploadBlobRequest{
-			Blob: &proto.UploadBlobRequest_Chunks{Chunks: bytes[:n]},
+		req := &proto.UploadFileRequest{
+			StreamFrame: &proto.UploadFileRequest_Chunks{Chunks: bytes[:n]},
 		}
 		err = stream.Send(req)
 		if err != nil {
@@ -198,17 +198,17 @@ func (m *ModelBoxClient) UploadBlob(path string, parentId string, t storage.Blob
 	if err != nil {
 		return nil, err
 	}
-	return &BlobUploadResponse{resp.BlobId, checksum}, nil
+	return &FileUploadResponse{resp.FileId, checksum}, nil
 }
 
 func (m *ModelBoxClient) DownloadBlob(id string, path string) (*CheckpointDownloadResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
 	defer cancel()
-	req := &proto.DownloadBlobRequest{
-		BlobId: id,
+	req := &proto.DownloadFileRequest{
+		FileId: id,
 	}
 	h := md5.New()
-	stream, err := m.client.DownloadBlob(ctx, req)
+	stream, err := m.client.DownloadFile(ctx, req)
 	if err != nil {
 		return nil, err
 	}

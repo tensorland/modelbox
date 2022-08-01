@@ -75,20 +75,20 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
         resp = service_pb2.ListExperimentsResponse(experiments=[e1, e2],)
         return resp
 
-    def UploadBlob(self, request_iterator, context):
+    def UploadFile(self, request_iterator, context):
         for req in request_iterator:
             pass
-        return service_pb2.UploadBlobResponse(blob_id=self._fake.uuid4())
+        return service_pb2.UploadFileResponse(file_id=self._fake.uuid4())
 
-    def DownloadBlob(self, request, context):
-        meta = service_pb2.BlobMetadata(
+    def DownloadFile(self, request, context):
+        meta = service_pb2.FileMetadata(
             id=self._fake.uuid4(),
             parent_id=self._fake.uuid4(),
-            blob_type=service_pb2.CHECKPOINT,
+            file_type=service_pb2.CHECKPOINT,
             checksum=self._fake.uuid4(),
             path="foo/bar",
         )
-        yield service_pb2.DownloadBlobResponse(metadata=meta)
+        yield service_pb2.DownloadFileResponse(metadata=meta)
         artifact = str(
             pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
         )
@@ -97,7 +97,7 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
                 data = f.read(1024)
                 if not data:
                     break
-                yield service_pb2.DownloadBlobResponse(chunks=data)
+                yield service_pb2.DownloadFileResponse(chunks=data)
 
         def UpdateMetadata(self, req, context):
             return service_pb2.UpdateMetadataResponse(updated_at=1260)
@@ -184,16 +184,16 @@ class TestModelBoxApi(unittest.TestCase):
             description="ASR for english",
             metadata={"x": "y"},
             unique_tags=tags,
-            blobs=[],
+            files=[],
             framework=MLFramework.PYTORCH.to_proto(),
         )
         self.assertNotEqual("", resp.id)
 
-    def test_upload_artifact(self):
-        artifact = str(
+    def test_upload_file(self):
+        file_path= str(
             pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
         )
-        resp = self._client.upload_artifact("abc", artifact)
+        resp = self._client.upload_file("abc", file_path)
         self.assertNotEqual("", resp.id)
 
     def test_download_artifact(self):

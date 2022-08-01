@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/diptanu/modelbox/client"
+	client "github.com/diptanu/modelbox/client-go"
 	svrConfig "github.com/diptanu/modelbox/server/config"
 	"github.com/diptanu/modelbox/server/storage"
 	"github.com/olekukonko/tablewriter"

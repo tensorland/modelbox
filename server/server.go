@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	pb "github.com/diptanu/modelbox/client/proto"
+	pb "github.com/diptanu/modelbox/client-go/proto"
 	"github.com/diptanu/modelbox/server/storage"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"

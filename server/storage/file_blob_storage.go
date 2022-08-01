@@ -19,7 +19,7 @@ func NewFileBlobStorage(baseDir string, log *zap.Logger) *FileBlobStorage {
 	return &FileBlobStorage{baseDir: baseDir, log: log}
 }
 
-func (f *FileBlobStorage) Open(blobInfo *BlobInfo, mode BlobOpenMode) error {
+func (f *FileBlobStorage) Open(blobInfo *FileMetadata, mode FileOpenMode) error {
 	var err error
 	if mode == Read {
 		if f.file, err = os.Open(blobInfo.Path); err != nil {

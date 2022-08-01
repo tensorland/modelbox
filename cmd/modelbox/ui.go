@@ -117,7 +117,7 @@ func (u *ClientUi) UploadCheckpoint(path, experimentId string, epoch uint64, upl
 	if !upload {
 		return nil
 	}
-	uploadResp, err := u.client.UploadBlob(path, resp.CheckpointId, storage.CheckpointBlob)
+	uploadResp, err := u.client.UploadFile(path, resp.CheckpointId, storage.CheckpointFile)
 	if err != nil {
 		println("unable to upload checkpoint: ", err.Error())
 		return nil
@@ -147,8 +147,8 @@ func (u *ClientUi) ListCheckpoints(experimentId string) error {
 			chkpoint.Id,
 			chkpoint.ExperimentId,
 			strconv.Itoa(int(chkpoint.Epoch)),
-			chkpoint.Blobs[0].Id,
-			chkpoint.Blobs[0].Path,
+			chkpoint.Files[0].Id,
+			chkpoint.Files[0].Path,
 			u.metricsMapToString(chkpoint.Metrics),
 		})
 	}

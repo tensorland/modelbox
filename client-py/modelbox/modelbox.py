@@ -86,7 +86,7 @@ class ListExperimentsResponse:
 
 
 @dataclass
-class UploadArtifactResponse:
+class UploadFileResponse:
     id: str
 
 
@@ -115,7 +115,7 @@ class ModelVersion:
     name: str
     version: str
     description: str
-    blobs: List
+    files: List
     metadata: Dict
     unique_tags: List
     framework: MLFramework
@@ -153,7 +153,7 @@ class ModelBoxClient:
         name: str,
         version: str,
         description: str,
-        blobs: List[service_pb2.BlobMetadata],
+        files: List[service_pb2.FileMetadata],
         metadata: Dict,
         framework: MLFramework,
         unique_tags: List[str],
@@ -163,7 +163,7 @@ class ModelBoxClient:
             name=name,
             version=version,
             description=description,
-            blobs=blobs,
+            files=files,
             metadata=metadata,
             framework=framework,
             unique_tags=unique_tags,
@@ -175,7 +175,7 @@ class ModelBoxClient:
             name=name,
             version=version,
             description=description,
-            blobs=blobs,
+            files=files,
             metadata=metadata,
             framework=framework,
             unique_tags=unique_tags,
@@ -207,9 +207,9 @@ class ModelBoxClient:
         req = service_pb2.CreateCheckpointRequest(
             experiment_id=experiment,
             epoch=epoch,
-            blobs=[
-                service_pb2.BlobMetadata(
-                    checksum="", path=path, blob_type=service_pb2.CHECKPOINT,
+            files=[
+                service_pb2.FileMetadata(
+                    checksum="", path=path, file_type=service_pb2.CHECKPOINT,
                 )
             ],
             metrics=metrics,
@@ -243,33 +243,33 @@ class ModelBoxClient:
             experiments.append(e)
         return ListExperimentsResponse(experiments=experiments)
 
-    def _artifact_iterator(self, parent, path):
+    def _file_chunk_iterator(self, parent, path):
         checksum = ""
         with open(path, "rb") as f:
             checksum = md5(f.read()).hexdigest()
 
-        blob_meta = service_pb2.BlobMetadata(
+        file_meta = service_pb2.FileMetadata(
             parent_id=parent,
             checksum=checksum,
-            blob_type=service_pb2.CHECKPOINT,
+            file_type=service_pb2.CHECKPOINT,
             path=path,
         )
-        yield service_pb2.UploadBlobRequest(metadata=blob_meta)
+        yield service_pb2.UploadFileRequest(metadata=file_meta)
         with open(path, "rb") as f:
             while True:
                 data = f.read(CHUNK_SZ)
                 if not data:
                     break
-                yield service_pb2.UploadBlobRequest(chunks=data)
+                yield service_pb2.UploadFileRequest(chunks=data)
 
-    def upload_artifact(self, parent: str, path: str) -> UploadArtifactResponse:
-        itr = self._artifact_iterator(parent, path)
-        resp = self._client.UploadBlob(itr)
-        return UploadArtifactResponse(id=resp.blob_id)
+    def upload_file(self, parent: str, path: str) -> UploadFileResponse:
+        itr = self._file_chunk_iterator(parent, path)
+        resp = self._client.UploadFile(itr)
+        return UploadFileResponse(id=resp.file_id)
 
     def download_artifact(self, id: str, path: str) -> DownloadArtifactResponse:
-        req = service_pb2.DownloadBlobRequest(blob_id=id)
-        resp_itr = self._client.DownloadBlob(req)
+        req = service_pb2.DownloadFileRequest(file_id=id)
+        resp_itr = self._client.DownloadFile(req)
         ret = DownloadArtifactResponse
         with open(path, "wb") as f:
             for resp in resp_itr:

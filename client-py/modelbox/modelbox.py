@@ -156,8 +156,9 @@ class ArtifactMime(Enum):
 class Artifact:
     parent: str
     path: str
-    checksum: str
     mime_type: ArtifactMime
+    checksum: str = ""
+    id: str = ""
 
 
 class ModelBoxClient:
@@ -241,14 +242,14 @@ class ModelBoxClient:
         )
 
     def create_checkpoint(
-        self, experiment: str, epoch: uint, path: str, metrics: Dict,
+        self, experiment: str, epoch: uint, path: str, metrics: Dict, file_checksum="",
     ) -> CreateCheckpointResponse:
         req = service_pb2.CreateCheckpointRequest(
             experiment_id=experiment,
             epoch=epoch,
             files=[
                 service_pb2.FileMetadata(
-                    checksum="", path=path, file_type=service_pb2.CHECKPOINT,
+                    checksum=file_checksum, path=path, file_type=service_pb2.CHECKPOINT,
                 )
             ],
             metrics=metrics,
@@ -283,10 +284,7 @@ class ModelBoxClient:
         return ListExperimentsResponse(experiments=experiments)
 
     def _file_chunk_iterator(self, parent, path):
-        checksum = ""
-        with open(path, "rb") as f:
-            checksum = md5(f.read()).hexdigest()
-
+        checksum = self._file_checksum(path)
         file_meta = service_pb2.FileMetadata(
             parent_id=parent,
             checksum=checksum,
@@ -341,6 +339,7 @@ class ModelBoxClient:
     def track_artifacts(self, artifacts: List[Artifact]) -> TrackArtifactsResponse:
         proto_artifacts = []
         for artifact in artifacts:
+            artifact.checksum = self._file_checksum(artifact.path)
             proto_artifacts.append(
                 service_pb2.FileMetadata(
                     parent_id=artifact.parent,
@@ -352,6 +351,12 @@ class ModelBoxClient:
         req = service_pb2.TrackArtifactsRequest(files=proto_artifacts)
         resp = self._client.TrackArtifacts(req)
         return TrackArtifactsResponse(num_artifacts_tracked=resp.num_files_tracked)
+
+    def _file_checksum(self, path) -> str:
+        checksum = ""
+        with open(path, "rb") as f:
+            checksum = md5(f.read()).hexdigest()
+        return checksum
 
     def close(self):
         if self._channel is not None:

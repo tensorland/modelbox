@@ -211,10 +211,13 @@ class TestModelBoxApi(unittest.TestCase):
         self.assertNotEqual("", resp.id)
 
     def test_track_artifacts(self):
+        file_path = str(
+            pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
+        )
         file = Artifact(
             parent="parent-id",
             checksum="abc",
-            path="/tmp/foo",
+            path=file_path,
             mime_type=ArtifactMime.Text,
         )
         resp = self._client.track_artifacts(artifacts=[file])

@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  modelbox:
+    image: diptanu/modelbox:0.0.1-next-arm64v8 
+    command: [ "server", "start", "--config-path=/app/config/modelbox.toml" ]
+    volumes:
+      - type: volume
+        source: data
+        target: /tmp # stores data
+      - type: bind
+        source: ./server/config
+        target: "/app/config" # binds config file
+volumes:
+  data:

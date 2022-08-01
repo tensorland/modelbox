@@ -39,7 +39,7 @@ func (s *GrpcServer) CreateModel(
 		req.Description,
 		req.Metadata,
 	)
-	model.SetFiles(storage.NewFileSetFromProto(model.Id, req.Files))
+	model.SetFiles(storage.NewFileSetFromProto(req.Files))
 	if _, err := s.metadataStorage.CreateModel(ctx, model); err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (s *GrpcServer) CreateModelVersion(
 		req.Description,
 		storage.MLFramework(req.Framework),
 		req.Metadata,
-		storage.NewFileSetFromProto(req.Model, req.Files),
+		storage.NewFileSetFromProto(req.Files),
 		req.UniqueTags,
 	)
 	if _, err := s.metadataStorage.CreateModelVersion(ctx, modelVersion); err != nil {
@@ -152,7 +152,7 @@ func (s *GrpcServer) CreateCheckpoint(
 		req.Metadata,
 		req.Metrics,
 	)
-	checkpoint.SetFiles(storage.NewFileSetFromProto(checkpoint.Id, req.Files))
+	checkpoint.SetFiles(storage.NewFileSetFromProto(req.Files))
 	if _, err := s.metadataStorage.CreateCheckpoint(ctx, checkpoint); err != nil {
 		return nil, fmt.Errorf("unable to create checkpoint: %v", err)
 	}
@@ -294,6 +294,17 @@ func (s *GrpcServer) DownloadFile(
 		fmt.Sprintf("checkpoint chunks sent for id: %v tot bytes: %v", req.FileId, totalBytes),
 	)
 	return nil
+}
+
+func (s *GrpcServer) TrackArtifacts(ctx context.Context, req *pb.TrackArtifactsRequest) (*pb.TrackArtifactsResponse, error) {
+	files := storage.NewFileSetFromProto(req.Files)
+	if err := s.metadataStorage.WriteFiles(ctx, files); err != nil {
+		return nil, err
+	}
+	return &pb.TrackArtifactsResponse{
+		NumFilesTracked: int32(len(files)),
+		CreatedAt:       timestamppb.New(time.Now()),
+	}, nil
 }
 
 func (s *GrpcServer) UpdateMetadata(ctx context.Context, req *pb.UpdateMetadataRequest) (*pb.UpdateMetadataResponse, error) {

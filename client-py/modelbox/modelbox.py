@@ -1,4 +1,5 @@
 from datetime import datetime
+from importlib.resources import path
 from re import I, S
 from time import time
 from typing import Dict, List
@@ -98,6 +99,11 @@ class DownloadArtifactResponse:
 
 
 @dataclass
+class TrackArtifactsResponse:
+    num_artifacts_tracked: int
+
+
+@dataclass
 class Model:
     id: str
     name: str
@@ -119,6 +125,39 @@ class ModelVersion:
     metadata: Dict
     unique_tags: List
     framework: MLFramework
+
+
+class ArtifactMime(Enum):
+    ModelVersion = 1
+    Checkpoint = 2
+    Text = 3
+    Image = 4
+    Video = 5
+    Audio = 6
+
+    def to_proto(self) -> service_pb2.FileType:
+        if self == self.ModelVersion:
+            return service_pb2.Model
+        if self == self.Checkpoint:
+            return service_pb2.CHECKPOINT
+        if self == self.Text:
+            return service_pb2.TEXT
+        if self == self.Image:
+            return service_pb2.IMAGE
+        if self == self.Video:
+            return service_pb2.VIDEO
+        if self == self.Audio:
+            return service_pb2.AUDIO
+
+        return service_pb2.UNDEFINED
+
+
+@dataclass
+class Artifact:
+    parent: str
+    path: str
+    checksum: str
+    mime_type: ArtifactMime
 
 
 class ModelBoxClient:
@@ -298,6 +337,21 @@ class ModelBoxClient:
         for k, v in resp.payload.items():
             meta_resp.metadata[k] = v
         return meta_resp
+
+    def track_artifacts(self, artifacts: List[Artifact]) -> TrackArtifactsResponse:
+        proto_artifacts = []
+        for artifact in artifacts:
+            proto_artifacts.append(
+                service_pb2.FileMetadata(
+                    parent_id=artifact.parent,
+                    file_type=artifact.mime_type.to_proto(),
+                    checksum=artifact.checksum,
+                    path=artifact.path,
+                )
+            )
+        req = service_pb2.TrackArtifactsRequest(files=proto_artifacts)
+        resp = self._client.TrackArtifacts(req)
+        return TrackArtifactsResponse(num_artifacts_tracked=resp.num_files_tracked)
 
     def close(self):
         if self._channel is not None:

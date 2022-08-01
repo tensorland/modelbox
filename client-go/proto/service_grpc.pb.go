@@ -49,6 +49,8 @@ type ModelStoreClient interface {
 	UpdateMetadata(ctx context.Context, in *UpdateMetadataRequest, opts ...grpc.CallOption) (*UpdateMetadataResponse, error)
 	// Lists metadata associated with an object
 	ListMetadata(ctx context.Context, in *ListMetadataRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
+	// Tracks a set of artifacts with a experiment/checkpoint/model
+	TrackArtifacts(ctx context.Context, in *TrackArtifactsRequest, opts ...grpc.CallOption) (*TrackArtifactsResponse, error)
 }
 
 type modelStoreClient struct {
@@ -224,6 +226,15 @@ func (c *modelStoreClient) ListMetadata(ctx context.Context, in *ListMetadataReq
 	return out, nil
 }
 
+func (c *modelStoreClient) TrackArtifacts(ctx context.Context, in *TrackArtifactsRequest, opts ...grpc.CallOption) (*TrackArtifactsResponse, error) {
+	out := new(TrackArtifactsResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/TrackArtifacts", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ModelStoreServer is the server API for ModelStore service.
 // All implementations must embed UnimplementedModelStoreServer
 // for forward compatibility
@@ -255,6 +266,8 @@ type ModelStoreServer interface {
 	UpdateMetadata(context.Context, *UpdateMetadataRequest) (*UpdateMetadataResponse, error)
 	// Lists metadata associated with an object
 	ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error)
+	// Tracks a set of artifacts with a experiment/checkpoint/model
+	TrackArtifacts(context.Context, *TrackArtifactsRequest) (*TrackArtifactsResponse, error)
 	mustEmbedUnimplementedModelStoreServer()
 }
 
@@ -300,6 +313,9 @@ func (UnimplementedModelStoreServer) UpdateMetadata(context.Context, *UpdateMeta
 }
 func (UnimplementedModelStoreServer) ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListMetadata not implemented")
+}
+func (UnimplementedModelStoreServer) TrackArtifacts(context.Context, *TrackArtifactsRequest) (*TrackArtifactsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TrackArtifacts not implemented")
 }
 func (UnimplementedModelStoreServer) mustEmbedUnimplementedModelStoreServer() {}
 
@@ -559,6 +575,24 @@ func _ModelStore_ListMetadata_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModelStore_TrackArtifacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TrackArtifactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).TrackArtifacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/TrackArtifacts",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).TrackArtifacts(ctx, req.(*TrackArtifactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ModelStore_ServiceDesc is the grpc.ServiceDesc for ModelStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -609,6 +643,10 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListMetadata",
 			Handler:    _ModelStore_ListMetadata_Handler,
+		},
+		{
+			MethodName: "TrackArtifacts",
+			Handler:    _ModelStore_TrackArtifacts_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

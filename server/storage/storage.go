@@ -115,11 +115,11 @@ func (s SerializableMetrics) Value() (driver.Value, error) {
 
 type FileSet []*FileMetadata
 
-func NewFileSetFromProto(parent string, pb []*proto.FileMetadata) FileSet {
-	blobs := make([]*FileMetadata, len(pb))
+func NewFileSetFromProto(pb []*proto.FileMetadata) FileSet {
+	files := make([]*FileMetadata, len(pb))
 	for i, b := range pb {
-		blobs[i] = NewFileMetadata(
-			parent,
+		files[i] = NewFileMetadata(
+			b.ParentId,
 			b.Path,
 			b.Checksum,
 			FileMIMEType(b.FileType),
@@ -127,7 +127,7 @@ func NewFileSetFromProto(parent string, pb []*proto.FileMetadata) FileSet {
 			b.UpdatedAt.AsTime().Unix(),
 		)
 	}
-	return blobs
+	return files
 }
 
 /*

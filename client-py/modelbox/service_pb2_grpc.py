@@ -81,6 +81,11 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.ListMetadataRequest.SerializeToString,
                 response_deserializer=service__pb2.ListMetadataResponse.FromString,
                 )
+        self.TrackArtifacts = channel.unary_unary(
+                '/modelbox.ModelStore/TrackArtifacts',
+                request_serializer=service__pb2.TrackArtifactsRequest.SerializeToString,
+                response_deserializer=service__pb2.TrackArtifactsResponse.FromString,
+                )
 
 
 class ModelStoreServicer(object):
@@ -181,6 +186,13 @@ class ModelStoreServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def TrackArtifacts(self, request, context):
+        """Tracks a set of artifacts with a experiment/checkpoint/model
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ModelStoreServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -248,6 +260,11 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     servicer.ListMetadata,
                     request_deserializer=service__pb2.ListMetadataRequest.FromString,
                     response_serializer=service__pb2.ListMetadataResponse.SerializeToString,
+            ),
+            'TrackArtifacts': grpc.unary_unary_rpc_method_handler(
+                    servicer.TrackArtifacts,
+                    request_deserializer=service__pb2.TrackArtifactsRequest.FromString,
+                    response_serializer=service__pb2.TrackArtifactsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -480,5 +497,22 @@ class ModelStore(object):
         return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/ListMetadata',
             service__pb2.ListMetadataRequest.SerializeToString,
             service__pb2.ListMetadataResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def TrackArtifacts(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/TrackArtifacts',
+            service__pb2.TrackArtifactsRequest.SerializeToString,
+            service__pb2.TrackArtifactsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

@@ -9,7 +9,9 @@ from random import randrange
 from faker import Faker
 from concurrent import futures
 
-from modelbox.modelbox import ModelBoxClient, MLFramework
+from google.protobuf.struct_pb2 import Struct
+
+from modelbox.modelbox import ModelBoxClient, MLFramework, Artifact, ArtifactMime
 from modelbox import service_pb2_grpc
 from modelbox import service_pb2
 
@@ -99,8 +101,16 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
                     break
                 yield service_pb2.DownloadFileResponse(chunks=data)
 
-        def UpdateMetadata(self, req, context):
-            return service_pb2.UpdateMetadataResponse(updated_at=1260)
+    def UpdateMetadata(self, req, context):
+        return service_pb2.UpdateMetadataResponse(updated_at=1260)
+
+    def ListMetadata(self, request, context):
+        payload = Struct()
+        payload.update({"key": "value"})
+        return service_pb2.ListMetadataResponse(payload=payload)
+
+    def TrackArtifacts(self, request, context):
+        return service_pb2.TrackArtifactsResponse(num_files_tracked=2)
 
 
 # We are really testing whether the client actually works against the current version
@@ -190,7 +200,7 @@ class TestModelBoxApi(unittest.TestCase):
         self.assertNotEqual("", resp.id)
 
     def test_upload_file(self):
-        file_path= str(
+        file_path = str(
             pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
         )
         resp = self._client.upload_file("abc", file_path)
@@ -199,6 +209,16 @@ class TestModelBoxApi(unittest.TestCase):
     def test_download_artifact(self):
         resp = self._client.download_artifact("random_id", "/tmp/lol")
         self.assertNotEqual("", resp.id)
+
+    def test_track_artifacts(self):
+        file = Artifact(
+            parent="parent-id",
+            checksum="abc",
+            path="/tmp/foo",
+            mime_type=ArtifactMime.Text,
+        )
+        resp = self._client.track_artifacts(artifacts=[file])
+        self.assertEqual(2, resp.num_artifacts_tracked)
 
 
 if __name__ == "__main__":

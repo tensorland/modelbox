@@ -1,7 +1,8 @@
 import os
 import logging
 from re import A
-from typing import Optional, Mapping, Callable, Sequence
+from argparse import Namespace
+from typing import Optional, Mapping, Callable, Sequence, Union, Any, Dict
 from unicodedata import name
 
 from pytorch_lightning.loggers.base import LightningLoggerBase, rank_zero_experiment
@@ -10,11 +11,7 @@ from pytorch_lightning.utilities.distributed import rank_zero_only
 from weakref import ReferenceType
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 
-import sys
-
-sys.path.append("../../client-py/modelbox")
-from modelbox import ModelBoxClient, Experiment, Project, MLFramework
-
+from modelbox.modelbox import ModelBoxClient, Experiment, MLFramework
 
 logger = logging.getLogger("pytorch_lightning")
 
@@ -24,17 +21,18 @@ SERVER_ADDR = "localhost:8085"
 class ModelBoxLogger(LightningLoggerBase):
     def __init__(
         self,
-        project_name: str,
+        namespace: str,
         experiment_name: str,
         owner: str,
         external_id: str = "",
+        server_addr: str = SERVER_ADDR,
         upload_checkpoints: bool = False,
         agg_key_funcs: Optional[
             Mapping[str, Callable[[Sequence[float]], float]]
         ] = None,
         agg_default_func: Optional[Callable[[Sequence[float]], float]] = None,
     ):
-        self._project_name = project_name
+        self._namepsace = namespace
         self._experiment_name = experiment_name
         self._owner = owner
         self._external_id = external_id
@@ -43,8 +41,7 @@ class ModelBoxLogger(LightningLoggerBase):
         self._experiment = None
 
         # Create the MBox client
-        self._mbox = ModelBoxClient(SERVER_ADDR)
-        self._project = None
+        self._mbox = ModelBoxClient(server_addr)
         self._experiment = None
         self._upload_checkpoints = upload_checkpoints
         self._checkpoint_paths = set()
@@ -56,7 +53,7 @@ class ModelBoxLogger(LightningLoggerBase):
     def name(self):
         if self._experiment is None:
             self._experiment = self.experiment
-        return self._experiment.name
+        return self._experiment_name
 
     @property
     def version(self):
@@ -73,18 +70,16 @@ class ModelBoxLogger(LightningLoggerBase):
     @rank_zero_experiment
     def experiment(self) -> Experiment:
         logger.info("modelbox - attempting to create a project")
-        if self._project is None:
-            self._project = self._mbox.create_project(self._project_name, self._owner)
         if self._experiment is None:
             self._experiment = self._mbox.create_experiment(
-                self._experiment_name,
-                self._project.name,
-                self._project.owner,
-                self._external_id,
-                MLFramework.PYTORCH,
+                name=self._experiment_name,
+                owner=self._owner,
+                namespace=self._namepsace,
+                external_id=self._external_id,
+                framework=MLFramework.PYTORCH,
             )
         logger.info(
-            "modelbox - created experimetn with id: {}".format(self._experiment.id)
+            "modelbox - created experiment with id: {}".format(self._experiment.experiment_id)
         )
         return self._experiment
 
@@ -92,9 +87,17 @@ class ModelBoxLogger(LightningLoggerBase):
     def log_metrics(self, metrics, step):
         self._current_step = step
         self._epoch = metrics["epoch"]
+        logger.info("logging metrics {}".format(metrics))
         logger.info(
             "modelbox - log metrics, step: {} metrics: {}".format(step, metrics)
         )
+
+    @rank_zero_only
+    def log_hyperparams(self, params: Union[Dict[str, Any], Namespace], metrics: Optional[Dict[str, Any]] = None) -> None:
+        self._mbox.update_metadata(parent_id=self.experiment.experiment_id, key="hyperparams", val=params)
+        logger.info(f"modelbox - log hpraams params {params}")
+        logger.info(f"modelbox - log hpraams metrics {metrics}")
+
 
     @rank_zero_only
     def after_save_checkpoint(
@@ -109,7 +112,7 @@ class ModelBoxLogger(LightningLoggerBase):
         for chk_path in new_chk_paths:
             logger.info("modelbox - recording checkpoint {}".format(chk_path))
             metrics = {"val_accu": chk_state[chk_path]}
-            chk_id = self._mbox.create_checkpoint_meta(
+            chk_id = self._mbox.create_checkpoint(
                 self.experiment.id, self._epoch, chk_path, metrics
             )
             logger.info("modelbox - recorded checkpoint {}".format(chk_id))

@@ -2,7 +2,7 @@ from datetime import datetime
 from importlib.resources import path
 from re import I, S
 from time import time
-from typing import Dict, List
+from typing import Dict, List, Any
 from typing_extensions import Self
 from enum import Enum
 from dataclasses import dataclass
@@ -192,7 +192,7 @@ class ModelBoxClient:
             metadata=metadata,
         )
         response = self._client.CreateModel(req)
-        return Model(response.id, name, owner, namespace, task, description, metadata)
+        return Model(response.id, name, owner, namespace, task, description, metadata, [])
 
     def list_models(self, namespace: str) -> ListModelsResult:
         req = service_pb2.ListModelsRequest(namespace=namespace)
@@ -356,7 +356,7 @@ class ModelBoxClient:
         return ret
 
     def update_metadata(
-        self, parent_id: str, key: str, val: str
+        self, parent_id: str, key: str, val: Any
     ) -> UpdateMetadataResponse:
         payload = Struct()
         payload.update({key: val})

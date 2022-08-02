@@ -224,6 +224,7 @@ func (m *MySqlStorage) ListModels(ctx context.Context, namespace string) ([]*Mod
 			if err != nil {
 				return err
 			}
+			m.logger.Sugar().Infof("DIPTANU NUMBER OF FILES %v", len(fileSet))
 			models = append(models, modelRow.ToModel(fileSet))
 		}
 		return nil

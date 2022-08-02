@@ -36,6 +36,41 @@ class MLFramework(Enum):
         return service_pb2.UNKNOWN
 
 
+class ArtifactMime(Enum):
+    Unknown = 0
+    ModelVersion = 1
+    Checkpoint = 2
+    Text = 3
+    Image = 4
+    Video = 5
+    Audio = 6
+
+    def to_proto(self) -> service_pb2.FileType:
+        if self == self.ModelVersion:
+            return service_pb2.Model
+        if self == self.Checkpoint:
+            return service_pb2.CHECKPOINT
+        if self == self.Text:
+            return service_pb2.TEXT
+        if self == self.Image:
+            return service_pb2.IMAGE
+        if self == self.Video:
+            return service_pb2.VIDEO
+        if self == self.Audio:
+            return service_pb2.AUDIO
+
+        return service_pb2.UNDEFINED
+
+
+@dataclass
+class Artifact:
+    parent: str
+    path: str
+    mime_type: ArtifactMime
+    checksum: str = ""
+    id: str = ""
+
+
 @dataclass
 class UpdateMetadataResponse:
     updated_at: Timestamp
@@ -112,6 +147,7 @@ class Model:
     task: str
     description: str
     metadata: str
+    artifacts: List[Artifact]
 
 
 @dataclass
@@ -127,38 +163,9 @@ class ModelVersion:
     framework: MLFramework
 
 
-class ArtifactMime(Enum):
-    ModelVersion = 1
-    Checkpoint = 2
-    Text = 3
-    Image = 4
-    Video = 5
-    Audio = 6
-
-    def to_proto(self) -> service_pb2.FileType:
-        if self == self.ModelVersion:
-            return service_pb2.Model
-        if self == self.Checkpoint:
-            return service_pb2.CHECKPOINT
-        if self == self.Text:
-            return service_pb2.TEXT
-        if self == self.Image:
-            return service_pb2.IMAGE
-        if self == self.Video:
-            return service_pb2.VIDEO
-        if self == self.Audio:
-            return service_pb2.AUDIO
-
-        return service_pb2.UNDEFINED
-
-
 @dataclass
-class Artifact:
-    parent: str
-    path: str
-    mime_type: ArtifactMime
-    checksum: str = ""
-    id: str = ""
+class ListModelsResult:
+    models: List[Model]
 
 
 class ModelBoxClient:
@@ -186,6 +193,36 @@ class ModelBoxClient:
         )
         response = self._client.CreateModel(req)
         return Model(response.id, name, owner, namespace, task, description, metadata)
+
+    def list_models(self, namespace: str) -> ListModelsResult:
+        req = service_pb2.ListModelsRequest(namespace=namespace)
+        resp = self._client.ListModels(req)
+        result = []
+        for m in resp.models:
+            artifacts = []
+            for f in m.files:
+                artifacts.append(
+                    Artifact(
+                        parent=f.parent_id,
+                        path=f.path,
+                        checksum=f.checksum,
+                        mime_type=ArtifactMime(f.file_type),
+                        id=f.id,
+                    )
+                )
+            result.append(
+                Model(
+                    id=m.id,
+                    name=m.name,
+                    owner=m.owner,
+                    namespace=m.namespace,
+                    task=m.task,
+                    description=m.description,
+                    metadata=m.metadata,
+                    artifacts=artifacts,
+                )
+            )
+        return ListModelsResult(models=result)
 
     def create_model_version(
         self,

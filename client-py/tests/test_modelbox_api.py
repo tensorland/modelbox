@@ -112,6 +112,12 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
     def TrackArtifacts(self, request, context):
         return service_pb2.TrackArtifactsResponse(num_files_tracked=2)
 
+    def ListModels(self, request, context):
+        models = []
+        models.append(service_pb2.Model(id=self._fake.uuid4(), name="gpt", owner="owner@owner.org", namespace="langtech", description="long description", task="mytask", files=[]))
+        resp = service_pb2.ListModelsResponse(models=models)
+        return resp
+
 
 # We are really testing whether the client actually works against the current version
 # of the grpc server definition. Tests related to logic in server based on what the
@@ -222,6 +228,10 @@ class TestModelBoxApi(unittest.TestCase):
         )
         resp = self._client.track_artifacts(artifacts=[file])
         self.assertEqual(2, resp.num_artifacts_tracked)
+
+    def test_list_models(self):
+        resp = self._client.list_models("langtech")
+        self.assertEqual(1, len(resp.models))
 
 
 if __name__ == "__main__":

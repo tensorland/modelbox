@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"strings"
 	"time"
 
 	pb "github.com/diptanu/modelbox/client-go/proto"
@@ -84,11 +85,14 @@ func (s *GrpcServer) ListModels(ctx context.Context,
 	apiModels := make([]*pb.Model, len(models))
 	for i, m := range models {
 		apiModels[i] = &pb.Model{
-			Id:        m.Id,
-			Name:      m.Name,
-			Owner:     m.Owner,
-			Namespace: m.Namespace,
-			Task:      m.Task,
+			Id:          m.Id,
+			Name:        m.Name,
+			Owner:       m.Owner,
+			Namespace:   m.Namespace,
+			Task:        m.Task,
+			Description: m.Description,
+			Metadata:    m.Meta,
+			Files:       m.Files.ToProto(),
 		}
 	}
 	return &pb.ListModelsResponse{Models: apiModels}, nil
@@ -219,6 +223,12 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 	}
 	blobInfo.Path = path
 	if err := s.metadataStorage.WriteFiles(stream.Context(), storage.FileSet{blobInfo}); err != nil {
+		//TODO This is not great, we should create a new error type and throw and check on the error type
+		// or code.
+		if strings.HasPrefix(err.Error(), "unable to create blobs for model: Error 1062") {
+			stream.SendAndClose(&pb.UploadFileResponse{FileId: blobInfo.Id})
+			return nil
+		}
 		return fmt.Errorf("unable to create blob metadata: %v", err)
 	}
 	var totalBytes uint64 = 0
@@ -299,8 +309,12 @@ func (s *GrpcServer) DownloadFile(
 func (s *GrpcServer) TrackArtifacts(ctx context.Context, req *pb.TrackArtifactsRequest) (*pb.TrackArtifactsResponse, error) {
 	files := storage.NewFileSetFromProto(req.Files)
 	if err := s.metadataStorage.WriteFiles(ctx, files); err != nil {
+		if strings.HasPrefix(err.Error(), "unable to create blobs for model: Error 1062:") {
+			goto respond
+		}
 		return nil, err
 	}
+respond:
 	return &pb.TrackArtifactsResponse{
 		NumFilesTracked: int32(len(files)),
 		CreatedAt:       timestamppb.New(time.Now()),

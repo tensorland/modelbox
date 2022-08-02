@@ -14,6 +14,7 @@ import (
 	"github.com/diptanu/modelbox/client-go/proto"
 	"github.com/diptanu/modelbox/server/config"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type MLFramework uint16
@@ -126,6 +127,22 @@ func NewFileSetFromProto(pb []*proto.FileMetadata) FileSet {
 			b.CreatedAt.AsTime().Unix(),
 			b.UpdatedAt.AsTime().Unix(),
 		)
+	}
+	return files
+}
+
+func (f *FileSet) ToProto() []*proto.FileMetadata {
+	files := make([]*proto.FileMetadata, len(*f))
+	for i, f := range *f {
+		files[i] = &proto.FileMetadata{
+			Id:        f.Id,
+			ParentId:  f.ParentId,
+			FileType:  FileTypeToProto(f.Type),
+			Checksum:  f.Checksum,
+			Path:      f.Path,
+			CreatedAt: timestamppb.New(time.Unix(f.CreatedAt, 0)),
+			UpdatedAt: timestamppb.New(time.Unix(f.UpdatedAt, 0)),
+		}
 	}
 	return files
 }

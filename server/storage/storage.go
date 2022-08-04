@@ -17,6 +17,25 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type FloatLog struct {
+	Value     float32
+	Step      uint64
+	WallClock uint64
+}
+type ExperimentLogger interface {
+	LogFloats(ctx context.Context, parentId string, key string, value *FloatLog) error
+
+	GetFloatLogs(ctx context.Context, parentId string) (map[string][]*FloatLog, error)
+}
+
+func ToFloatLogFromProto(value *proto.MetricsValue) *FloatLog {
+	return &FloatLog{
+		Value:     value.GetFVal(),
+		Step:      uint64(value.Step),
+		WallClock: uint64(value.WallclockTime),
+	}
+}
+
 type MLFramework uint16
 
 const (

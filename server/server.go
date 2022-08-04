@@ -19,6 +19,7 @@ import (
 type GrpcServer struct {
 	grpcServer         *grpc.Server
 	metadataStorage    storage.MetadataStorage
+	experimentLogger   storage.ExperimentLogger
 	blobStorageBuilder storage.BlobStorageBuilder
 
 	lis    net.Listener
@@ -374,6 +375,42 @@ func (s *GrpcServer) GetCheckpoint(ctx context.Context, req *pb.GetCheckpointReq
 	}, nil
 }
 
+func (s *GrpcServer) LogMetrics(ctx context.Context, req *pb.LogMetricsRequest) (*pb.LogMetricsResponse, error) {
+	switch v := req.Value.Value.(type) {
+	case *pb.MetricsValue_FVal:
+		s.experimentLogger.LogFloats(ctx, req.ParentId, req.Key, storage.ToFloatLogFromProto(req.GetValue()))
+	case nil:
+	default:
+		return nil, fmt.Errorf("unable to write metric for %v", v)
+	}
+	return &pb.LogMetricsResponse{}, nil
+}
+
+func (s *GrpcServer) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) (*pb.GetMetricsResponse, error) {
+	metrics, err := s.experimentLogger.GetFloatLogs(ctx, req.ParentId)
+	if err != nil {
+		return nil, err
+	}
+	protoMetrics := make([]*pb.Metrics, 0)
+	for key := range metrics {
+		values := metrics[key]
+		metricValues := make([]*pb.MetricsValue, len(values))
+		for i, v := range values {
+			metricValues[i] = &pb.MetricsValue{
+				Step:          v.Step,
+				WallclockTime: v.WallClock,
+				Value:         &pb.MetricsValue_FVal{FVal: v.Value},
+			}
+		}
+		m := &pb.Metrics{
+			Key:    key,
+			Values: metricValues,
+		}
+		protoMetrics = append(protoMetrics, m)
+	}
+	return &pb.GetMetricsResponse{Metrics: protoMetrics}, nil
+}
+
 func NewGrpcServer(
 	metadatStorage storage.MetadataStorage,
 	blobStorageBuilder storage.BlobStorageBuilder,
@@ -383,6 +420,7 @@ func NewGrpcServer(
 	grpcServer := grpc.NewServer()
 	modelBoxServer := &GrpcServer{
 		metadataStorage:    metadatStorage,
+		experimentLogger:   storage.NewInMemoryExperimentLogger(),
 		grpcServer:         grpcServer,
 		blobStorageBuilder: blobStorageBuilder,
 		lis:                lis,

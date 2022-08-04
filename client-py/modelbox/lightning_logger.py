@@ -1,5 +1,6 @@
 import os
 import logging
+import time
 from re import A
 from argparse import Namespace
 from typing import Optional, Mapping, Callable, Sequence, Union, Any, Dict
@@ -11,7 +12,7 @@ from pytorch_lightning.utilities.distributed import rank_zero_only
 from weakref import ReferenceType
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 
-from modelbox.modelbox import ModelBoxClient, Experiment, MLFramework
+from modelbox.modelbox import ModelBoxClient, Experiment, MLFramework, MetricValue
 
 logger = logging.getLogger("pytorch_lightning")
 
@@ -86,11 +87,15 @@ class ModelBoxLogger(LightningLoggerBase):
     @rank_zero_only
     def log_metrics(self, metrics, step):
         self._current_step = step
-        self._epoch = metrics["epoch"]
-        logger.info("logging metrics {}".format(metrics))
-        logger.info(
-            "modelbox - log metrics, step: {} metrics: {}".format(step, metrics)
-        )
+        self._epoch = metrics.pop('epoch')
+        if self._experiment is None:
+            return
+        for k, v in metrics.items():
+            val = MetricValue(step=step, wallclock_time=int(time.time()), value=v)
+            self._mbox.log_metrics(self._experiment.experiment_id, k, val)
+            logger.info(
+                "modelbox - log metrics, step: {}, key: {}, metrics: {}".format(step, k, val)
+                )
 
     @rank_zero_only
     def log_hyperparams(self, params: Union[Dict[str, Any], Namespace], metrics: Optional[Dict[str, Any]] = None) -> None:

@@ -51,6 +51,8 @@ type ModelStoreClient interface {
 	ListMetadata(ctx context.Context, in *ListMetadataRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
 	// Tracks a set of artifacts with a experiment/checkpoint/model
 	TrackArtifacts(ctx context.Context, in *TrackArtifactsRequest, opts ...grpc.CallOption) (*TrackArtifactsResponse, error)
+	LogMetrics(ctx context.Context, in *LogMetricsRequest, opts ...grpc.CallOption) (*LogMetricsResponse, error)
+	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
 }
 
 type modelStoreClient struct {
@@ -235,6 +237,24 @@ func (c *modelStoreClient) TrackArtifacts(ctx context.Context, in *TrackArtifact
 	return out, nil
 }
 
+func (c *modelStoreClient) LogMetrics(ctx context.Context, in *LogMetricsRequest, opts ...grpc.CallOption) (*LogMetricsResponse, error) {
+	out := new(LogMetricsResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/LogMetrics", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *modelStoreClient) GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error) {
+	out := new(GetMetricsResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/GetMetrics", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ModelStoreServer is the server API for ModelStore service.
 // All implementations must embed UnimplementedModelStoreServer
 // for forward compatibility
@@ -268,6 +288,8 @@ type ModelStoreServer interface {
 	ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error)
 	// Tracks a set of artifacts with a experiment/checkpoint/model
 	TrackArtifacts(context.Context, *TrackArtifactsRequest) (*TrackArtifactsResponse, error)
+	LogMetrics(context.Context, *LogMetricsRequest) (*LogMetricsResponse, error)
+	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
 	mustEmbedUnimplementedModelStoreServer()
 }
 
@@ -316,6 +338,12 @@ func (UnimplementedModelStoreServer) ListMetadata(context.Context, *ListMetadata
 }
 func (UnimplementedModelStoreServer) TrackArtifacts(context.Context, *TrackArtifactsRequest) (*TrackArtifactsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TrackArtifacts not implemented")
+}
+func (UnimplementedModelStoreServer) LogMetrics(context.Context, *LogMetricsRequest) (*LogMetricsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LogMetrics not implemented")
+}
+func (UnimplementedModelStoreServer) GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetMetrics not implemented")
 }
 func (UnimplementedModelStoreServer) mustEmbedUnimplementedModelStoreServer() {}
 
@@ -593,6 +621,42 @@ func _ModelStore_TrackArtifacts_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModelStore_LogMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LogMetricsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).LogMetrics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/LogMetrics",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).LogMetrics(ctx, req.(*LogMetricsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ModelStore_GetMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetMetricsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).GetMetrics(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/GetMetrics",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).GetMetrics(ctx, req.(*GetMetricsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ModelStore_ServiceDesc is the grpc.ServiceDesc for ModelStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -647,6 +711,14 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TrackArtifacts",
 			Handler:    _ModelStore_TrackArtifacts_Handler,
+		},
+		{
+			MethodName: "LogMetrics",
+			Handler:    _ModelStore_LogMetrics_Handler,
+		},
+		{
+			MethodName: "GetMetrics",
+			Handler:    _ModelStore_GetMetrics_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

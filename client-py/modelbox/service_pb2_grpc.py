@@ -86,6 +86,16 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.TrackArtifactsRequest.SerializeToString,
                 response_deserializer=service__pb2.TrackArtifactsResponse.FromString,
                 )
+        self.LogMetrics = channel.unary_unary(
+                '/modelbox.ModelStore/LogMetrics',
+                request_serializer=service__pb2.LogMetricsRequest.SerializeToString,
+                response_deserializer=service__pb2.LogMetricsResponse.FromString,
+                )
+        self.GetMetrics = channel.unary_unary(
+                '/modelbox.ModelStore/GetMetrics',
+                request_serializer=service__pb2.GetMetricsRequest.SerializeToString,
+                response_deserializer=service__pb2.GetMetricsResponse.FromString,
+                )
 
 
 class ModelStoreServicer(object):
@@ -193,6 +203,18 @@ class ModelStoreServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def LogMetrics(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetMetrics(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ModelStoreServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -265,6 +287,16 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     servicer.TrackArtifacts,
                     request_deserializer=service__pb2.TrackArtifactsRequest.FromString,
                     response_serializer=service__pb2.TrackArtifactsResponse.SerializeToString,
+            ),
+            'LogMetrics': grpc.unary_unary_rpc_method_handler(
+                    servicer.LogMetrics,
+                    request_deserializer=service__pb2.LogMetricsRequest.FromString,
+                    response_serializer=service__pb2.LogMetricsResponse.SerializeToString,
+            ),
+            'GetMetrics': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetMetrics,
+                    request_deserializer=service__pb2.GetMetricsRequest.FromString,
+                    response_serializer=service__pb2.GetMetricsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -514,5 +546,39 @@ class ModelStore(object):
         return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/TrackArtifacts',
             service__pb2.TrackArtifactsRequest.SerializeToString,
             service__pb2.TrackArtifactsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def LogMetrics(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/LogMetrics',
+            service__pb2.LogMetricsRequest.SerializeToString,
+            service__pb2.LogMetricsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetMetrics(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/GetMetrics',
+            service__pb2.GetMetricsRequest.SerializeToString,
+            service__pb2.GetMetricsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

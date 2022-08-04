@@ -11,7 +11,7 @@ from concurrent import futures
 
 from google.protobuf.struct_pb2 import Struct
 
-from modelbox.modelbox import ModelBoxClient, MLFramework, Artifact, ArtifactMime
+from modelbox.modelbox import ModelBoxClient, MLFramework, Artifact, ArtifactMime, MetricValue
 from modelbox import service_pb2_grpc
 from modelbox import service_pb2
 
@@ -117,6 +117,14 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
         models.append(service_pb2.Model(id=self._fake.uuid4(), name="gpt", owner="owner@owner.org", namespace="langtech", description="long description", task="mytask", files=[]))
         resp = service_pb2.ListModelsResponse(models=models)
         return resp
+
+    def LogMetrics(self, request, context):
+        return service_pb2.LogMetricsResponse()
+
+    def GetMetrics(self, request, context):
+        values = [service_pb2.MetricsValue(step=1, wallclock_time=500, f_val=0.45)]
+        m = service_pb2.Metrics(key="foo", values=values)
+        return service_pb2.GetMetricsResponse(metrics=[m])
 
 
 # We are really testing whether the client actually works against the current version
@@ -232,6 +240,12 @@ class TestModelBoxApi(unittest.TestCase):
     def test_list_models(self):
         resp = self._client.list_models("langtech")
         self.assertEqual(1, len(resp.models))
+
+    def test_log_metrics(self):
+        resp = self._client.log_metrics("parent_id1", "val_accu", MetricValue(step=1, wallclock_time=500, value=0.234))
+
+    def test_get_metrics(self):
+        resp = self._client.get_metrics("foo")
 
 
 if __name__ == "__main__":

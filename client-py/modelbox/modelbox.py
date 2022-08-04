@@ -1,17 +1,10 @@
-from datetime import datetime
-from importlib.resources import path
-from re import I, S
-from time import time
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union
 from typing_extensions import Self
 from enum import Enum
 from dataclasses import dataclass
 from hashlib import md5
 
 import grpc
-from grpc_status import rpc_status
-from numpy import float32, uint, uint64
-from regex import W
 from . import service_pb2
 from . import service_pb2_grpc
 from google.protobuf.struct_pb2 import Struct
@@ -168,6 +161,19 @@ class ListModelsResult:
     models: List[Model]
 
 
+@dataclass
+class MetricValue:
+    step: int 
+    wallclock_time: int 
+    value: Union[float, str, bytes]
+
+
+@dataclass
+class Metrics:
+    key: str
+    values: List[MetricValue]
+
+
 class ModelBoxClient:
     def __init__(self, addr):
         self._addr = addr
@@ -192,7 +198,9 @@ class ModelBoxClient:
             metadata=metadata,
         )
         response = self._client.CreateModel(req)
-        return Model(response.id, name, owner, namespace, task, description, metadata, [])
+        return Model(
+            response.id, name, owner, namespace, task, description, metadata, []
+        )
 
     def list_models(self, namespace: str) -> ListModelsResult:
         req = service_pb2.ListModelsRequest(namespace=namespace)
@@ -279,7 +287,7 @@ class ModelBoxClient:
         )
 
     def create_checkpoint(
-        self, experiment: str, epoch: uint, path: str, metrics: Dict, file_checksum="",
+        self, experiment: str, epoch: int, path: str, metrics: Dict, file_checksum="",
     ) -> CreateCheckpointResponse:
         req = service_pb2.CreateCheckpointRequest(
             experiment_id=experiment,
@@ -388,6 +396,33 @@ class ModelBoxClient:
         req = service_pb2.TrackArtifactsRequest(files=proto_artifacts)
         resp = self._client.TrackArtifacts(req)
         return TrackArtifactsResponse(num_artifacts_tracked=resp.num_files_tracked)
+
+    def log_metrics(self, parent_id: str, key: str, value: MetricValue):
+        req = service_pb2.LogMetricsRequest(
+            parent_id=parent_id,
+            key=key,
+            value=service_pb2.MetricsValue(
+                step=value.step, wallclock_time=value.wallclock_time, f_val=value.value
+            ),
+        )
+        return self._client.LogMetrics(req)
+
+    def get_metrics(self, parent_id: str) -> Dict[str, Metrics]:
+        req = service_pb2.GetMetricsRequest(parent_id=parent_id)
+        resp = self._client.GetMetrics(req)
+        metrics = {}
+        for metric in resp.metrics:
+            m_vals = []
+            for v in metric.values:
+                m_vals.append(
+                    MetricValue(
+                        step=v.step, wallclock_time=v.wallclock_time, value=v.f_val
+                    )
+                )
+            m = Metrics(key=metric.key, values=[m_vals])
+            metrics[metric.key] = m
+
+        return metrics
 
     def _file_checksum(self, path) -> str:
         checksum = ""

@@ -57,6 +57,51 @@ service ModelStore {
 
   // Tracks a set of artifacts with a experiment/checkpoint/model
   rpc TrackArtifacts(TrackArtifactsRequest) returns (TrackArtifactsResponse);
+
+  rpc LogMetrics(LogMetricsRequest) returns (LogMetricsResponse);
+
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
+}
+
+// Metrics contain the metric values for a given key
+message Metrics {
+  string key = 1;
+
+  repeated MetricsValue values = 2;
+}
+
+// Metric Value at a given point of time.
+message MetricsValue {
+  uint64 step = 1;
+
+  uint64 wallclock_time = 2;
+
+  oneof value {
+     float f_val = 5;
+
+     string s_tensor = 6;
+
+     bytes b_tensor = 7;
+  }
+}
+
+// Message for logging a metric value at a given time
+message LogMetricsRequest {
+  string parent_id = 1;
+
+  string key = 2;
+
+  MetricsValue value = 3;
+}
+
+message LogMetricsResponse {}
+
+message GetMetricsRequest {
+  string parent_id = 1;
+}
+
+message GetMetricsResponse {
+  repeated Metrics metrics = 1;
 }
 
 message TrackArtifactsRequest {

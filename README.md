@@ -1,13 +1,13 @@
-# ModelBox - A Machine Learning model management service
+# ModelBox - AI Model Operations and Metadata Management Service
 
-ModelBox is a model management service. It can integrate with Deep Learning frameworks to provide model checkpoint and artifact tracking and optional features such as serving them to inference engines, measuring performance. It provides a pluggable storage interface to track metadata and artifacts related to models and experiments producing checkpoints. We are working towards developing a flexible worker interface to build model transformation, benchmarking and other model operations utilities.
+ModelBox is a model and AI metadata management service. It can integrate with Deep Learning frameworks to provide model checkpoint and artifact tracking and optional features such as serving them to inference engines, measuring performance. It provides a pluggable storage interface to track metadata and artifacts related to models and experiments producing checkpoints. We are working towards developing a flexible worker interface to build model transformation, benchmarking and other model operations primitives.
 
 ## Features
+- Python SDK to integrate with custom PyTorch(or any other ML framework) trainer.
 - Model versioning and lineage tracking of Models in relation to Experiments which created them.
 - Labelling models and checkpoints to track the environement they are deployed in, metrics, and other related metadata meaningful to users.
-- Integrates with DL Frameworks like Keras and PyTorch Lightening for checkpoint storage and for fault tolerant training.
-- Load production ready models in inference engines directly from ModelBox - clients in Python, Rust, Go, etc. C++ library is in the works.
-- Python SDK to integrate with ML Frameworks.
+- Integrates transparenly with DL Frameworks like PyTorch Lightening for checkpoint storage/retrieval, metadata and metrics logging.
+- Load production ready models in inference engines directly from ModelBox - clients in Python, Go, etc. Rust and C++ library are in the works.
 
 ## Planned Features
 - Add retention policies written in any WASM compatible language which has all the model and checkpoint related metadata available.

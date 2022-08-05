@@ -1,5 +1,7 @@
 <p align="center"><img src="https://raw.githubusercontent.com/diptanu/modelbox/main/docs/images/ModelBox1.png" width="300" height="150"></p>
 
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/diptanu/modelbox/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/diptanu/modelbox/tree/main)
+
 # AI Model Operations and Metadata Management Service
 
 ModelBox is a model and AI metadata management service. It can integrate with Deep Learning frameworks to provide model checkpoint and artifact tracking and optional features such as serving them to inference engines, measuring performance. It provides a pluggable storage interface to track metadata and artifacts related to models and experiments producing checkpoints. We are working towards developing a flexible worker interface to build model transformation, benchmarking and other model operations primitives.

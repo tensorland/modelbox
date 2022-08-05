@@ -4,7 +4,11 @@
 
 # AI Model Operations and Metadata Management Service
 
-ModelBox is a model and AI metadata management service. It can integrate with Deep Learning frameworks to provide model checkpoint and artifact tracking and optional features such as serving them to inference engines, measuring performance. It provides a pluggable storage interface to track metadata and artifacts related to models and experiments producing checkpoints. We are working towards developing a flexible worker interface to build model transformation, benchmarking and other model operations primitives.
+ModelBox is an AI models and metadata management service. 
+
+It can integrate with Deep Learning frameworks to provide model checkpoint and artifact tracking. Optional features include serving AI models to inference engines snd measuring their performance. 
+
+Additionally, ModelBox provides a pluggable storage interface to track metadata & artifacts related to models, and experiments producing checkpoints. 
 
 ## Features
 - Python SDK to integrate with custom PyTorch(or any other ML framework) trainer.

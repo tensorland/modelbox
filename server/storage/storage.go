@@ -264,6 +264,14 @@ func FileTypeToProto(t FileMIMEType) proto.FileType {
 		return proto.FileType_CHECKPOINT
 	case ModelFile:
 		return proto.FileType_MODEL
+	case TextFile:
+		return proto.FileType_TEXT
+	case ImageFile:
+		return proto.FileType_IMAGE
+	case AudioFile:
+		return proto.FileType_AUDIO
+	case VideoFile:
+		return proto.FileType_VIDEO
 	}
 	return proto.FileType_UNDEFINED
 }

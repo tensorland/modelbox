@@ -182,7 +182,7 @@ func (s *GrpcServer) ListCheckpoints(
 				ParentId:  b.ParentId,
 				Path:      b.Path,
 				Checksum:  b.Checksum,
-				FileType:  pb.FileType(b.Type),
+				FileType:  storage.FileTypeToProto(b.Type),
 				CreatedAt: timestamppb.New(time.Unix(b.CreatedAt, 0)),
 				UpdatedAt: timestamppb.New(time.Unix(b.UpdatedAt, 0)),
 			}
@@ -272,6 +272,7 @@ func (s *GrpcServer) DownloadFile(
 				Id:        blobInfo.Id,
 				ParentId:  blobInfo.ParentId,
 				Checksum:  blobInfo.Checksum,
+				FileType:  storage.FileTypeToProto(blobInfo.Type),
 				Path:      blobInfo.Path,
 				CreatedAt: timestamppb.New(time.Unix(blobInfo.CreatedAt, 0)),
 				UpdatedAt: timestamppb.New(time.Unix(blobInfo.UpdatedAt, 0)),

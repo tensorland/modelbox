@@ -29,3 +29,11 @@ This will build the modelbox server binary from source and create a Docker conta
 ```
 goreleaser release --snapshot --rm-dist
 ```
+
+This creates the following docker images -
+```
+(base) diptanuc@firefly:~/Projects/modelbox$ docker images
+REPOSITORY                 TAG                  IMAGE ID       CREATED         SIZE
+diptanu/modelbox           0.0.1-next-amd64     893ae15a50b7   2 minutes ago   14.9MB
+diptanu/modelbox           0.0.1-next-arm64v8   67ff73eb4604   2 minutes ago   14.4MB
+```

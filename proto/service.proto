@@ -61,6 +61,37 @@ service ModelStore {
   rpc LogMetrics(LogMetricsRequest) returns (LogMetricsResponse);
 
   rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
+
+  rpc WatchNamespace(WatchNamespaceRequest) returns (stream WatchNamespaceResponse);
+}
+
+// Request to watch events in a namespace, such as experiments/models/mocel versions
+// being created or updated.  
+message WatchNamespaceRequest {
+  string namespace = 1;
+
+  uint64 since = 2;
+}
+
+enum ServerEvent {
+  SERVER_EVENT_UNDEFINED  = 0;
+
+  OBJECT_CREATED = 1;
+
+  OBJECT_UPDATED = 2;
+}
+
+message WatchNamespaceResponse {
+  ServerEvent event = 1;
+  oneof updated_object {
+    Experiment experiment = 2;
+
+    Model model = 3;
+
+    Checkpoint checkpoint = 4;
+
+    ModelVersion model_version = 5;
+  }
 }
 
 // Metrics contain the metric values for a given key

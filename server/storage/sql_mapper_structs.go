@@ -249,3 +249,14 @@ func toMetadataSchema(m *Metadata) (*MetadataSchema, error) {
 		Metadata: b,
 	}, nil
 }
+
+type MutationEventSchema struct {
+	MutationId   uint64 `db:"mutation_id"`
+	MutationTime uint64 `db:"mutation_time"`
+	Action       string
+	ObjectId     string `db:"object_id"`
+	ObjectType   string `db:"object_type"`
+	ParentId     string `db:"parent_id"`
+	Namespace    string
+	Payload      interface{}
+}

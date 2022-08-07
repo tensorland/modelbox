@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -22,6 +23,8 @@ type StorageInterfaceTestSuite struct {
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateExperiment() {
+	since := time.Now()
+	ctx := context.Background()
 	meta := SerializableMeta(map[string]string{"foo": "bar"})
 	e := NewExperiment(MODEL_NAME, OWNER, NAMESPACE, "xyz", Pytorch, meta)
 	_, err := s.storageIf.CreateExperiment(context.Background(), e)
@@ -33,6 +36,11 @@ func (s *StorageInterfaceTestSuite) TestCreateExperiment() {
 	assert.Equal(s.t, OWNER, experiments[0].Owner)
 	assert.Equal(s.t, NAMESPACE, experiments[0].Namespace)
 	assert.Equal(s.t, "xyz", experiments[0].ExternalId)
+
+	// Check for mutation events
+	changes, err := s.storageIf.ListChanges(ctx, NAMESPACE, since)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, len(changes), 1)
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateCheckpoint() {

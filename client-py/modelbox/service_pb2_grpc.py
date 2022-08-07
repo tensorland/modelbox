@@ -96,6 +96,11 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.GetMetricsRequest.SerializeToString,
                 response_deserializer=service__pb2.GetMetricsResponse.FromString,
                 )
+        self.WatchNamespace = channel.unary_stream(
+                '/modelbox.ModelStore/WatchNamespace',
+                request_serializer=service__pb2.WatchNamespaceRequest.SerializeToString,
+                response_deserializer=service__pb2.WatchNamespaceResponse.FromString,
+                )
 
 
 class ModelStoreServicer(object):
@@ -215,6 +220,12 @@ class ModelStoreServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def WatchNamespace(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ModelStoreServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -297,6 +308,11 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     servicer.GetMetrics,
                     request_deserializer=service__pb2.GetMetricsRequest.FromString,
                     response_serializer=service__pb2.GetMetricsResponse.SerializeToString,
+            ),
+            'WatchNamespace': grpc.unary_stream_rpc_method_handler(
+                    servicer.WatchNamespace,
+                    request_deserializer=service__pb2.WatchNamespaceRequest.FromString,
+                    response_serializer=service__pb2.WatchNamespaceResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -580,5 +596,22 @@ class ModelStore(object):
         return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/GetMetrics',
             service__pb2.GetMetricsRequest.SerializeToString,
             service__pb2.GetMetricsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def WatchNamespace(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_stream(request, target, '/modelbox.ModelStore/WatchNamespace',
+            service__pb2.WatchNamespaceRequest.SerializeToString,
+            service__pb2.WatchNamespaceResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

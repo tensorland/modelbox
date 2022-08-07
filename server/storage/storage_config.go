@@ -14,7 +14,7 @@ type MySqlStorageConfig struct {
 }
 
 func (c *MySqlStorageConfig) DataSource() string {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8",
 		c.UserName, c.Password, c.Host, strconv.Itoa(c.Port), c.DbName)
 	return dsn
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 	"strconv"
@@ -20,7 +19,7 @@ func WriteServerConfigToFile(path string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path, data, 0600)
+	return os.WriteFile(path, data, 0600)
 }
 
 func CreateSchema(configPath string, schema string, logger *zap.Logger) error {
@@ -40,7 +39,7 @@ func WriteClientConfigToFile(path string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(path, data, 0600)
+	return os.WriteFile(path, data, 0600)
 }
 
 type ClientUi struct {
@@ -177,4 +176,17 @@ func (u *ClientUi) metricsMapToString(metrics map[string]float32) string {
 		metricsKv = append(metricsKv, fmt.Sprintf("%s: %f", metric, val))
 	}
 	return strings.Join(metricsKv, ",")
+}
+
+func (u *ClientUi) WatchNamespace(namespace string) error {
+	fmt.Println("watching changes in the namespace: ", namespace)
+	cb := func(event *client.ChangeStreamEventResponse) error {
+		b, err := event.PayLoad.MarshalJSON()
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(b))
+		return nil
+	}
+	return u.client.StremChangeEvents(namespace, cb)
 }

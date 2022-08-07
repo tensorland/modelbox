@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
+	"time"
 
 	"github.com/VividCortex/mysqlerr"
+	"github.com/fatih/structs"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 
@@ -50,6 +52,10 @@ const (
 	METADATA_UPDATE = "INSERT INTO metadata (id, parent_id, metadata) VALUES(:id, :parent_id, :metadata) ON DUPLICATE KEY UPDATE id=VALUES(`id`), parent_id=VALUES(`parent_id`), metadata=VALUES(`metadata`)"
 
 	METADATA_LIST = "select id, parent_id, metadata from metadata where parent_id=?"
+
+	EVENT_CREATE = "insert into mutation_events (mutation_time, action, object_id, object_type, parent_id, namespace, payload) VALUES(:mutation_time, :action, :object_id, :object_type, :parent_id, :namespace, :payload)"
+
+	EVENT_NS_LIST = "select mutation_id, mutation_time, action, object_id, object_type, parent_id, namespace, payload from mutation_events where namespace =? and mutation_time>=?"
 )
 
 type MySqlStorage struct {
@@ -71,18 +77,36 @@ func (m *MySqlStorage) CreateExperiment(
 	ctx context.Context,
 	experiment *Experiment,
 ) (*CreateExperimentResult, error) {
-	schema := FromExperimentToSchema(experiment)
-	_, err := m.db.NamedExec(
-		EXPERIMENT_CREATE,
-		schema,
-	)
-	if err != nil {
-		if m.isDuplicateError(err) {
-			return &CreateExperimentResult{ExperimentId: experiment.Id, Exists: true}, nil
+	result := &CreateExperimentResult{}
+	err := m.transact(ctx, func(tx *sqlx.Tx) error {
+		schema := FromExperimentToSchema(experiment)
+		_, err := tx.NamedExec(
+			EXPERIMENT_CREATE,
+			schema,
+		)
+		if err != nil {
+			if m.isDuplicateError(err) {
+				result.Exists = true
+				result.ExperimentId = experiment.Id
+				return nil
+			}
+			return fmt.Errorf("unable to write experiment to db: %v", err)
 		}
-		return nil, fmt.Errorf("unable to write experiment to db: %v", err)
-	}
-	return &CreateExperimentResult{ExperimentId: experiment.Id, Exists: false}, nil
+		result.ExperimentId = experiment.Id
+		event := &MutationEventSchema{
+			MutationTime: uint64(time.Now().Unix()),
+			Action:       "create",
+			ObjectType:   "experiment",
+			ObjectId:     experiment.Id,
+			Namespace:    experiment.Namespace,
+			Payload:      structs.Map(experiment),
+		}
+		if err := m.createMutationEvent(ctx, tx, event); err != nil {
+			return fmt.Errorf("unable to create mutation for experiment: %v", err)
+		}
+		return nil
+	})
+	return result, err
 }
 
 func (m *MySqlStorage) CreateCheckpoint(
@@ -471,4 +495,29 @@ func (m *MySqlStorage) ListMetadata(ctx context.Context, parentId string) ([]*Me
 		return nil
 	})
 	return meta, err
+}
+
+func (m *MySqlStorage) createMutationEvent(ctx context.Context, tx *sqlx.Tx, event *MutationEventSchema) error {
+	_, err := tx.NamedExec(EVENT_CREATE, event)
+	return err
+}
+
+func (m *MySqlStorage) ListChanges(ctx context.Context, namespace string, since time.Time) ([]*ChangeEvent, error) {
+	rows := []MutationEventSchema{}
+	if err := m.db.Select(&rows, EVENT_NS_LIST, namespace, since.Unix()); err != nil {
+		return nil, fmt.Errorf("unable to list mutation events: %v", err)
+	}
+
+	result := make([]*ChangeEvent, len(rows))
+	for i, row := range rows {
+		result[i] = &ChangeEvent{
+			ObjectId:   row.ObjectId,
+			ObjectType: row.ObjectType,
+			Action:     row.Action,
+			Payload:    row.Payload,
+			Time:       time.Unix(int64(row.MutationTime), 0),
+			Namespace:  row.Namespace,
+		}
+	}
+	return result, nil
 }

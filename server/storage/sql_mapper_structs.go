@@ -1,7 +1,9 @@
 package storage
 
 import (
+	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx/types"
@@ -248,4 +250,30 @@ func toMetadataSchema(m *Metadata) (*MetadataSchema, error) {
 		ParentId: m.ParentId,
 		Metadata: b,
 	}, nil
+}
+
+type SerializablePayload map[string]interface{}
+
+func (s SerializablePayload) Value() (driver.Value, error) {
+	return json.Marshal(s)
+}
+
+func (s *SerializablePayload) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &s)
+}
+
+type MutationEventSchema struct {
+	MutationId   uint64 `db:"mutation_id"`
+	MutationTime uint64 `db:"mutation_time"`
+	Action       string
+	ObjectId     string `db:"object_id"`
+	ObjectType   string `db:"object_type"`
+	ParentId     string `db:"parent_id"`
+	Namespace    string
+	Payload      SerializablePayload
 }

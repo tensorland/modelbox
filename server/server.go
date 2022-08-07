@@ -412,6 +412,39 @@ func (s *GrpcServer) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) 
 	return &pb.GetMetricsResponse{Metrics: protoMetrics}, nil
 }
 
+func (s *GrpcServer) WatchNamespace(
+	req *pb.WatchNamespaceRequest,
+	stream pb.ModelStore_WatchNamespaceServer,
+) error {
+	since := time.Now()
+	var pushTicker <-chan time.Time
+	pushTicker = time.After(0)
+	for {
+		select {
+		case <-pushTicker:
+			changes, err := s.metadataStorage.ListChanges(stream.Context(), req.Namespace, since)
+			since = time.Now()
+			if err != nil {
+				return fmt.Errorf("unable to list changes: %v", err)
+			}
+			for _, change := range changes {
+				val, err := structpb.NewValue(change.Payload)
+				if err != nil {
+					return fmt.Errorf("unable to create proto value: %v", err)
+				}
+				resp := &pb.WatchNamespaceResponse{
+					Event:   pb.ServerEvent_OBJECT_CREATED,
+					Payload: val,
+				}
+				stream.Send(resp)
+			}
+			pushTicker = time.After(5 * time.Second)
+		case <-stream.Context().Done():
+			return nil
+		}
+	}
+}
+
 func NewGrpcServer(
 	metadatStorage storage.MetadataStorage,
 	blobStorageBuilder storage.BlobStorageBuilder,

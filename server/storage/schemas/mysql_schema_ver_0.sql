@@ -63,3 +63,14 @@ CREATE TABLE IF NOT EXISTS metadata (
    parent_id VARCHAR(40),
    metadata JSON
 );
+
+CREATE TABLE IF NOT EXISTS mutation_events (
+   mutation_id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+   mutation_time BIGINT,
+   action VARCHAR(20),
+   object_id VARCHAR(40),
+   object_type VARCHAR(20),
+   parent_id VARCHAR(40),
+   namespace VARCHAR(40),
+   payload JSON
+);

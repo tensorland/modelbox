@@ -53,6 +53,7 @@ type ModelStoreClient interface {
 	TrackArtifacts(ctx context.Context, in *TrackArtifactsRequest, opts ...grpc.CallOption) (*TrackArtifactsResponse, error)
 	LogMetrics(ctx context.Context, in *LogMetricsRequest, opts ...grpc.CallOption) (*LogMetricsResponse, error)
 	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
+	WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error)
 }
 
 type modelStoreClient struct {
@@ -255,6 +256,38 @@ func (c *modelStoreClient) GetMetrics(ctx context.Context, in *GetMetricsRequest
 	return out, nil
 }
 
+func (c *modelStoreClient) WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ModelStore_ServiceDesc.Streams[2], "/modelbox.ModelStore/WatchNamespace", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &modelStoreWatchNamespaceClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type ModelStore_WatchNamespaceClient interface {
+	Recv() (*WatchNamespaceResponse, error)
+	grpc.ClientStream
+}
+
+type modelStoreWatchNamespaceClient struct {
+	grpc.ClientStream
+}
+
+func (x *modelStoreWatchNamespaceClient) Recv() (*WatchNamespaceResponse, error) {
+	m := new(WatchNamespaceResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // ModelStoreServer is the server API for ModelStore service.
 // All implementations must embed UnimplementedModelStoreServer
 // for forward compatibility
@@ -290,6 +323,7 @@ type ModelStoreServer interface {
 	TrackArtifacts(context.Context, *TrackArtifactsRequest) (*TrackArtifactsResponse, error)
 	LogMetrics(context.Context, *LogMetricsRequest) (*LogMetricsResponse, error)
 	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
+	WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error
 	mustEmbedUnimplementedModelStoreServer()
 }
 
@@ -344,6 +378,9 @@ func (UnimplementedModelStoreServer) LogMetrics(context.Context, *LogMetricsRequ
 }
 func (UnimplementedModelStoreServer) GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMetrics not implemented")
+}
+func (UnimplementedModelStoreServer) WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error {
+	return status.Errorf(codes.Unimplemented, "method WatchNamespace not implemented")
 }
 func (UnimplementedModelStoreServer) mustEmbedUnimplementedModelStoreServer() {}
 
@@ -657,6 +694,27 @@ func _ModelStore_GetMetrics_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModelStore_WatchNamespace_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(WatchNamespaceRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(ModelStoreServer).WatchNamespace(m, &modelStoreWatchNamespaceServer{stream})
+}
+
+type ModelStore_WatchNamespaceServer interface {
+	Send(*WatchNamespaceResponse) error
+	grpc.ServerStream
+}
+
+type modelStoreWatchNamespaceServer struct {
+	grpc.ServerStream
+}
+
+func (x *modelStoreWatchNamespaceServer) Send(m *WatchNamespaceResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // ModelStore_ServiceDesc is the grpc.ServiceDesc for ModelStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -730,6 +788,11 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "DownloadFile",
 			Handler:       _ModelStore_DownloadFile_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "WatchNamespace",
+			Handler:       _ModelStore_WatchNamespace_Handler,
 			ServerStreams: true,
 		},
 	},

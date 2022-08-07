@@ -2,8 +2,12 @@ package storage
 
 import (
 	"context"
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
+	"time"
 
+	"github.com/fatih/structs"
 	"github.com/ugorji/go/codec"
 	bolt "go.etcd.io/bbolt"
 	"go.uber.org/zap"
@@ -16,7 +20,15 @@ var (
 	MODEL_VERSIONS = []byte("model_versions")
 	FILES          = []byte("files")
 	METADATA       = []byte("metadata")
+	MUTATIONS      = []byte("mutations")
 )
+
+// itob returns an 8-byte big endian representation of v.
+func itob(v int) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(v))
+	return b
+}
 
 type EphemeralStorage struct {
 	db *bolt.DB
@@ -61,7 +73,15 @@ func (e *EphemeralStorage) Close() error {
 
 func (e *EphemeralStorage) CreateExperiment(_ context.Context, experiment *Experiment) (*CreateExperimentResult, error) {
 	id := experiment.Hash()
-	if err := e.writeBytes(experiment, id, EXPERIMENTS); err != nil {
+	event := &ChangeEvent{
+		ObjectId:   experiment.Id,
+		ObjectType: "experiment",
+		Action:     "create",
+		Time:       time.Now(),
+		Payload:    structs.Map(experiment),
+		Namespace:  experiment.Namespace,
+	}
+	if err := e.writeBytes(experiment, id, EXPERIMENTS, event); err != nil {
 		return nil, err
 	}
 	result := CreateExperimentResult{
@@ -104,7 +124,7 @@ func (e *EphemeralStorage) ListExperiments(_ context.Context, namespace string) 
 }
 
 func (e *EphemeralStorage) CreateCheckpoint(_ context.Context, checkpoint *Checkpoint) (*CreateCheckpointResult, error) {
-	if err := e.writeBytes(checkpoint, checkpoint.Id, CHECKPOINTS); err != nil {
+	if err := e.writeBytes(checkpoint, checkpoint.Id, CHECKPOINTS, nil); err != nil {
 		return nil, err
 	}
 
@@ -133,7 +153,7 @@ func (e *EphemeralStorage) ListCheckpoints(_ context.Context, experimentId strin
 	return checkpoints, err
 }
 
-func (e *EphemeralStorage) writeBytes(obj interface{}, id string, bucket []byte) error {
+func (e *EphemeralStorage) writeBytes(obj interface{}, id string, bucket []byte, mutation *ChangeEvent) error {
 	var encodedBytes []byte
 	encoder := codec.NewEncoderBytes(&encodedBytes, new(codec.MsgpackHandle))
 	if err := encoder.Encode(obj); err != nil {
@@ -145,6 +165,21 @@ func (e *EphemeralStorage) writeBytes(obj interface{}, id string, bucket []byte)
 			return err
 		}
 		bucket.Put([]byte(id), encodedBytes)
+		b, err := tx.CreateBucketIfNotExists([]byte(MUTATIONS))
+		if err != nil {
+			return err
+		}
+		if mutation != nil {
+			mutationId, err := b.NextSequence()
+			if err != nil {
+				return err
+			}
+			val, err := mutation.json()
+			if err != nil {
+				return fmt.Errorf("unable to convert change event to json: %v", err)
+			}
+			b.Put(itob(int(mutationId)), val)
+		}
 		return nil
 	})
 	return err
@@ -168,7 +203,7 @@ func (e *EphemeralStorage) GetCheckpoint(_ context.Context, id string) (*Checkpo
 }
 
 func (e *EphemeralStorage) CreateModel(_ context.Context, model *Model) (*CreateModelResult, error) {
-	return &CreateModelResult{ModelId: model.Id}, e.writeBytes(model, model.Id, MODELS)
+	return &CreateModelResult{ModelId: model.Id}, e.writeBytes(model, model.Id, MODELS, nil)
 }
 
 func (e *EphemeralStorage) GetModel(_ context.Context, id string) (*Model, error) {
@@ -208,7 +243,7 @@ func (e *EphemeralStorage) ListModels(_ context.Context, namespace string) ([]*M
 }
 
 func (e *EphemeralStorage) CreateModelVersion(_ context.Context, modelVersion *ModelVersion) (*CreateModelVersionResult, error) {
-	return &CreateModelVersionResult{ModelVersionId: modelVersion.Id}, e.writeBytes(modelVersion, modelVersion.Id, MODEL_VERSIONS)
+	return &CreateModelVersionResult{ModelVersionId: modelVersion.Id}, e.writeBytes(modelVersion, modelVersion.Id, MODEL_VERSIONS, nil)
 }
 
 func (e *EphemeralStorage) GetModelVersion(ctx context.Context, id string) (*ModelVersion, error) {
@@ -224,7 +259,7 @@ func (e *EphemeralStorage) GetModelVersion(ctx context.Context, id string) (*Mod
 
 func (e *EphemeralStorage) WriteFiles(_ context.Context, files FileSet) error {
 	for _, file := range files {
-		if err := e.writeBytes(file, file.Id, FILES); err != nil {
+		if err := e.writeBytes(file, file.Id, FILES, nil); err != nil {
 			return err
 		}
 	}
@@ -288,7 +323,7 @@ func (e *EphemeralStorage) GetFile(ctx context.Context, id string) (*FileMetadat
 
 func (e *EphemeralStorage) UpdateMetadata(_ context.Context, metadataList []*Metadata) error {
 	for _, m := range metadataList {
-		if err := e.writeBytes(m, m.Id, METADATA); err != nil {
+		if err := e.writeBytes(m, m.Id, METADATA, nil); err != nil {
 			return err
 		}
 	}
@@ -314,4 +349,23 @@ func (e *EphemeralStorage) ListMetadata(ctx context.Context, parentId string) ([
 		return nil
 	})
 	return metadataList, err
+}
+
+func (e *EphemeralStorage) ListChanges(ctx context.Context, namespace string, since time.Time) ([]*ChangeEvent, error) {
+	events := []*ChangeEvent{}
+	err := e.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(MUTATIONS)
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var changeEvent ChangeEvent
+			if err := json.Unmarshal(v, &changeEvent); err != nil {
+				return fmt.Errorf("unable to decode change event: %v", err)
+			}
+			if changeEvent.Namespace == namespace && changeEvent.Time.After(since) {
+				events = append(events, &changeEvent)
+			}
+		}
+		return nil
+	})
+	return events, err
 }

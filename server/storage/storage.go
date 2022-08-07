@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash"
 	"io"
@@ -16,6 +17,19 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+type ChangeEvent struct {
+	ObjectId   string
+	Time       time.Time
+	ObjectType string
+	Action     string
+	Namespace  string
+	Payload    map[string]interface{}
+}
+
+func (ce *ChangeEvent) json() ([]byte, error) {
+	return json.Marshal(ce)
+}
 
 type FloatLog struct {
 	Value     float32
@@ -335,18 +349,24 @@ func NewExperiment(
 	return experiment
 }
 
-func (e *Experiment) SerialializeMeta() (string, error) {
-	b, err := json.Marshal(e.Meta)
-	if err != nil {
-		return "", err
-	}
-	return string(b), nil
-}
 func (e *Experiment) Hash() string {
 	h := sha1.New()
 	hashString(h, e.Name)
 	hashString(h, e.Namespace)
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func (e Experiment) Value() (driver.Value, error) {
+	return json.Marshal(e)
+}
+
+func (a *Experiment) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &a)
 }
 
 type Checkpoint struct {
@@ -559,6 +579,8 @@ type MetadataStorage interface {
 	UpdateMetadata(context.Context, []*Metadata) error
 
 	ListMetadata(ctx context.Context, parentId string) ([]*Metadata, error)
+
+	ListChanges(ctx context.Context, namespace string, since time.Time) ([]*ChangeEvent, error)
 
 	Close() error
 }

@@ -83,15 +83,8 @@ enum ServerEvent {
 
 message WatchNamespaceResponse {
   ServerEvent event = 1;
-  oneof updated_object {
-    Experiment experiment = 2;
 
-    Model model = 3;
-
-    Checkpoint checkpoint = 4;
-
-    ModelVersion model_version = 5;
-  }
+  google.protobuf.Value payload = 2;
 }
 
 // Metrics contain the metric values for a given key

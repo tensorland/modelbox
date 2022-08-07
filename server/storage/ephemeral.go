@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/fatih/structs"
 	"github.com/ugorji/go/codec"
 	bolt "go.etcd.io/bbolt"
 	"go.uber.org/zap"
@@ -77,7 +78,7 @@ func (e *EphemeralStorage) CreateExperiment(_ context.Context, experiment *Exper
 		ObjectType: "experiment",
 		Action:     "create",
 		Time:       time.Now(),
-		Payload:    experiment,
+		Payload:    structs.Map(experiment),
 		Namespace:  experiment.Namespace,
 	}
 	if err := e.writeBytes(experiment, id, EXPERIMENTS, event); err != nil {

@@ -13,6 +13,7 @@ import (
 	"github.com/diptanu/modelbox/server/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 func MLFrameworkProtoFromStr(framework string) proto.MLFramework {
@@ -41,6 +42,11 @@ type FileUploadResponse struct {
 
 type CreateModelApiResponse struct {
 	Id string
+}
+
+type ChangeStreamEventResponse struct {
+	Event   uint8
+	PayLoad *structpb.Value
 }
 
 type ModelBoxClient struct {
@@ -258,4 +264,32 @@ func (m *ModelBoxClient) getChecksum(path string) (string, error) {
 		return "", fmt.Errorf("error reading file while calculating checksum: %v", err)
 	}
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+func (m *ModelBoxClient) StremChangeEvents(namespace string, cb func(*ChangeStreamEventResponse) error) error {
+	req := &proto.WatchNamespaceRequest{
+		Namespace: namespace,
+		Since:     uint64(time.Now().Unix()),
+	}
+
+	resp, err := m.client.WatchNamespace(context.Background(), req)
+	if err != nil {
+		return fmt.Errorf("unable to request change events: %v", err)
+	}
+	for {
+		resp, err := resp.Recv()
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return fmt.Errorf("stream closed with error: %v", err)
+		}
+		streamEvent := &ChangeStreamEventResponse{
+			Event:   1,
+			PayLoad: resp.Payload,
+		}
+		if err := cb(streamEvent); err != nil {
+			return fmt.Errorf("cb error: %v", err)
+		}
+	}
 }

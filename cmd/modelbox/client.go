@@ -30,10 +30,30 @@ is created in the current directory. Help:
 	},
 }
 
+var watchCmd = &cobra.Command{
+	Use:   "watch",
+	Short: "Creates a sample client config",
+	Long: `Creates a sample client config. By default the config
+is created in the current directory. Help:
+./modelbox client --init-config path/to/new/config`,
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := NewClientUi(ConfigPath)
+		if err != nil {
+			zap.L().Sugar().Panicf("unable to create client from config: %v ", err)
+		}
+		if err := client.WatchNamespace(namespace); err != nil {
+			zap.L().Sugar().Errorf("unable to stream events: %v", err)
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(clientCmd)
 	clientCmd.AddCommand(clientInitConfigCmd)
 	clientInitConfigCmd.Flags().String("path", "./modelbox_client.toml", "path to write the client config")
+
+	clientCmd.AddCommand(watchCmd)
+	watchCmd.Flags().StringVar(&namespace, "namespace", "", "namespace to watch")
 
 	// Initialize logger for the client
 	logger, _ := zap.NewProduction()

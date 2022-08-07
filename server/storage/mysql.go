@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/VividCortex/mysqlerr"
+	"github.com/fatih/structs"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 
@@ -86,11 +87,11 @@ func (m *MySqlStorage) CreateExperiment(
 		if err != nil {
 			if m.isDuplicateError(err) {
 				result.Exists = true
-				goto insert_event
+				result.ExperimentId = experiment.Id
+				return nil
 			}
 			return fmt.Errorf("unable to write experiment to db: %v", err)
 		}
-	insert_event:
 		result.ExperimentId = experiment.Id
 		event := &MutationEventSchema{
 			MutationTime: uint64(time.Now().Unix()),
@@ -98,7 +99,7 @@ func (m *MySqlStorage) CreateExperiment(
 			ObjectType:   "experiment",
 			ObjectId:     experiment.Id,
 			Namespace:    experiment.Namespace,
-			Payload:      experiment,
+			Payload:      structs.Map(experiment),
 		}
 		if err := m.createMutationEvent(ctx, tx, event); err != nil {
 			return fmt.Errorf("unable to create mutation for experiment: %v", err)
@@ -507,7 +508,6 @@ func (m *MySqlStorage) ListChanges(ctx context.Context, namespace string, since 
 		return nil, fmt.Errorf("unable to list mutation events: %v", err)
 	}
 
-	fmt.Println("Diptanu herere ", len(rows))
 	result := make([]*ChangeEvent, len(rows))
 	for i, row := range rows {
 		result[i] = &ChangeEvent{

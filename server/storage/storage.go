@@ -24,7 +24,7 @@ type ChangeEvent struct {
 	ObjectType string
 	Action     string
 	Namespace  string
-	Payload    interface{}
+	Payload    map[string]interface{}
 }
 
 func (ce *ChangeEvent) json() ([]byte, error) {

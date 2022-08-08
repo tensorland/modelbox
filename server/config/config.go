@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/BurntSushi/toml"
 )
@@ -30,6 +30,7 @@ type ServerConfig struct {
 	FileStorage       *FileStorageConfig       `toml:"blob_storage_filesystem"`
 	IntegratedStorage *IntegratedStorageConfig `toml:"metadata_storage_integrated"`
 	MySQLConfig       *MySQLConfig             `toml:"metadata_storage_mysql"`
+	PromAddr          string                   `toml:"prometheus_addr"`
 }
 
 // Merges empty values of itself with non-empty values of anotherConfig
@@ -44,6 +45,9 @@ func (c *ServerConfig) Merge(anotherConfig *ServerConfig) {
 
 	if c.ListenAddr == "" {
 		c.ListenAddr = anotherConfig.ListenAddr
+	}
+	if c.PromAddr == "" {
+		c.PromAddr = anotherConfig.PromAddr
 	}
 }
 
@@ -64,6 +68,7 @@ func defaultServerConfig() *ServerConfig {
 		StorageBackend:  "file",
 		MetadataBackend: "integrated",
 		ListenAddr:      ":8080",
+		PromAddr:        ":2112",
 	}
 }
 
@@ -77,7 +82,7 @@ type LoggingConfig struct {
 }
 
 func NewServerConfig(path string) (*ServerConfig, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't read server config: %v", err)
 	}

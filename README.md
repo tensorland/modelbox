@@ -159,8 +159,6 @@ cd client-py
 pip install .
 ```
 
-## Logging
-TODO
-
 ## Monitoring
-TODO
+Metrics on the metadata server is exposed by the `/metrics` endpoint and can be collected by a Prometheus collector.
+The default port for the endpoint is `:2112` and can be configured in the server config.

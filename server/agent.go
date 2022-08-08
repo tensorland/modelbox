@@ -14,6 +14,7 @@ import (
 
 type Agent struct {
 	grpcServer *GrpcServer
+	promServer *PromServer
 	storage    storage.MetadataStorage
 	ShutdownCh <-chan struct{}
 
@@ -25,6 +26,10 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to listen on interface: %v", err)
 	}
+	pSrvr, err := NewPromServer(config, logger)
+	if err != nil {
+		return nil, err
+	}
 	metadataStorage, err := storage.NewMetadataStorage(config, logger)
 	if err != nil {
 		return nil, err
@@ -35,10 +40,16 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	}
 	logger.Sugar().Infof("using storage backend: %v", metadataStorage.Backend())
 	server := NewGrpcServer(metadataStorage, fileStorageBuilder, lis, logger)
-	return &Agent{grpcServer: server, storage: metadataStorage, logger: logger}, nil
+	return &Agent{
+		grpcServer: server,
+		storage:    metadataStorage,
+		logger:     logger,
+		promServer: pSrvr,
+	}, nil
 }
 
 func (a *Agent) StartAndBlock() (int, error) {
+	go a.promServer.Start()
 	go a.grpcServer.Start()
 	return a.handleSignals(), nil
 }
@@ -66,6 +77,8 @@ WAIT:
 		// TODO Handle reloading config
 		goto WAIT
 	}
+
+	a.promServer.Stop()
 
 	// Stop grpc server
 	a.grpcServer.Stop()

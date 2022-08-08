@@ -7,6 +7,7 @@ require (
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/fatih/structs v1.1.0
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/prometheus/client_golang v1.13.0

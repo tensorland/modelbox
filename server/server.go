@@ -10,6 +10,7 @@ import (
 
 	pb "github.com/diptanu/modelbox/client-go/proto"
 	"github.com/diptanu/modelbox/server/storage"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -451,7 +452,10 @@ func NewGrpcServer(
 	lis net.Listener,
 	logger *zap.Logger,
 ) *GrpcServer {
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
+		grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
+	)
 	modelBoxServer := &GrpcServer{
 		metadataStorage:    metadatStorage,
 		experimentLogger:   storage.NewInMemoryExperimentLogger(),

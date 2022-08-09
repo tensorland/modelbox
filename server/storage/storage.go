@@ -572,10 +572,6 @@ type MetadataStorage interface {
 
 	GetFile(ctx context.Context, id string) (*FileMetadata, error)
 
-	UpdateBlobPath(ctx context.Context, path string, parentId string, t FileMIMEType) error
-
-	DeleteExperiment(ctx context.Context, id string) error
-
 	UpdateMetadata(context.Context, []*Metadata) error
 
 	ListMetadata(ctx context.Context, parentId string) ([]*Metadata, error)

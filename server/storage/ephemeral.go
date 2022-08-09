@@ -299,14 +299,6 @@ func (e *EphemeralStorage) Backend() *BackendInfo {
 	return &BackendInfo{Name: "boltdb"}
 }
 
-func (e *EphemeralStorage) UpdateBlobPath(_ context.Context, path string, parentId string, t FileMIMEType) error {
-	return nil
-}
-
-func (e *EphemeralStorage) DeleteExperiment(_ context.Context, id string) error {
-	return nil
-}
-
 func (e *EphemeralStorage) GetFile(ctx context.Context, id string) (*FileMetadata, error) {
 	file := FileMetadata{}
 	err := e.db.View(func(tx *bolt.Tx) error {

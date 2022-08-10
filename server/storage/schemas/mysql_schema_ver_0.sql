@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS experiments (
    owner VARCHAR(30),
    namespace VARCHAR(50),
    ml_framework INT,
-   metadata JSON,
    created_at BIGINT,
    updated_at BIGINT 
 );
@@ -22,7 +21,6 @@ CREATE TABLE IF NOT EXISTS checkpoints (
    experiment VARCHAR(40),
    epoch int,
    metrics JSON,
-   metadata JSON,
    created_at BIGINT,
    updated_at BIGINT 
 );
@@ -33,7 +31,6 @@ CREATE TABLE IF NOT EXISTS models (
    owner  VARCHAR(30),
    namespace VARCHAR(50),
    task VARCHAR(20),
-   metadata JSON,
    description TEXT,
    created_at BIGINT,
    updated_at BIGINT
@@ -46,7 +43,6 @@ CREATE TABLE IF NOT EXISTS model_versions (
    version VARCHAR(5),
    description TEXT,
    ml_framework INT,
-   metadata JSON,
    unique_tags JSON,
    created_at BIGINT,
    updated_at BIGINT

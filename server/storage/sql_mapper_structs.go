@@ -15,10 +15,9 @@ type ModelSchema struct {
 	Owner     string
 	Namespace string
 	Task      string
-	Meta      SerializableMeta `db:"metadata"`
-	Desc      string           `db:"description"`
-	CreatedAt int64            `db:"created_at"`
-	UpdatedAt int64            `db:"updated_at"`
+	Desc      string `db:"description"`
+	CreatedAt int64  `db:"created_at"`
+	UpdatedAt int64  `db:"updated_at"`
 }
 
 func (m *ModelSchema) ToModel(files FileSet) *Model {
@@ -28,7 +27,6 @@ func (m *ModelSchema) ToModel(files FileSet) *Model {
 		Owner:       m.Owner,
 		Namespace:   m.Namespace,
 		Task:        m.Task,
-		Meta:        m.Meta,
 		Description: m.Desc,
 		Files:       []*FileMetadata{},
 		CreatedAt:   m.CreatedAt,
@@ -47,7 +45,6 @@ func ModelToSchema(m *Model) *ModelSchema {
 		Owner:     m.Owner,
 		Namespace: m.Namespace,
 		Task:      m.Task,
-		Meta:      m.Meta,
 		Desc:      m.Description,
 		CreatedAt: m.CreatedAt,
 		UpdatedAt: m.UpdatedAt,
@@ -61,7 +58,6 @@ type ModelVersionSchema struct {
 	Version    string
 	Desc       string           `db:"description"`
 	Framework  int8             `db:"ml_framework"`
-	Meta       SerializableMeta `db:"metadata"`
 	UniqueTags SerializableTags `db:"unique_tags"`
 	Tags       SerializableTags `db:"tags"`
 	CreatedAt  int64            `db:"created_at"`
@@ -76,7 +72,6 @@ func (m *ModelVersionSchema) ToModelVersion(files FileSet) *ModelVersion {
 		Version:     m.Version,
 		Description: m.Desc,
 		Framework:   MLFramework(m.Framework),
-		Meta:        m.Meta,
 		Files:       files,
 		UniqueTags:  m.UniqueTags,
 		CreatedAt:   m.CreatedAt,
@@ -93,7 +88,6 @@ func ModelVersionToSchema(mv *ModelVersion) *ModelVersionSchema {
 		Version:    mv.Version,
 		Desc:       mv.Description,
 		Framework:  int8(mv.Framework),
-		Meta:       mv.Meta,
 		UniqueTags: mv.UniqueTags,
 		CreatedAt:  mv.CreatedAt,
 		UpdatedAt:  mv.UpdatedAt,
@@ -149,10 +143,9 @@ type ExperimentSchema struct {
 	Name      string
 	Owner     string
 	Namespace string
-	Framework uint8            `db:"ml_framework"`
-	Meta      SerializableMeta `db:"metadata"`
-	CreatedAt int64            `db:"created_at"`
-	UpdatedAt int64            `db:"updated_at"`
+	Framework uint8 `db:"ml_framework"`
+	CreatedAt int64 `db:"created_at"`
+	UpdatedAt int64 `db:"updated_at"`
 }
 
 func (e *ExperimentSchema) ToExperiment() *Experiment {
@@ -163,7 +156,6 @@ func (e *ExperimentSchema) ToExperiment() *Experiment {
 		Namespace:  e.Namespace,
 		ExternalId: e.ExternId,
 		Framework:  MLFramework(e.Framework),
-		Meta:       e.Meta,
 		Exists:     false,
 		CreatedAt:  e.CreatedAt,
 		UpdatedAt:  e.UpdatedAt,
@@ -178,7 +170,6 @@ func FromExperimentToSchema(experiment *Experiment) *ExperimentSchema {
 		Owner:     experiment.Owner,
 		Namespace: experiment.Namespace,
 		Framework: uint8(experiment.Framework),
-		Meta:      experiment.Meta,
 		CreatedAt: experiment.CreatedAt,
 		UpdatedAt: experiment.UpdatedAt,
 	}
@@ -189,9 +180,8 @@ type CheckpointSchema struct {
 	Experiment string
 	Epoch      uint64
 	Metrics    SerializableMetrics
-	Meta       SerializableMeta `db:"metadata"`
-	CreatedAt  int64            `db:"created_at"`
-	UpdatedAt  int64            `db:"updated_at"`
+	CreatedAt  int64 `db:"created_at"`
+	UpdatedAt  int64 `db:"updated_at"`
 }
 
 func (c *CheckpointSchema) ToCheckpoint(files FileSet) *Checkpoint {
@@ -200,7 +190,6 @@ func (c *CheckpointSchema) ToCheckpoint(files FileSet) *Checkpoint {
 		ExperimentId: c.Experiment,
 		Epoch:        c.Epoch,
 		Files:        files,
-		Meta:         c.Meta,
 		Metrics:      c.Metrics,
 		CreatedAt:    c.CreatedAt,
 		UpdtedAt:     c.UpdatedAt,
@@ -213,7 +202,6 @@ func ToCheckpointSchema(c *Checkpoint) *CheckpointSchema {
 		Experiment: c.ExperimentId,
 		Epoch:      c.Epoch,
 		Metrics:    c.Metrics,
-		Meta:       c.Meta,
 		CreatedAt:  c.CreatedAt,
 		UpdatedAt:  c.UpdtedAt,
 	}

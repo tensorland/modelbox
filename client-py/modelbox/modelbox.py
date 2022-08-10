@@ -139,7 +139,7 @@ class Model:
     namespace: str
     task: str
     description: str
-    metadata: str
+    metadata: Dict 
     artifacts: List[Artifact]
 
 
@@ -195,7 +195,6 @@ class ModelBoxClient:
             namespace=namespace,
             task=task,
             description=description,
-            metadata=metadata,
         )
         response = self._client.CreateModel(req)
         return Model(
@@ -226,7 +225,7 @@ class ModelBoxClient:
                     namespace=m.namespace,
                     task=m.task,
                     description=m.description,
-                    metadata=m.metadata,
+                    metadata={}, #TODO Fix this when we pull meta from top level objects 
                     artifacts=artifacts,
                 )
             )
@@ -249,7 +248,6 @@ class ModelBoxClient:
             version=version,
             description=description,
             files=files,
-            metadata=metadata,
             framework=framework,
             unique_tags=unique_tags,
         )

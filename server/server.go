@@ -40,7 +40,6 @@ func (s *GrpcServer) CreateModel(
 		req.Namespace,
 		req.Task,
 		req.Description,
-		req.Metadata,
 	)
 	model.SetFiles(storage.NewFileSetFromProto(req.Files))
 	if _, err := s.metadataStorage.CreateModel(ctx, model); err != nil {
@@ -59,7 +58,6 @@ func (s *GrpcServer) CreateModelVersion(
 		req.Version,
 		req.Description,
 		storage.MLFramework(req.Framework),
-		req.Metadata,
 		storage.NewFileSetFromProto(req.Files),
 		req.UniqueTags,
 	)
@@ -93,7 +91,6 @@ func (s *GrpcServer) ListModels(ctx context.Context,
 			Namespace:   m.Namespace,
 			Task:        m.Task,
 			Description: m.Description,
-			Metadata:    m.Meta,
 			Files:       m.Files.ToProto(),
 		}
 	}
@@ -112,7 +109,6 @@ func (s *GrpcServer) CreateExperiment(
 		req.Namespace,
 		req.ExternalId,
 		fwk,
-		req.Metadata,
 	)
 	result, err := s.metadataStorage.CreateExperiment(ctx, experiment)
 	if err != nil {
@@ -155,7 +151,6 @@ func (s *GrpcServer) CreateCheckpoint(
 	checkpoint := storage.NewCheckpoint(
 		req.ExperimentId,
 		req.Epoch,
-		req.Metadata,
 		req.Metrics,
 	)
 	checkpoint.SetFiles(storage.NewFileSetFromProto(req.Files))
@@ -194,7 +189,6 @@ func (s *GrpcServer) ListCheckpoints(
 			Epoch:        p.Epoch,
 			Files:        apiFiles,
 			Metrics:      p.Metrics,
-			Metadata:     p.Meta,
 			CreatedAt:    timestamppb.New(time.Unix(p.CreatedAt, 0)),
 			UpdatedAt:    timestamppb.New(time.Unix(p.UpdtedAt, 0)),
 		}
@@ -370,7 +364,6 @@ func (s *GrpcServer) GetCheckpoint(ctx context.Context, req *pb.GetCheckpointReq
 			Epoch:        chk.Epoch,
 			ExperimentId: chk.ExperimentId,
 			Metrics:      chk.Metrics,
-			Metadata:     chk.Meta,
 			CreatedAt:    &timestamppb.Timestamp{},
 			UpdatedAt:    &timestamppb.Timestamp{},
 		},

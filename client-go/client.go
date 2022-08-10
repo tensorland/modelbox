@@ -104,7 +104,6 @@ func (m *ModelBoxClient) CreateModel(name, owner, namespace, task, description s
 		Namespace:   namespace,
 		Task:        task,
 		Description: description,
-		Metadata:    metadata,
 		Files:       files,
 	}
 

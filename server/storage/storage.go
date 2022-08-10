@@ -90,25 +90,6 @@ func NewMetadata(parentId string, k string, v interface{}) *Metadata {
 	return &m
 }
 
-type SerializableMeta map[string]string
-
-func (s *SerializableMeta) Scan(val interface{}) error {
-	switch v := val.(type) {
-	case []byte:
-		json.Unmarshal(v, &s)
-		return nil
-	case string:
-		json.Unmarshal([]byte(v), &s)
-		return nil
-	default:
-		return fmt.Errorf("unsupported type: %v", v)
-	}
-}
-
-func (s SerializableMeta) Value() (driver.Value, error) {
-	return json.Marshal(s)
-}
-
 type SerializableTags []string
 
 func (s *SerializableTags) Scan(val interface{}) error {
@@ -323,7 +304,6 @@ type Experiment struct {
 	Namespace  string
 	ExternalId string
 	Framework  MLFramework
-	Meta       SerializableMeta
 	Exists     bool
 	CreatedAt  int64
 	UpdatedAt  int64
@@ -332,7 +312,6 @@ type Experiment struct {
 func NewExperiment(
 	name, owner, namespace, externId string,
 	fwk MLFramework,
-	meta map[string]string,
 ) *Experiment {
 	currentTime := time.Now().Unix()
 	experiment := &Experiment{
@@ -341,7 +320,6 @@ func NewExperiment(
 		ExternalId: externId,
 		Namespace:  namespace,
 		Framework:  fwk,
-		Meta:       meta,
 		CreatedAt:  currentTime,
 		UpdatedAt:  currentTime,
 	}
@@ -374,7 +352,6 @@ type Checkpoint struct {
 	ExperimentId string
 	Epoch        uint64
 	Files        FileSet
-	Meta         SerializableMeta
 	Metrics      SerializableMetrics
 	CreatedAt    int64
 	UpdtedAt     int64
@@ -383,13 +360,11 @@ type Checkpoint struct {
 func NewCheckpoint(
 	experimentId string,
 	epoch uint64,
-	meta map[string]string,
 	metrics map[string]float32) *Checkpoint {
 	currentTime := time.Now().Unix()
 	chk := &Checkpoint{
 		ExperimentId: experimentId,
 		Epoch:        epoch,
-		Meta:         meta,
 		Metrics:      metrics,
 		CreatedAt:    currentTime,
 		UpdtedAt:     currentTime,
@@ -422,15 +397,13 @@ type Model struct {
 	Owner       string
 	Namespace   string
 	Task        string
-	Meta        SerializableMeta
 	Description string
 	Files       FileSet
 	CreatedAt   int64
 	UpdatedAt   int64
 }
 
-func NewModel(name, owner, namespace, task, description string,
-	meta map[string]string) *Model {
+func NewModel(name, owner, namespace, task, description string) *Model {
 	currentTime := time.Now().Unix()
 	model := &Model{
 		Name:        name,
@@ -438,7 +411,6 @@ func NewModel(name, owner, namespace, task, description string,
 		Namespace:   namespace,
 		Task:        task,
 		Description: description,
-		Meta:        meta,
 		CreatedAt:   currentTime,
 		UpdatedAt:   currentTime,
 	}
@@ -464,7 +436,6 @@ type ModelVersion struct {
 	Version     string
 	Description string
 	Framework   MLFramework
-	Meta        SerializableMeta
 	Files       FileSet
 	UniqueTags  SerializableTags
 	CreatedAt   int64
@@ -473,7 +444,6 @@ type ModelVersion struct {
 
 func NewModelVersion(name, model, version, description string,
 	framework MLFramework,
-	meta map[string]string,
 	files []*FileMetadata,
 	uniqueTags []string) *ModelVersion {
 	currentTime := time.Now().Unix()
@@ -483,7 +453,6 @@ func NewModelVersion(name, model, version, description string,
 		Version:     version,
 		Description: description,
 		Framework:   framework,
-		Meta:        meta,
 		Files:       files,
 		UniqueTags:  uniqueTags,
 		CreatedAt:   currentTime,

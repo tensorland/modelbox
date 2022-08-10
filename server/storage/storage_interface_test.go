@@ -25,8 +25,7 @@ type StorageInterfaceTestSuite struct {
 func (s *StorageInterfaceTestSuite) TestCreateExperiment() {
 	since := time.Now()
 	ctx := context.Background()
-	meta := SerializableMeta(map[string]string{"foo": "bar"})
-	e := NewExperiment(MODEL_NAME, OWNER, NAMESPACE, "xyz", Pytorch, meta)
+	e := NewExperiment(MODEL_NAME, OWNER, NAMESPACE, "xyz", Pytorch)
 	_, err := s.storageIf.CreateExperiment(context.Background(), e)
 	assert.Nil(s.t, err)
 	experiments, err := s.storageIf.ListExperiments(context.Background(), e.Namespace)
@@ -44,10 +43,9 @@ func (s *StorageInterfaceTestSuite) TestCreateExperiment() {
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateCheckpoint() {
-	meta := SerializableMeta(map[string]string{"foo": "bar"})
 	metrics := SerializableMetrics(map[string]float32{"val_loss": 0.041, "train_accu": 98.01})
-	e := NewExperiment("quartznet-lid", "owner@email", "langtech", "xyz", Pytorch, meta)
-	c := NewCheckpoint(e.Id, 45, meta, metrics)
+	e := NewExperiment("quartznet-lid", "owner@email", "langtech", "xyz", Pytorch)
+	c := NewCheckpoint(e.Id, 45, metrics)
 	chk, err := s.storageIf.CreateCheckpoint(context.Background(), c)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, c.Id, chk.CheckpointId)
@@ -57,41 +55,38 @@ func (s *StorageInterfaceTestSuite) TestCreateCheckpoint() {
 	assert.Equal(s.t, chk.CheckpointId, checkpoints[0].Id)
 	assert.Equal(s.t, e.Id, checkpoints[0].ExperimentId)
 	assert.Equal(s.t, uint64(45), checkpoints[0].Epoch)
-	assert.Equal(s.t, meta, checkpoints[0].Meta)
 	assert.Equal(s.t, metrics, checkpoints[0].Metrics)
 }
 
 func (s *StorageInterfaceTestSuite) TestObjectCreateIdempotency() {
 	ctx := context.Background()
-	meta := SerializableMeta(map[string]string{"foo": "bar"})
 	metrics := SerializableMetrics(map[string]float32{"val_loss": 0.041, "train_accu": 98.01})
-	e := NewExperiment("quartznet-lid", "owner@email", "langtech", "xyz", Pytorch, meta)
+	e := NewExperiment("quartznet-lid", "owner@email", "langtech", "xyz", Pytorch)
 	result1, err := s.storageIf.CreateExperiment(ctx, e)
 	assert.Nil(s.t, err)
 	result2, err := s.storageIf.CreateExperiment(ctx, e)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, result1.ExperimentId, result2.ExperimentId)
 
-	c := NewCheckpoint(e.Id, 45, meta, metrics)
+	c := NewCheckpoint(e.Id, 45, metrics)
 	chk1, err := s.storageIf.CreateCheckpoint(ctx, c)
 	assert.Nil(s.t, err)
 	chk2, err := s.storageIf.CreateCheckpoint(ctx, c)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, chk1.CheckpointId, chk2.CheckpointId)
 
-	m1 := NewModel(MODEL_NAME, e.Owner, NAMESPACE, TASK, "description", meta)
+	m1 := NewModel(MODEL_NAME, e.Owner, NAMESPACE, TASK, "description")
 	resp1, err := s.storageIf.CreateModel(ctx, m1)
 	assert.Nil(s.t, err)
-	m2 := NewModel(MODEL_NAME, e.Owner, NAMESPACE, TASK, "description", meta)
+	m2 := NewModel(MODEL_NAME, e.Owner, NAMESPACE, TASK, "description")
 	resp2, err := s.storageIf.CreateModel(ctx, m2)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, resp1.ModelId, resp2.ModelId)
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateModel() {
-	meta := map[string]string{"model": "gpt3"}
 	description := "a large translation model based on gpt3"
-	m := NewModel("blender", OWNER, NAMESPACE, TASK, description, meta)
+	m := NewModel("blender", OWNER, NAMESPACE, TASK, description)
 	blob1 := NewFileMetadata(m.Id, "/foo/bar", "checksum123", TextFile, 0, 0)
 	blob2 := NewFileMetadata(m.Id, "/foo/pipe", "checksum345", ModelFile, 0, 0)
 	m.SetFiles([]*FileMetadata{blob1, blob2})
@@ -106,10 +101,9 @@ func (s *StorageInterfaceTestSuite) TestCreateModel() {
 }
 
 func (s *StorageInterfaceTestSuite) TestListModels() {
-	meta := map[string]string{"model": "gpt3"}
 	description := "a large translation model based on gpt3"
 	namespace := "namespace-x"
-	m := NewModel("blender", OWNER, namespace, TASK, description, meta)
+	m := NewModel("blender", OWNER, namespace, TASK, description)
 	blob1 := NewFileMetadata(m.Id, "/foo/bar", "checksum123", TextFile, 0, 0)
 	blob2 := NewFileMetadata(m.Id, "/foo/pipe", "checksum345", ModelFile, 0, 0)
 	m.SetFiles([]*FileMetadata{blob1, blob2})
@@ -124,7 +118,6 @@ func (s *StorageInterfaceTestSuite) TestListModels() {
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateModelVersion() {
-	meta := map[string]string{"bar": "foo"}
 	blobs := []*FileMetadata{}
 	mvName := "test-version"
 	version := "1"
@@ -136,7 +129,6 @@ func (s *StorageInterfaceTestSuite) TestCreateModelVersion() {
 		version,
 		description,
 		Pytorch,
-		meta,
 		blobs,
 		uniqueTags,
 	)

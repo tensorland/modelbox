@@ -202,7 +202,6 @@ message Checkpoint {
   string experiment_id = 3;
   repeated FileMetadata files = 4;
   map<string, float> metrics = 5;
-  map<string, string> metadata = 6;
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;
 }
@@ -212,7 +211,6 @@ message CreateCheckpointRequest {
   uint64 epoch = 2;
   repeated FileMetadata files = 3;
   map<string, float> metrics = 4;
-  map<string, string> metadata = 5;
 }
 
 message CreateCheckpointResponse {
@@ -242,7 +240,6 @@ message Model {
   string namespace = 4;
   string description = 5;
   string task = 6;
-  map<string, string> metadata = 8;
   repeated FileMetadata files = 9;
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;
@@ -258,7 +255,6 @@ message CreateModelRequest {
   string namespace = 4;
   string task = 5;
   string description = 6;
-  map<string, string> metadata = 7;
   repeated FileMetadata files = 8;
 }
 
@@ -289,7 +285,6 @@ message ModelVersion {
   string version = 4;
   string description = 5;
   repeated FileMetadata files = 6;
-  map<string, string> metadata = 7;
   MLFramework framework = 8;
   repeated string unique_tags = 9;
   google.protobuf.Timestamp created_at = 20;
@@ -302,7 +297,6 @@ message CreateModelVersionRequest {
   string version = 3;
   string description = 4;
   repeated FileMetadata files = 5;
-  map<string, string> metadata = 6;
   MLFramework framework = 7;
   repeated string unique_tags = 8;
 }
@@ -324,7 +318,6 @@ message Experiment {
   string namespace = 3;
   string owner = 4;
   MLFramework framework = 5;
-  map<string, string> metadata = 6;
   string external_id = 7;
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;
@@ -336,7 +329,6 @@ message CreateExperimentRequest {
   string namespace = 3;
   MLFramework framework = 4;
   string task = 5;
-  map<string, string> metadata = 6;
   string external_id = 7;
 }
 

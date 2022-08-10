@@ -1,8 +1,8 @@
 package client
 
 import (
-	"io/ioutil"
 	"net"
+	"os"
 
 	"github.com/BurntSushi/toml"
 )
@@ -12,7 +12,7 @@ type ClientConfig struct {
 }
 
 func NewClientConfig(configPath string) (*ClientConfig, error) {
-	bytes, err := ioutil.ReadFile(configPath)
+	bytes, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, err
 	}

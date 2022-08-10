@@ -11,24 +11,24 @@ import (
 )
 
 const (
-	EXPERIMENT_CREATE = "insert into experiments(id, name, owner, namespace, external_id, ml_framework, metadata, created_at, updated_at) values(:id, :name, :owner, :namespace, :external_id, :ml_framework, :metadata, :created_at, :updated_at)"
+	EXPERIMENT_CREATE = "insert into experiments(id, name, owner, namespace, external_id, ml_framework, created_at, updated_at) values(:id, :name, :owner, :namespace, :external_id, :ml_framework, :created_at, :updated_at)"
 
-	EXPERIMENTS_LIST = "SELECT id, name, owner, namespace, external_id, ml_framework, metadata, created_at, updated_at from experiments where namespace = ?"
+	EXPERIMENTS_LIST = "SELECT id, name, owner, namespace, external_id, ml_framework, created_at, updated_at from experiments where namespace = ?"
 
-	CHECKPOINTS_CREATE = "insert into checkpoints(id, experiment, epoch, metrics, metadata, created_at, updated_at) values(:id, :experiment, :epoch, :metrics, :metadata, :created_at, :updated_at)"
+	CHECKPOINTS_CREATE = "insert into checkpoints(id, experiment, epoch, metrics, created_at, updated_at) values(:id, :experiment, :epoch, :metrics, :created_at, :updated_at)"
 
-	CHECKPOINTS_LIST = `select id, experiment, epoch, metrics, metadata, created_at, updated_at from checkpoints 
+	CHECKPOINTS_LIST = `select id, experiment, epoch, metrics, created_at, updated_at from checkpoints 
 	                      where experiment = ?`
 
-	MODEL_CREATE = "insert into models(id, name, owner, namespace, task, metadata, description, created_at, updated_at) values(:id, :name, :owner, :namespace, :task, :metadata, :description, :created_at, :updated_at)"
+	MODEL_CREATE = "insert into models(id, name, owner, namespace, task, description, created_at, updated_at) values(:id, :name, :owner, :namespace, :task, :description, :created_at, :updated_at)"
 
-	MODEL_GET = "select id, name, owner, namespace, task, metadata, description, created_at, updated_at from models where id = ?"
+	MODEL_GET = "select id, name, owner, namespace, task, description, created_at, updated_at from models where id = ?"
 
-	MODELS_NS_LIST = "select id, name, owner, namespace, task, metadata, description, created_at, updated_at from models where namespace = ?"
+	MODELS_NS_LIST = "select id, name, owner, namespace, task, description, created_at, updated_at from models where namespace = ?"
 
-	MODEL_VERSION_CREATE = `insert into model_versions(id, name, model_id, version, description, ml_framework, metadata, unique_tags, created_at, updated_at) values(:id, :name, :model_id, :version, :description, :ml_framework, :metadata, :unique_tags, :created_at, :updated_at)`
+	MODEL_VERSION_CREATE = `insert into model_versions(id, name, model_id, version, description, ml_framework, unique_tags, created_at, updated_at) values(:id, :name, :model_id, :version, :description, :ml_framework, :unique_tags, :created_at, :updated_at)`
 
-	MODEL_VERSION_GET = "select name, model_id, version, description, ml_framework, metadata, unique_tags, created_at, updated_at from model_versions where id = ?"
+	MODEL_VERSION_GET = "select name, model_id, version, description, ml_framework, unique_tags, created_at, updated_at from model_versions where id = ?"
 
 	BLOB_MULTI_WRITE = "insert into blobs(id, parent_id, metadata) VALUES "
 

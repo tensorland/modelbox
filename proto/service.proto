@@ -58,10 +58,14 @@ service ModelStore {
   // Tracks a set of artifacts with a experiment/checkpoint/model
   rpc TrackArtifacts(TrackArtifactsRequest) returns (TrackArtifactsResponse);
 
+  // Log Metrics for an experiment, model or checkpoint
   rpc LogMetrics(LogMetricsRequest) returns (LogMetricsResponse);
 
+  // Get metrics logged for an experiment, model or checkpoint.
   rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
 
+  // Streams change events in any of objects such as experiments, models, etc, for a given namespace
+  // Response is a json representation of the new state of the obejct
   rpc WatchNamespace(WatchNamespaceRequest) returns (stream WatchNamespaceResponse);
 }
 

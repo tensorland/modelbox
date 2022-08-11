@@ -51,8 +51,12 @@ type ModelStoreClient interface {
 	ListMetadata(ctx context.Context, in *ListMetadataRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
 	// Tracks a set of artifacts with a experiment/checkpoint/model
 	TrackArtifacts(ctx context.Context, in *TrackArtifactsRequest, opts ...grpc.CallOption) (*TrackArtifactsResponse, error)
+	// Log Metrics for an experiment, model or checkpoint
 	LogMetrics(ctx context.Context, in *LogMetricsRequest, opts ...grpc.CallOption) (*LogMetricsResponse, error)
+	// Get metrics logged for an experiment, model or checkpoint.
 	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
+	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
+	// Response is a json representation of the new state of the obejct
 	WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error)
 }
 
@@ -321,8 +325,12 @@ type ModelStoreServer interface {
 	ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error)
 	// Tracks a set of artifacts with a experiment/checkpoint/model
 	TrackArtifacts(context.Context, *TrackArtifactsRequest) (*TrackArtifactsResponse, error)
+	// Log Metrics for an experiment, model or checkpoint
 	LogMetrics(context.Context, *LogMetricsRequest) (*LogMetricsResponse, error)
+	// Get metrics logged for an experiment, model or checkpoint.
 	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
+	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
+	// Response is a json representation of the new state of the obejct
 	WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error
 	mustEmbedUnimplementedModelStoreServer()
 }

@@ -209,19 +209,23 @@ class ModelStoreServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def LogMetrics(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Log Metrics for an experiment, model or checkpoint
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def GetMetrics(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Get metrics logged for an experiment, model or checkpoint.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def WatchNamespace(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Streams change events in any of objects such as experiments, models, etc, for a given namespace
+        Response is a json representation of the new state of the obejct
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')

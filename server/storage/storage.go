@@ -15,6 +15,7 @@ import (
 	"github.com/diptanu/modelbox/client-go/proto"
 	"github.com/diptanu/modelbox/server/config"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -69,26 +70,6 @@ const (
 	AudioFile
 	VideoFile
 )
-
-type Metadata struct {
-	Id       string
-	ParentId string
-	Key      string
-	Value    interface{}
-}
-
-func NewMetadata(parentId string, k string, v interface{}) *Metadata {
-	m := Metadata{
-		ParentId: parentId,
-		Key:      k,
-		Value:    v,
-	}
-	h := sha1.New()
-	hashString(h, m.ParentId)
-	hashString(h, m.Key)
-	m.Id = fmt.Sprintf("%x", h.Sum(nil))
-	return &m
-}
 
 type SerializableTags []string
 
@@ -541,9 +522,9 @@ type MetadataStorage interface {
 
 	GetFile(ctx context.Context, id string) (*FileMetadata, error)
 
-	UpdateMetadata(context.Context, []*Metadata) error
+	UpdateMetadata(ctx context.Context, parentId string, metadata map[string]*structpb.Value) error
 
-	ListMetadata(ctx context.Context, parentId string) ([]*Metadata, error)
+	ListMetadata(ctx context.Context, parentId string) (map[string]*structpb.Value, error)
 
 	ListChanges(ctx context.Context, namespace string, since time.Time) ([]*ChangeEvent, error)
 

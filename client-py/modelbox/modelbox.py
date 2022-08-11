@@ -1,13 +1,16 @@
+from importlib.metadata import metadata
 from typing import Dict, List, Any, Union
 from typing_extensions import Self
 from enum import Enum
 from dataclasses import dataclass
 from hashlib import md5
+import json
 
 import grpc
 from . import service_pb2
 from . import service_pb2_grpc
-from google.protobuf.struct_pb2 import Struct
+from google.protobuf.struct_pb2 import Value
+from google.protobuf import json_format 
 from google.protobuf.timestamp_pb2 import Timestamp
 
 DEFAULT_NAMESPACE = "default"
@@ -364,10 +367,10 @@ class ModelBoxClient:
     def update_metadata(
         self, parent_id: str, key: str, val: Any
     ) -> UpdateMetadataResponse:
-        payload = Struct()
-        payload.update({key: val})
-        meta = service_pb2.Metadata(parent_id=parent_id, payload=payload)
-        req = service_pb2.UpdateMetadataRequest(metadata=[meta])
+        json_value = Value()
+        json_format.Parse(json.dumps(val), json_value)
+        meta = service_pb2.Metadata(metadata={key:json_value})
+        req = service_pb2.UpdateMetadataRequest(parent_id=parent_id, metadata=meta)
         resp = self._client.UpdateMetadata(req)
         return UpdateMetadataResponse(updated_at=resp.updated_at)
 

@@ -319,13 +319,7 @@ respond:
 }
 
 func (s *GrpcServer) UpdateMetadata(ctx context.Context, req *pb.UpdateMetadataRequest) (*pb.UpdateMetadataResponse, error) {
-	metadataList := []*storage.Metadata{}
-	for _, meta := range req.Metadata {
-		for k, v := range meta.Payload.AsMap() {
-			metadataList = append(metadataList, storage.NewMetadata(meta.ParentId, k, v))
-		}
-	}
-	if err := s.metadataStorage.UpdateMetadata(ctx, metadataList); err != nil {
+	if err := s.metadataStorage.UpdateMetadata(ctx, req.ParentId, req.Metadata.Metadata); err != nil {
 		return nil, err
 	}
 	updatedAt := timestamppb.New(time.Now())
@@ -336,20 +330,11 @@ func (s *GrpcServer) UpdateMetadata(ctx context.Context, req *pb.UpdateMetadataR
 }
 
 func (s *GrpcServer) ListMetadata(ctx context.Context, req *pb.ListMetadataRequest) (*pb.ListMetadataResponse, error) {
-	metadataList, err := s.metadataStorage.ListMetadata(ctx, req.ParentId)
+	metadata, err := s.metadataStorage.ListMetadata(ctx, req.ParentId)
 	if err != nil {
 		return nil, err
 	}
-
-	m := make(map[string]interface{})
-	for _, meta := range metadataList {
-		m[meta.Key] = meta.Value
-	}
-	payload, err := structpb.NewStruct(m)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create structspb: %v", err)
-	}
-	return &pb.ListMetadataResponse{Payload: payload}, nil
+	return &pb.ListMetadataResponse{Metadata: metadata}, nil
 }
 
 func (s *GrpcServer) GetCheckpoint(ctx context.Context, req *pb.GetCheckpointRequest) (*pb.GetCheckpointResponse, error) {

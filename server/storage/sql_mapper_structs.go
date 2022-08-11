@@ -1,12 +1,14 @@
 package storage
 
 import (
+	"crypto/sha1"
 	"database/sql/driver"
 	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/jmoiron/sqlx/types"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type ModelSchema struct {
@@ -207,37 +209,52 @@ func ToCheckpointSchema(c *Checkpoint) *CheckpointSchema {
 	}
 }
 
+type SerializableMetadata map[string]*structpb.Value
+
+func (s SerializableMetadata) Value() (driver.Value, error) {
+	return json.Marshal(s)
+}
+
+func (s *SerializableMetadata) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &s)
+}
+
 type MetadataSchema struct {
 	Id       string
 	ParentId string `db:"parent_id"`
-	Metadata types.JSONText
+	Metadata SerializableMetadata
 }
 
-func (c *MetadataSchema) toMetadata() (*Metadata, error) {
-	var m map[string]interface{}
-	json.Unmarshal(c.Metadata, &m)
-	k, _ := m["key"].(string)
-	v := m["value"]
-	return &Metadata{
-		Id:       c.Id,
-		ParentId: c.ParentId,
-		Key:      k,
-		Value:    v,
-	}, nil
-}
-
-func toMetadataSchema(m *Metadata) (*MetadataSchema, error) {
-	meta := map[string]interface{}{"key": m.Key, "value": m.Value}
-	b, err := json.Marshal(meta)
-	if err != nil {
-		return nil, fmt.Errorf("unable to convert to json: %v", err)
+func toMetadata(rows []*MetadataSchema) map[string]*structpb.Value {
+	metadata := make(map[string]*structpb.Value)
+	for _, m := range rows {
+		for k, v := range m.Metadata {
+			metadata[k] = v
+		}
 	}
+	return metadata
+}
 
-	return &MetadataSchema{
-		Id:       m.Id,
-		ParentId: m.ParentId,
-		Metadata: b,
-	}, nil
+func toMetadataSchema(parentId string, metadata map[string]*structpb.Value) []*MetadataSchema {
+	rows := []*MetadataSchema{}
+	for k, v := range metadata {
+		h := sha1.New()
+		hashString(h, parentId)
+		hashString(h, k)
+		id := fmt.Sprintf("%x", h.Sum(nil))
+		m := &MetadataSchema{
+			Id:       id,
+			ParentId: parentId,
+			Metadata: map[string]*structpb.Value{k: v},
+		}
+		rows = append(rows, m)
+	}
+	return rows
 }
 
 type SerializablePayload map[string]interface{}

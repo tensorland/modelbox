@@ -168,20 +168,22 @@ func (s *StorageInterfaceTestSuite) TestUpdateMetadata() {
 	ctx := context.Background()
 
 	// Write Metadata
-	scalerVal, err := structpb.NewValue(map[string]interface{}{"/foo/bar": interface{}(1)})
-	assert.Nil(s.t, err)
-	m := NewMetadata("parent-id1", "/foo/bar", scalerVal)
-	err = s.storageIf.UpdateMetadata(ctx, []*Metadata{m})
+	val1, _ := structpb.NewValue(1)
+	meta1 := map[string]*structpb.Value{"/tmp/foo": val1}
+	err := s.storageIf.UpdateMetadata(ctx, "parent-id1", meta1)
 	assert.Nil(s.t, err)
 
-	complexVal, err1 := structpb.NewValue(map[string]interface{}{"/tmp/hola": map[string]interface{}{"name1": "val1", "name2": 5}})
-	assert.Nil(s.t, err1)
-	m2 := NewMetadata("parent-id1", "/foo/bar1", complexVal)
-	err = s.storageIf.UpdateMetadata(ctx, []*Metadata{m2})
+	val2, _ := structpb.NewValue(map[string]interface{}{"name1": "val1", "name2": 5})
+	complexVal := map[string]*structpb.Value{"/tmp/hola": val2}
+	err = s.storageIf.UpdateMetadata(ctx, "parent-id2", complexVal)
 	assert.Nil(s.t, err)
 
 	// Get Metadata
-	meta, err := s.storageIf.ListMetadata(ctx, "parent-id1")
+	meta3, err := s.storageIf.ListMetadata(ctx, "parent-id1")
 	assert.Nil(s.t, err)
-	assert.Equal(s.t, 2, len(meta))
+	assert.Equal(s.t, 1, len(meta3))
+
+	meta4, err := s.storageIf.ListMetadata(ctx, "parent-id2")
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, 1, len(meta4))
 }

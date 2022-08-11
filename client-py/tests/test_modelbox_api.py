@@ -1,4 +1,6 @@
 from argparse import Namespace
+from importlib.metadata import metadata
+from time import time
 import unittest
 import grpc
 import sys
@@ -9,7 +11,8 @@ from random import randrange
 from faker import Faker
 from concurrent import futures
 
-from google.protobuf.struct_pb2 import Struct
+from google.protobuf.struct_pb2 import Value
+from google.protobuf import json_format, timestamp_pb2
 
 from modelbox.modelbox import ModelBoxClient, MLFramework, Artifact, ArtifactMime, MetricValue
 from modelbox import service_pb2_grpc
@@ -102,12 +105,12 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
                 yield service_pb2.DownloadFileResponse(chunks=data)
 
     def UpdateMetadata(self, req, context):
-        return service_pb2.UpdateMetadataResponse(updated_at=1260)
+        return service_pb2.UpdateMetadataResponse(updated_at=timestamp_pb2.Timestamp())
 
     def ListMetadata(self, request, context):
-        payload = Struct()
-        payload.update({"key": "value"})
-        return service_pb2.ListMetadataResponse(payload=payload)
+        payload = Value()
+        json_format.ParseDict({"key": "value"}, payload)
+        return service_pb2.ListMetadataResponse(metadata={'/tmp': payload})
 
     def TrackArtifacts(self, request, context):
         return service_pb2.TrackArtifactsResponse(num_files_tracked=2)
@@ -246,6 +249,9 @@ class TestModelBoxApi(unittest.TestCase):
 
     def test_get_metrics(self):
         resp = self._client.get_metrics("foo")
+
+    def test_metadata(self):
+        resp = self._client.update_metadata('parent1', 'foo', 'bar')
 
 
 if __name__ == "__main__":

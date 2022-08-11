@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/json"
@@ -11,6 +12,7 @@ import (
 	"github.com/ugorji/go/codec"
 	bolt "go.etcd.io/bbolt"
 	"go.uber.org/zap"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var (
@@ -185,6 +187,36 @@ func (e *EphemeralStorage) writeBytes(obj interface{}, id string, bucket []byte,
 	return err
 }
 
+func (e *EphemeralStorage) writeJsonBytes(obj interface{}, id string, bucket []byte, mutation *ChangeEvent) error {
+	encodedBytes, err := json.Marshal(obj)
+	if err != nil {
+		return fmt.Errorf("unable to encode object in json: %v", err)
+	}
+	return e.db.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists(bucket)
+		if err != nil {
+			return err
+		}
+		bucket.Put([]byte(id), encodedBytes)
+		b, err := tx.CreateBucketIfNotExists([]byte(MUTATIONS))
+		if err != nil {
+			return err
+		}
+		if mutation != nil {
+			mutationId, err := b.NextSequence()
+			if err != nil {
+				return err
+			}
+			val, err := mutation.json()
+			if err != nil {
+				return fmt.Errorf("unable to convert change event to json: %v", err)
+			}
+			b.Put(itob(int(mutationId)), val)
+		}
+		return nil
+	})
+}
+
 func (e *EphemeralStorage) GetCheckpoint(_ context.Context, id string) (*Checkpoint, error) {
 	var checkpoint Checkpoint
 	err := e.db.View(func(tx *bolt.Tx) error {
@@ -313,34 +345,37 @@ func (e *EphemeralStorage) GetFile(ctx context.Context, id string) (*FileMetadat
 	return &file, err
 }
 
-func (e *EphemeralStorage) UpdateMetadata(_ context.Context, metadataList []*Metadata) error {
-	for _, m := range metadataList {
-		if err := e.writeBytes(m, m.Id, METADATA, nil); err != nil {
+func (e *EphemeralStorage) UpdateMetadata(_ context.Context, parentId string, metadata map[string]*structpb.Value) error {
+	for k, v := range metadata {
+		key := fmt.Sprintf("%s-%s", parentId, k)
+		if err := e.writeJsonBytes(map[string]*structpb.Value{k: v}, key, METADATA, nil); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (e *EphemeralStorage) ListMetadata(ctx context.Context, parentId string) ([]*Metadata, error) {
-	metadataList := []*Metadata{}
+func (e *EphemeralStorage) ListMetadata(ctx context.Context, parentId string) (map[string]*structpb.Value, error) {
+	metadata := map[string]*structpb.Value{}
 	err := e.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(METADATA)
-		c := b.Cursor()
-		handle := new(codec.MsgpackHandle)
-		for k, v := c.First(); k != nil; k, v = c.Next() {
-			var metadata Metadata
-			decoder := codec.NewDecoderBytes(v, handle)
-			if err := decoder.Decode(&metadata); err != nil {
-				return err
+		c := tx.Bucket(METADATA).Cursor()
+		parentIdBytes := []byte(parentId)
+		for k, v := c.Seek(parentIdBytes); k != nil && bytes.HasPrefix(k, parentIdBytes); k, v = c.Next() {
+			var mB map[string]interface{}
+			if err := json.Unmarshal(v, &mB); err != nil {
+				return fmt.Errorf("can't unmarshal json: %v", err)
 			}
-			if metadata.ParentId == parentId {
-				metadataList = append(metadataList, &metadata)
+			for mK, mV := range mB {
+				m, err := structpb.NewValue(mV)
+				if err != nil {
+					return fmt.Errorf("cant create value: %v", err)
+				}
+				metadata[mK] = m
 			}
 		}
 		return nil
 	})
-	return metadataList, err
+	return metadata, err
 }
 
 func (e *EphemeralStorage) ListChanges(ctx context.Context, namespace string, since time.Time) ([]*ChangeEvent, error) {

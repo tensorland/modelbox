@@ -357,12 +357,12 @@ message ListModelsRequest { string namespace = 1; }
 message ListModelsResponse { repeated Model models = 1; }
 
 message Metadata {
-  string parent_id = 1;
-  google.protobuf.Struct payload = 2;
+  map<string, google.protobuf.Value> metadata = 1;
 }
 
 message UpdateMetadataRequest {
-  repeated Metadata metadata = 1;
+  string parent_id = 1;
+  Metadata metadata = 2;
 }
 
 message UpdateMetadataResponse {
@@ -375,5 +375,5 @@ message ListMetadataRequest {
 }
 
 message ListMetadataResponse {
-  google.protobuf.Struct payload = 1;
+  map<string, google.protobuf.Value> metadata = 1;
 }

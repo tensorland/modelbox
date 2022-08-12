@@ -6,22 +6,22 @@
 
 ModelBox is an AI models and metadata management service. 
 
-It can integrate with Deep Learning frameworks to provide model checkpoint and artifact tracking. Optional features include serving AI models to inference engines snd measuring their performance. 
+It can integrate with Deep Learning frameworks to provide model checkpoint and artifact tracking. Optional features include serving AI models to inference engines and measuring their performance. 
 
 Additionally, ModelBox provides a pluggable storage interface to track metadata & artifacts related to models, and experiments producing checkpoints. 
 
 ## Features
-- Python SDK to integrate with custom PyTorch(or any other ML framework) trainer.
+- Python SDK to integrate with custom PyTorch (or any other ML framework) trainer.
 - Model versioning and lineage tracking of Models in relation to Experiments which created them.
-- Labelling models and checkpoints to track the environement they are deployed in, metrics, and other related metadata meaningful to users.
-- Integrates transparenly with DL Frameworks like PyTorch Lightening for checkpoint storage/retrieval, metadata and metrics logging.
+- Labelling models and checkpoints to track the environment they are deployed in, metrics, and other related metadata meaningful to users.
+- Integrates transparenly with DL Frameworks like PyTorch Lightning for checkpoint storage/retrieval, metadata and metrics logging.
 - Load production ready models in inference engines directly from ModelBox - clients in Python, Go, etc. Rust and C++ library are in the works.
 
 ## Planned Features
 - Add retention policies written in any WASM compatible language which has all the model and checkpoint related metadata available.
 - Add RBAC based access control for models and checkpoints for compliance.
 - Create a worker infrastructure which automatically transforms models, benchmarks for performance on inference hardware, etc, and update the model metadata.
-- Make the worker architecture pluggable such that users can write custom workers any langugage while the model, metrics and other metadata are available to the runtime, abstracting the storage and other infrastructure primitives.
+- Make the worker architecture pluggable such that users can write custom workers any language while the model, metrics and other metadata are available to the runtime, abstracting the storage and other infrastructure primitives.
 - Build Model Explainability features, such as exctracting information about shape of input and output tensors, types of layers used by the model, parameter counts, etc.
 - Build infrastructure to run known recipes for model optimazation for inference such as Layer Fusion, replacing transformer layers with more optimized implemenations such as Faster Transformer, quantization, model compression, etc.
 - Beyond being able to stream a model binary using the streaming api, build exporters which are more native to model deployment.
@@ -46,7 +46,7 @@ A model is an object to track common metadata, and to apply policies on models c
 A model version is a trained model, it includes the model binary, related files that a user wants to track - dataset file handles, any other metadata, model metrics, etc. Model versions are always related to a Model and all the policies created for a Model are applied to Model Versions.
 
 ### Experiment and Checkpoints
-Experiments are used to injest model checkpoints created during a training run. ModelBox is not an experiment metadata tracker so there is no support for rich experiment management which are available on experiment trackers such as Weights and Biases, the experiment abstraction here exists so that we can track and injest model checkpoints which eventually become model versions if they have good metrics and does well in benchmarks.
+Experiments are used to ingest model checkpoints created during a training run. ModelBox is not an experiment metadata tracker so there is no support for rich experiment management which are available on experiment trackers such as Weights and Biases, the experiment abstraction here exists so that we can track and ingest model checkpoints which eventually become model versions if they have good metrics and does well in benchmarks.
 
 ## Architecture
 ModelBox has the following components

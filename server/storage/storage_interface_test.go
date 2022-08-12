@@ -26,7 +26,9 @@ func (s *StorageInterfaceTestSuite) TestCreateExperiment() {
 	since := time.Now()
 	ctx := context.Background()
 	e := NewExperiment(MODEL_NAME, OWNER, NAMESPACE, "xyz", Pytorch)
-	_, err := s.storageIf.CreateExperiment(context.Background(), e)
+	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
+	metaData := map[string]*structpb.Value{"foo": metaVal}
+	_, err := s.storageIf.CreateExperiment(context.Background(), e, metaData)
 	assert.Nil(s.t, err)
 	experiments, err := s.storageIf.ListExperiments(context.Background(), e.Namespace)
 	assert.Nil(s.t, err)
@@ -46,7 +48,7 @@ func (s *StorageInterfaceTestSuite) TestCreateCheckpoint() {
 	metrics := SerializableMetrics(map[string]float32{"val_loss": 0.041, "train_accu": 98.01})
 	e := NewExperiment("quartznet-lid", "owner@email", "langtech", "xyz", Pytorch)
 	c := NewCheckpoint(e.Id, 45, metrics)
-	chk, err := s.storageIf.CreateCheckpoint(context.Background(), c)
+	chk, err := s.storageIf.CreateCheckpoint(context.Background(), c, nil)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, c.Id, chk.CheckpointId)
 	checkpoints, err := s.storageIf.ListCheckpoints(context.Background(), e.Id)
@@ -62,24 +64,24 @@ func (s *StorageInterfaceTestSuite) TestObjectCreateIdempotency() {
 	ctx := context.Background()
 	metrics := SerializableMetrics(map[string]float32{"val_loss": 0.041, "train_accu": 98.01})
 	e := NewExperiment("quartznet-lid", "owner@email", "langtech", "xyz", Pytorch)
-	result1, err := s.storageIf.CreateExperiment(ctx, e)
+	result1, err := s.storageIf.CreateExperiment(ctx, e, nil)
 	assert.Nil(s.t, err)
-	result2, err := s.storageIf.CreateExperiment(ctx, e)
+	result2, err := s.storageIf.CreateExperiment(ctx, e, nil)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, result1.ExperimentId, result2.ExperimentId)
 
 	c := NewCheckpoint(e.Id, 45, metrics)
-	chk1, err := s.storageIf.CreateCheckpoint(ctx, c)
+	chk1, err := s.storageIf.CreateCheckpoint(ctx, c, nil)
 	assert.Nil(s.t, err)
-	chk2, err := s.storageIf.CreateCheckpoint(ctx, c)
+	chk2, err := s.storageIf.CreateCheckpoint(ctx, c, nil)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, chk1.CheckpointId, chk2.CheckpointId)
 
 	m1 := NewModel(MODEL_NAME, e.Owner, NAMESPACE, TASK, "description")
-	resp1, err := s.storageIf.CreateModel(ctx, m1)
+	resp1, err := s.storageIf.CreateModel(ctx, m1, nil)
 	assert.Nil(s.t, err)
 	m2 := NewModel(MODEL_NAME, e.Owner, NAMESPACE, TASK, "description")
-	resp2, err := s.storageIf.CreateModel(ctx, m2)
+	resp2, err := s.storageIf.CreateModel(ctx, m2, nil)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, resp1.ModelId, resp2.ModelId)
 }
@@ -90,8 +92,10 @@ func (s *StorageInterfaceTestSuite) TestCreateModel() {
 	blob1 := NewFileMetadata(m.Id, "/foo/bar", "checksum123", TextFile, 0, 0)
 	blob2 := NewFileMetadata(m.Id, "/foo/pipe", "checksum345", ModelFile, 0, 0)
 	m.SetFiles([]*FileMetadata{blob1, blob2})
+	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
+	metaData := map[string]*structpb.Value{"foo": metaVal}
 	ctx := context.Background()
-	_, err := s.storageIf.CreateModel(ctx, m)
+	_, err := s.storageIf.CreateModel(ctx, m, metaData)
 	assert.Nil(s.t, err)
 
 	m1, err := s.storageIf.GetModel(ctx, m.Id)
@@ -108,7 +112,7 @@ func (s *StorageInterfaceTestSuite) TestListModels() {
 	blob2 := NewFileMetadata(m.Id, "/foo/pipe", "checksum345", ModelFile, 0, 0)
 	m.SetFiles([]*FileMetadata{blob1, blob2})
 	ctx := context.Background()
-	_, err := s.storageIf.CreateModel(ctx, m)
+	_, err := s.storageIf.CreateModel(ctx, m, nil)
 	assert.Nil(s.t, err)
 
 	models, err := s.storageIf.ListModels(ctx, namespace)
@@ -123,6 +127,8 @@ func (s *StorageInterfaceTestSuite) TestCreateModelVersion() {
 	version := "1"
 	description := "testing"
 	uniqueTags := SerializableTags([]string{"foo", "bar"})
+	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
+	metaData := map[string]*structpb.Value{"foo": metaVal}
 	mv := NewModelVersion(
 		mvName,
 		MODEL_NAME,
@@ -132,7 +138,7 @@ func (s *StorageInterfaceTestSuite) TestCreateModelVersion() {
 		blobs,
 		uniqueTags,
 	)
-	_, err := s.storageIf.CreateModelVersion(context.Background(), mv)
+	_, err := s.storageIf.CreateModelVersion(context.Background(), mv, metaData)
 	assert.Nil(s.t, err)
 
 	mv1, err := s.storageIf.GetModelVersion(context.Background(), mv.Id)

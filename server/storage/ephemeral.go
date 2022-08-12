@@ -73,7 +73,7 @@ func (e *EphemeralStorage) Close() error {
 	return e.db.Close()
 }
 
-func (e *EphemeralStorage) CreateExperiment(_ context.Context, experiment *Experiment) (*CreateExperimentResult, error) {
+func (e *EphemeralStorage) CreateExperiment(_ context.Context, experiment *Experiment, metadata SerializableMetadata) (*CreateExperimentResult, error) {
 	id := experiment.Hash()
 	event := &ChangeEvent{
 		ObjectId:   experiment.Id,
@@ -125,8 +125,12 @@ func (e *EphemeralStorage) ListExperiments(_ context.Context, namespace string) 
 	return experiments, err
 }
 
-func (e *EphemeralStorage) CreateCheckpoint(_ context.Context, checkpoint *Checkpoint) (*CreateCheckpointResult, error) {
+func (e *EphemeralStorage) CreateCheckpoint(ctx context.Context, checkpoint *Checkpoint, metadata SerializableMetadata) (*CreateCheckpointResult, error) {
 	if err := e.writeBytes(checkpoint, checkpoint.Id, CHECKPOINTS, nil); err != nil {
+		return nil, err
+	}
+
+	if err := e.UpdateMetadata(ctx, checkpoint.Id, metadata); err != nil {
 		return nil, err
 	}
 
@@ -234,8 +238,16 @@ func (e *EphemeralStorage) GetCheckpoint(_ context.Context, id string) (*Checkpo
 	return &checkpoint, nil
 }
 
-func (e *EphemeralStorage) CreateModel(_ context.Context, model *Model) (*CreateModelResult, error) {
-	return &CreateModelResult{ModelId: model.Id}, e.writeBytes(model, model.Id, MODELS, nil)
+func (e *EphemeralStorage) CreateModel(ctx context.Context, model *Model, metadata SerializableMetadata) (*CreateModelResult, error) {
+	result, err := &CreateModelResult{ModelId: model.Id}, e.writeBytes(model, model.Id, MODELS, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := e.UpdateMetadata(ctx, model.Id, metadata); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (e *EphemeralStorage) GetModel(_ context.Context, id string) (*Model, error) {
@@ -274,8 +286,15 @@ func (e *EphemeralStorage) ListModels(_ context.Context, namespace string) ([]*M
 	return models, err
 }
 
-func (e *EphemeralStorage) CreateModelVersion(_ context.Context, modelVersion *ModelVersion) (*CreateModelVersionResult, error) {
-	return &CreateModelVersionResult{ModelVersionId: modelVersion.Id}, e.writeBytes(modelVersion, modelVersion.Id, MODEL_VERSIONS, nil)
+func (e *EphemeralStorage) CreateModelVersion(ctx context.Context, modelVersion *ModelVersion, metadata SerializableMetadata) (*CreateModelVersionResult, error) {
+	result, err := &CreateModelVersionResult{ModelVersionId: modelVersion.Id}, e.writeBytes(modelVersion, modelVersion.Id, MODEL_VERSIONS, nil)
+	if err != nil {
+		return nil, err
+	}
+	if err := e.UpdateMetadata(ctx, modelVersion.Id, metadata); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (e *EphemeralStorage) GetModelVersion(ctx context.Context, id string) (*ModelVersion, error) {

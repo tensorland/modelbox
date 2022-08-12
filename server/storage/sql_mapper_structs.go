@@ -136,7 +136,6 @@ func (b *FileSchema) ToFile() (*FileMetadata, error) {
 		CreatedAt: meta.CreatedAt,
 		UpdatedAt: meta.UpdatedAt,
 	}, nil
-
 }
 
 type ExperimentSchema struct {
@@ -207,21 +206,6 @@ func ToCheckpointSchema(c *Checkpoint) *CheckpointSchema {
 		CreatedAt:  c.CreatedAt,
 		UpdatedAt:  c.UpdtedAt,
 	}
-}
-
-type SerializableMetadata map[string]*structpb.Value
-
-func (s SerializableMetadata) Value() (driver.Value, error) {
-	return json.Marshal(s)
-}
-
-func (s *SerializableMetadata) Scan(value interface{}) error {
-	b, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-
-	return json.Unmarshal(b, &s)
 }
 
 type MetadataSchema struct {

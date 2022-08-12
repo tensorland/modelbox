@@ -42,7 +42,7 @@ func (s *GrpcServer) CreateModel(
 		req.Description,
 	)
 	model.SetFiles(storage.NewFileSetFromProto(req.Files))
-	if _, err := s.metadataStorage.CreateModel(ctx, model); err != nil {
+	if _, err := s.metadataStorage.CreateModel(ctx, model, req.Metadata.Metadata); err != nil {
 		return nil, err
 	}
 	return &pb.CreateModelResponse{Id: model.Id}, nil
@@ -61,7 +61,7 @@ func (s *GrpcServer) CreateModelVersion(
 		storage.NewFileSetFromProto(req.Files),
 		req.UniqueTags,
 	)
-	if _, err := s.metadataStorage.CreateModelVersion(ctx, modelVersion); err != nil {
+	if _, err := s.metadataStorage.CreateModelVersion(ctx, modelVersion, req.Metadata.Metadata); err != nil {
 		return nil, fmt.Errorf("unable to create model version: %v", err)
 	}
 	return &pb.CreateModelVersionResponse{ModelVersion: modelVersion.Id}, nil
@@ -110,7 +110,7 @@ func (s *GrpcServer) CreateExperiment(
 		req.ExternalId,
 		fwk,
 	)
-	result, err := s.metadataStorage.CreateExperiment(ctx, experiment)
+	result, err := s.metadataStorage.CreateExperiment(ctx, experiment, req.Metadata.Metadata)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (s *GrpcServer) CreateCheckpoint(
 		req.Metrics,
 	)
 	checkpoint.SetFiles(storage.NewFileSetFromProto(req.Files))
-	if _, err := s.metadataStorage.CreateCheckpoint(ctx, checkpoint); err != nil {
+	if _, err := s.metadataStorage.CreateCheckpoint(ctx, checkpoint, req.Metadata.Metadata); err != nil {
 		return nil, fmt.Errorf("unable to create checkpoint: %v", err)
 	}
 	return &pb.CreateCheckpointResponse{CheckpointId: checkpoint.Id}, nil
@@ -219,7 +219,7 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 	}
 	blobInfo.Path = path
 	if err := s.metadataStorage.WriteFiles(stream.Context(), storage.FileSet{blobInfo}); err != nil {
-		//TODO This is not great, we should create a new error type and throw and check on the error type
+		// TODO This is not great, we should create a new error type and throw and check on the error type
 		// or code.
 		if strings.HasPrefix(err.Error(), "unable to create blobs for model: Error 1062") {
 			stream.SendAndClose(&pb.UploadFileResponse{FileId: blobInfo.Id})

@@ -19,6 +19,21 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type SerializableMetadata map[string]*structpb.Value
+
+func (s SerializableMetadata) Value() (driver.Value, error) {
+	return json.Marshal(s)
+}
+
+func (s *SerializableMetadata) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &s)
+}
+
 type ChangeEvent struct {
 	ObjectId   string
 	Time       time.Time
@@ -488,9 +503,9 @@ type CreateModelVersionResult struct {
 }
 
 type MetadataStorage interface {
-	CreateExperiment(ctx context.Context, experiment *Experiment) (*CreateExperimentResult, error)
+	CreateExperiment(ctx context.Context, experiment *Experiment, metadata SerializableMetadata) (*CreateExperimentResult, error)
 
-	CreateCheckpoint(ctx context.Context, checkpoint *Checkpoint) (*CreateCheckpointResult, error)
+	CreateCheckpoint(ctx context.Context, checkpoint *Checkpoint, metadata SerializableMetadata) (*CreateCheckpointResult, error)
 
 	ListExperiments(ctx context.Context, namespace string) ([]*Experiment, error)
 
@@ -498,11 +513,11 @@ type MetadataStorage interface {
 
 	GetCheckpoint(ctx context.Context, checkpointId string) (*Checkpoint, error)
 
-	CreateModel(ctx context.Context, model *Model) (*CreateModelResult, error)
+	CreateModel(ctx context.Context, model *Model, metadata SerializableMetadata) (*CreateModelResult, error)
 
 	GetModel(ctx context.Context, id string) (*Model, error)
 
-	CreateModelVersion(ctx context.Context, modelVersion *ModelVersion) (*CreateModelVersionResult, error)
+	CreateModelVersion(ctx context.Context, modelVersion *ModelVersion, metadata SerializableMetadata) (*CreateModelVersionResult, error)
 
 	GetModelVersion(ctx context.Context, id string) (*ModelVersion, error)
 

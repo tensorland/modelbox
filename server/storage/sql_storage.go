@@ -64,6 +64,7 @@ func NewSQLStorage(db *sqlx.DB, driverUtils driverUtils, logger *zap.Logger) *SQ
 func (s *SQLStorage) CreateExperiment(
 	ctx context.Context,
 	experiment *Experiment,
+	metadata SerializableMetadata,
 ) (*CreateExperimentResult, error) {
 	result := &CreateExperimentResult{}
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
@@ -81,6 +82,9 @@ func (s *SQLStorage) CreateExperiment(
 			return fmt.Errorf("unable to write experiment to db: %v", err)
 		}
 		result.ExperimentId = experiment.Id
+		if err := s.writeMetadata(tx, result.ExperimentId, metadata); err != nil {
+			return fmt.Errorf("can't write metadata: %v", err)
+		}
 		event := &MutationEventSchema{
 			MutationTime: uint64(time.Now().Unix()),
 			Action:       "create",
@@ -100,6 +104,7 @@ func (s *SQLStorage) CreateExperiment(
 func (s *SQLStorage) CreateCheckpoint(
 	ctx context.Context,
 	c *Checkpoint,
+	metadata SerializableMetadata,
 ) (*CreateCheckpointResult, error) {
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		cs := ToCheckpointSchema(c)
@@ -110,7 +115,9 @@ func (s *SQLStorage) CreateCheckpoint(
 			}
 			return fmt.Errorf("unable to write checkpoint: %v", err)
 		}
-
+		if err := s.writeMetadata(tx, c.Id, metadata); err != nil {
+			return fmt.Errorf("can't write metadata: %v", err)
+		}
 		return s.writeFileSet(tx, c.Files)
 	})
 	return &CreateCheckpointResult{CheckpointId: c.Id}, err
@@ -181,7 +188,7 @@ func (s *SQLStorage) GetCheckpoint(
 	return checkpoint, err
 }
 
-func (s *SQLStorage) CreateModel(ctx context.Context, model *Model) (*CreateModelResult, error) {
+func (s *SQLStorage) CreateModel(ctx context.Context, model *Model, metadata SerializableMetadata) (*CreateModelResult, error) {
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := ModelToSchema(model)
 		if _, err := tx.NamedExec(MODEL_CREATE, schema); err != nil {
@@ -189,6 +196,9 @@ func (s *SQLStorage) CreateModel(ctx context.Context, model *Model) (*CreateMode
 				return nil
 			}
 			return fmt.Errorf("unable to create model: %v", err)
+		}
+		if err := s.writeMetadata(tx, model.Id, metadata); err != nil {
+			return fmt.Errorf("can't write metadata: %v", err)
 		}
 		return s.writeFileSet(tx, model.Files)
 	})
@@ -230,23 +240,31 @@ func (s *SQLStorage) ListModels(ctx context.Context, namespace string) ([]*Model
 	})
 	return models, err
 }
-func (m *MySqlStorage) CreateModelVersion(
+
+func (s *MySqlStorage) CreateModelVersion(
 	ctx context.Context,
 	modelVersion *ModelVersion,
+	metadata SerializableMetadata,
 ) (*CreateModelVersionResult, error) {
-	err := m.transact(ctx, func(tx *sqlx.Tx) error {
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := ModelVersionToSchema(modelVersion)
 		if _, err := tx.NamedExec(
 			MODEL_VERSION_CREATE,
 			schema,
 		); err != nil {
-			if m.driverUtils.isDuplicate(err) {
+			if s.driverUtils.isDuplicate(err) {
 				return nil
 			}
 			return fmt.Errorf("unable to create model version: %v", err)
 		}
-		return m.writeFileSet(tx, modelVersion.Files)
+		if err := s.writeMetadata(tx, modelVersion.Id, metadata); err != nil {
+			return fmt.Errorf("can't write metadata: %v", err)
+		}
+		return s.writeFileSet(tx, modelVersion.Files)
 	})
+	if err != nil {
+		return nil, err
+	}
 	return &CreateModelVersionResult{ModelVersionId: modelVersion.Id}, err
 }
 
@@ -312,15 +330,19 @@ func (m *SQLStorage) GetFile(ctx context.Context, id string) (*FileMetadata, err
 	return &blob, nil
 }
 
-func (s *SQLStorage) UpdateMetadata(ctx context.Context, parentId string, metadata map[string]*structpb.Value) error {
+func (s *SQLStorage) writeMetadata(tx *sqlx.Tx, parentId string, metadata map[string]*structpb.Value) error {
 	rows := toMetadataSchema(parentId, metadata)
-	return s.transact(ctx, func(tx *sqlx.Tx) error {
-		for _, row := range rows {
-			if _, err := tx.NamedExec(METADATA_UPDATE, row); err != nil {
-				return fmt.Errorf("unable to write to db: %v", err)
-			}
+	for _, row := range rows {
+		if _, err := tx.NamedExec(METADATA_UPDATE, row); err != nil {
+			return fmt.Errorf("unable to write to db: %v", err)
 		}
-		return nil
+	}
+	return nil
+}
+
+func (s *SQLStorage) UpdateMetadata(ctx context.Context, parentId string, metadata map[string]*structpb.Value) error {
+	return s.transact(ctx, func(tx *sqlx.Tx) error {
+		return s.writeMetadata(tx, parentId, metadata)
 	})
 }
 

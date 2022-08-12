@@ -215,6 +215,7 @@ message CreateCheckpointRequest {
   uint64 epoch = 2;
   repeated FileMetadata files = 3;
   map<string, float> metrics = 4;
+  Metadata metadata = 5;
 }
 
 message CreateCheckpointResponse {
@@ -259,6 +260,7 @@ message CreateModelRequest {
   string namespace = 4;
   string task = 5;
   string description = 6;
+  Metadata metadata = 7;
   repeated FileMetadata files = 8;
 }
 
@@ -289,6 +291,7 @@ message ModelVersion {
   string version = 4;
   string description = 5;
   repeated FileMetadata files = 6;
+  Metadata metadata = 7;
   MLFramework framework = 8;
   repeated string unique_tags = 9;
   google.protobuf.Timestamp created_at = 20;
@@ -301,6 +304,7 @@ message CreateModelVersionRequest {
   string version = 3;
   string description = 4;
   repeated FileMetadata files = 5;
+  Metadata metadata = 6;
   MLFramework framework = 7;
   repeated string unique_tags = 8;
 }
@@ -333,6 +337,7 @@ message CreateExperimentRequest {
   string namespace = 3;
   MLFramework framework = 4;
   string task = 5;
+  Metadata metadata = 6;
   string external_id = 7;
 }
 

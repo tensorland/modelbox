@@ -41,7 +41,7 @@ type MySQLTestSuite struct {
 }
 
 func (s *MySQLTestSuite) SetupSuite() {
-	if err := s.mysql.CreateSchema("schemas/mysql_schema_ver_0.sql"); err != nil {
+	if err := s.mysql.CreateSchema("schemas/mysql/schema_ver_0.sql"); err != nil {
 		s.T().Fatalf("unable to load mysql schema: %v", err)
 	}
 }

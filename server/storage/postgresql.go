@@ -92,8 +92,8 @@ func (p *PostgresStorage) CreateSchema(path string) error {
 	defer dbCloser()
 	p.dropConnections(db, p.config.DbName)
 	queries := []string{
-		"DROP DATABASE IF EXISTS gotest",
-		"CREATE DATABASE  gotest",
+		fmt.Sprintf("DROP DATABASE IF EXISTS %v", p.config.DbName),
+		fmt.Sprintf("CREATE DATABASE %v", p.config.DbName),
 	}
 	for _, query := range queries {
 		if _, err := db.Exec(query); err != nil {

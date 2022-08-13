@@ -1,4 +1,4 @@
-package storage
+package logging
 
 import (
 	"context"

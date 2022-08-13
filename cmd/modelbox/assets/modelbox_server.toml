@@ -19,10 +19,11 @@ path = "/tmp/modelbox.dat"
 
 # Additional configuration for metadata storage in PostgreSQL
 [metadata_storage_postgres]
-host = "172.17.0.2"
+host = "172.17.0.3"
 port = 5432
-user = "postgres"
-
+username = "postgres"
+password = "foo"
+dbname   = "modelbox"
 
 [metadata_storage_mysql]
 host     = "172.17.0.2"

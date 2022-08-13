@@ -12,16 +12,10 @@ import (
 )
 
 const (
-	EXPERIMENT_CREATE = "insert into experiments(id, name, owner, namespace, external_id, ml_framework, created_at, updated_at) values(:id, :name, :owner, :namespace, :external_id, :ml_framework, :created_at, :updated_at)"
-
 	EXPERIMENTS_LIST = "SELECT id, name, owner, namespace, external_id, ml_framework, created_at, updated_at from experiments where namespace = ?"
-
-	CHECKPOINTS_CREATE = "insert into checkpoints(id, experiment, epoch, metrics, created_at, updated_at) values(:id, :experiment, :epoch, :metrics, :created_at, :updated_at)"
 
 	CHECKPOINTS_LIST = `select id, experiment, epoch, metrics, created_at, updated_at from checkpoints 
 	                      where experiment = ?`
-
-	MODEL_CREATE = "insert into models(id, name, owner, namespace, task, description, created_at, updated_at) values(:id, :name, :owner, :namespace, :task, :description, :created_at, :updated_at)"
 
 	MODEL_GET = "select id, name, owner, namespace, task, description, created_at, updated_at from models where id = ?"
 
@@ -48,11 +42,19 @@ const (
 
 type driverUtils interface {
 	isDuplicate(err error) bool
+
+	updateMetadata() string
+
+	createExperiment() string
+
+	createCheckpoint() string
+
+	createModel() string
 }
 
 type SQLStorage struct {
-	db          *sqlx.DB
-	driverUtils driverUtils
+	driverUtils
+	db *sqlx.DB
 
 	logger *zap.Logger
 }
@@ -70,7 +72,7 @@ func (s *SQLStorage) CreateExperiment(
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := FromExperimentToSchema(experiment)
 		_, err := tx.NamedExec(
-			EXPERIMENT_CREATE,
+			s.createExperiment(),
 			schema,
 		)
 		if err != nil {
@@ -108,7 +110,7 @@ func (s *SQLStorage) CreateCheckpoint(
 ) (*CreateCheckpointResult, error) {
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		cs := ToCheckpointSchema(c)
-		_, err := tx.NamedExec(CHECKPOINTS_CREATE, cs)
+		_, err := tx.NamedExec(s.createCheckpoint(), cs)
 		if err != nil {
 			if s.driverUtils.isDuplicate(err) {
 				return nil
@@ -130,7 +132,7 @@ func (s *SQLStorage) ListExperiments(
 	experiments := make([]*Experiment, 0)
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		rows := []ExperimentSchema{}
-		if err := tx.Select(&rows, EXPERIMENTS_LIST, namespace); err != nil {
+		if err := tx.Select(&rows, s.db.Rebind(EXPERIMENTS_LIST), namespace); err != nil {
 			return err
 		}
 		for _, row := range rows {
@@ -148,7 +150,7 @@ func (s *SQLStorage) ListCheckpoints(
 	checkpoints := make([]*Checkpoint, 0)
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		rows := []CheckpointSchema{}
-		if err := s.db.Select(&rows, CHECKPOINTS_LIST, experimentId); err != nil {
+		if err := s.db.Select(&rows, s.db.Rebind(CHECKPOINTS_LIST), experimentId); err != nil {
 			return err
 		}
 		for _, row := range rows {
@@ -175,7 +177,7 @@ func (s *SQLStorage) GetCheckpoint(
 			return err
 		}
 		rows := []FileSchema{}
-		if err := tx.Select(&rows, BLOBSET_GET, checkpointSchema.Id); err != nil {
+		if err := tx.Select(&rows, s.db.Rebind(BLOBSET_GET), checkpointSchema.Id); err != nil {
 			return err
 		}
 		files, err := ToFileSet(rows)
@@ -191,7 +193,7 @@ func (s *SQLStorage) GetCheckpoint(
 func (s *SQLStorage) CreateModel(ctx context.Context, model *Model, metadata SerializableMetadata) (*CreateModelResult, error) {
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := ModelToSchema(model)
-		if _, err := tx.NamedExec(MODEL_CREATE, schema); err != nil {
+		if _, err := tx.NamedExec(s.createModel(), schema); err != nil {
 			if s.driverUtils.isDuplicate(err) {
 				return nil
 			}
@@ -209,7 +211,7 @@ func (s *SQLStorage) GetModel(ctx context.Context, id string) (*Model, error) {
 	var model *Model
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		modelSchema := ModelSchema{}
-		if err := tx.Get(&modelSchema, MODEL_GET, id); err != nil {
+		if err := tx.Get(&modelSchema, s.db.Rebind(MODEL_GET), id); err != nil {
 			return err
 		}
 		fileSet, err := s.getFileSetForParent(tx, id)
@@ -226,7 +228,7 @@ func (s *SQLStorage) ListModels(ctx context.Context, namespace string) ([]*Model
 	models := make([]*Model, 0)
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		modelRows := []ModelSchema{}
-		if err := tx.Select(&modelRows, MODELS_NS_LIST, namespace); err != nil {
+		if err := tx.Select(&modelRows, s.db.Rebind(MODELS_NS_LIST), namespace); err != nil {
 			return fmt.Errorf("can't query: %v", err)
 		}
 		for _, modelRow := range modelRows {
@@ -241,7 +243,7 @@ func (s *SQLStorage) ListModels(ctx context.Context, namespace string) ([]*Model
 	return models, err
 }
 
-func (s *MySqlStorage) CreateModelVersion(
+func (s *SQLStorage) CreateModelVersion(
 	ctx context.Context,
 	modelVersion *ModelVersion,
 	metadata SerializableMetadata,
@@ -272,7 +274,7 @@ func (s *SQLStorage) GetModelVersion(ctx context.Context, id string) (*ModelVers
 	var modelVersion *ModelVersion
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		var modelVersionSchema ModelVersionSchema
-		if err := tx.Get(&modelVersionSchema, MODEL_VERSION_GET, id); err != nil {
+		if err := tx.Get(&modelVersionSchema, s.db.Rebind(MODEL_VERSION_GET), id); err != nil {
 			return err
 		}
 		fileSet, err := s.getFileSetForParent(tx, id)
@@ -289,7 +291,6 @@ func (s *SQLStorage) ListModelVersions(
 	ctx context.Context,
 	model string,
 ) ([]*ModelVersion, error) {
-
 	return nil, nil
 }
 
@@ -309,11 +310,11 @@ func (e *SQLStorage) GetFiles(ctx context.Context, parentId string) (FileSet, er
 	return blobs, err
 }
 
-func (m *SQLStorage) GetFile(ctx context.Context, id string) (*FileMetadata, error) {
+func (s *SQLStorage) GetFile(ctx context.Context, id string) (*FileMetadata, error) {
 	var blob FileMetadata
-	err := m.transact(ctx, func(tx *sqlx.Tx) error {
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		var blobRow FileSchema
-		if err := tx.Get(&blobRow, BLOB_GET, id); err != nil {
+		if err := tx.Get(&blobRow, s.db.Rebind(BLOB_GET), id); err != nil {
 			return fmt.Errorf("unable to get query blobs: %v", err)
 		}
 
@@ -333,7 +334,7 @@ func (m *SQLStorage) GetFile(ctx context.Context, id string) (*FileMetadata, err
 func (s *SQLStorage) writeMetadata(tx *sqlx.Tx, parentId string, metadata map[string]*structpb.Value) error {
 	rows := toMetadataSchema(parentId, metadata)
 	for _, row := range rows {
-		if _, err := tx.NamedExec(METADATA_UPDATE, row); err != nil {
+		if _, err := tx.NamedExec(s.updateMetadata(), row); err != nil {
 			return fmt.Errorf("unable to write to db: %v", err)
 		}
 	}
@@ -350,7 +351,7 @@ func (s *SQLStorage) ListMetadata(ctx context.Context, parentId string) (map[str
 	meta := map[string]*structpb.Value{}
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		rows := []*MetadataSchema{}
-		if err := s.db.Select(&rows, METADATA_LIST, parentId); err != nil {
+		if err := s.db.Select(&rows, s.db.Rebind(METADATA_LIST), parentId); err != nil {
 			return err
 		}
 		meta = toMetadata(rows)
@@ -366,7 +367,7 @@ func (s *SQLStorage) createMutationEvent(ctx context.Context, tx *sqlx.Tx, event
 
 func (s *SQLStorage) ListChanges(ctx context.Context, namespace string, since time.Time) ([]*ChangeEvent, error) {
 	rows := []MutationEventSchema{}
-	if err := s.db.Select(&rows, EVENT_NS_LIST, namespace, since.Unix()); err != nil {
+	if err := s.db.Select(&rows, s.db.Rebind(EVENT_NS_LIST), namespace, since.Unix()); err != nil {
 		return nil, fmt.Errorf("unable to list mutation events: %v", err)
 	}
 
@@ -386,7 +387,7 @@ func (s *SQLStorage) ListChanges(ctx context.Context, namespace string, since ti
 
 func (s *SQLStorage) getFileSetForParent(tx *sqlx.Tx, parentId string) (FileSet, error) {
 	blobRows := []FileSchema{}
-	if err := tx.Select(&blobRows, BLOBSET_GET, parentId); err != nil {
+	if err := tx.Select(&blobRows, s.db.Rebind(BLOBSET_GET), parentId); err != nil {
 		return nil, fmt.Errorf("unable to get query blobset: %v", err)
 	}
 	blobSet, err := ToFileSet(blobRows)
@@ -412,7 +413,7 @@ func (s *SQLStorage) writeFileSet(tx *sqlx.Tx, files FileSet) error {
 	}
 	sqlStr = sqlStr[0 : len(sqlStr)-1]
 	if len(files) > 0 {
-		if _, err := tx.Exec(sqlStr, vals...); err != nil {
+		if _, err := tx.Exec(s.db.Rebind(sqlStr), vals...); err != nil {
 			return fmt.Errorf("unable to create blobs for model: %v", err)
 		}
 	}

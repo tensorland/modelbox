@@ -356,7 +356,8 @@ type Checkpoint struct {
 func NewCheckpoint(
 	experimentId string,
 	epoch uint64,
-	metrics map[string]float32) *Checkpoint {
+	metrics map[string]float32,
+) *Checkpoint {
 	currentTime := time.Now().Unix()
 	chk := &Checkpoint{
 		ExperimentId: experimentId,
@@ -441,7 +442,8 @@ type ModelVersion struct {
 func NewModelVersion(name, model, version, description string,
 	framework MLFramework,
 	files []*FileMetadata,
-	uniqueTags []string) *ModelVersion {
+	uniqueTags []string,
+) *ModelVersion {
 	currentTime := time.Now().Unix()
 	mv := &ModelVersion{
 		Name:        name,
@@ -565,6 +567,19 @@ func NewMetadataStorage(
 			UserName: mysqlConfig.User,
 			DbName:   mysqlConfig.DbName,
 		}, logger)
+	case config.METADATA_BACKEND_POSTGRES:
+		postgresConfig := svrConfig.PostgresConfig
+		if postgresConfig == nil {
+			return nil, fmt.Errorf("postgres config is not set up")
+		}
+		return NewPostgresStorage(
+			&PostgresConfig{
+				Host:     postgresConfig.Host,
+				Port:     postgresConfig.Port,
+				Password: postgresConfig.Password,
+				UserName: postgresConfig.User,
+				DbName:   postgresConfig.DbName,
+			}, logger)
 	}
 	return nil, fmt.Errorf("unknown metadata backend: %v", svrConfig.MetadataBackend)
 }

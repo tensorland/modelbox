@@ -9,6 +9,7 @@ import (
 
 const (
 	METADATA_BACKEND_MYSQL      = "mysql"
+	METADATA_BACKEND_POSTGRES   = "postgres"
 	METADATA_BACKEND_INTEGRATED = "integrated"
 
 	BLOB_STORAGE_BACKEND_FS = "filesystem"
@@ -23,6 +24,17 @@ type MySQLConfig struct {
 	DbName   string `toml:"dbname"`
 }
 
+// This is being duplicated from mysql to accomodate specfic configs
+// which are not common like ssl and such and offers flexibility for
+// the future
+type PostgresConfig struct {
+	Host     string `toml:"host"`
+	Port     int    `toml:"port"`
+	User     string `toml:"username"`
+	Password string `toml:"password"`
+	DbName   string `toml:"dbname"`
+}
+
 type ServerConfig struct {
 	StorageBackend    string                   `toml:"blob_storage"`
 	MetadataBackend   string                   `toml:"metadata_storage"`
@@ -30,6 +42,7 @@ type ServerConfig struct {
 	FileStorage       *FileStorageConfig       `toml:"blob_storage_filesystem"`
 	IntegratedStorage *IntegratedStorageConfig `toml:"metadata_storage_integrated"`
 	MySQLConfig       *MySQLConfig             `toml:"metadata_storage_mysql"`
+	PostgresConfig    *PostgresConfig          `toml:"metadata_storage_postgres"`
 	PromAddr          string                   `toml:"prometheus_addr"`
 }
 

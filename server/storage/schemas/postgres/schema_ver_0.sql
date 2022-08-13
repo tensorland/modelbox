@@ -57,7 +57,9 @@ CREATE TABLE IF NOT EXISTS blobs (
 CREATE TABLE IF NOT EXISTS metadata (
    id VARCHAR(40) PRIMARY KEY,
    parent_id VARCHAR(40),
-   metadata JSON
+   metadata JSON,
+   created_at BIGINT,
+   updated_at BIGINT
 );
 
 CREATE TABLE IF NOT EXISTS mutation_events (

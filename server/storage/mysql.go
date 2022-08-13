@@ -16,8 +16,7 @@ const (
 	MYSQL_DRIVER = "mysql"
 )
 
-type mySQLDriverUtils struct {
-}
+type mySQLDriverUtils struct{}
 
 func (*mySQLDriverUtils) isDuplicate(err error) bool {
 	if driverErr, ok := err.(*mysql.MySQLError); ok {
@@ -26,6 +25,22 @@ func (*mySQLDriverUtils) isDuplicate(err error) bool {
 		}
 	}
 	return false
+}
+
+func (*mySQLDriverUtils) updateMetadata() string {
+	return "INSERT INTO metadata (id, parent_id, metadata) VALUES(:id, :parent_id, :metadata) ON DUPLICATE KEY UPDATE id=VALUES(`id`), parent_id=VALUES(`parent_id`), metadata=VALUES(`metadata`)"
+}
+
+func (*mySQLDriverUtils) createExperiment() string {
+	return "insert into experiments(id, name, owner, namespace, external_id, ml_framework, created_at, updated_at) values(:id, :name, :owner, :namespace, :external_id, :ml_framework, :created_at, :updated_at)"
+}
+
+func (*mySQLDriverUtils) createCheckpoint() string {
+	return "insert into checkpoints(id, experiment, epoch, metrics, created_at, updated_at) values(:id, :experiment, :epoch, :metrics, :created_at, :updated_at)"
+}
+
+func (*mySQLDriverUtils) createModel() string {
+	return "insert into models(id, name, owner, namespace, task, description, created_at, updated_at) values(:id, :name, :owner, :namespace, :task, :description, :created_at, :updated_at)"
 }
 
 type MySqlStorage struct {

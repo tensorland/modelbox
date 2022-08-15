@@ -86,7 +86,7 @@ func (t *TimescaleDbLogger) GetFloatLogs(ctx context.Context, parentId string) (
 	logs := map[string][]*FloatLog{}
 	err := t.transact(ctx, func(tx *sqlx.Tx) error {
 		foo := []MetricsSchema{}
-		if err := tx.Select(&foo, LOG_GET, parentId); err != nil {
+		if err := tx.SelectContext(ctx, &foo, LOG_GET, parentId); err != nil {
 			return fmt.Errorf("can't retrieve metrics for object: %v, err: %v", parentId, err)
 		}
 		for _, row := range foo {

@@ -1,6 +1,11 @@
 package logging
 
-import "context"
+import (
+	"context"
+
+	"github.com/diptanu/modelbox/server/config"
+	"go.uber.org/zap"
+)
 
 type FloatLog struct {
 	Value     float32
@@ -11,4 +16,13 @@ type ExperimentLogger interface {
 	LogFloats(ctx context.Context, parentId string, key string, value *FloatLog) error
 
 	GetFloatLogs(ctx context.Context, parentId string) (map[string][]*FloatLog, error)
+
+	Backend() string
+}
+
+func NewExperimentLogger(config *config.ServerConfig, logger *zap.Logger) (ExperimentLogger, error) {
+	if config.MetricsBackend == "timescaledb" {
+		return NewTimescaleDbLogger(&TimescaleDbConfig{}, logger)
+	}
+	return NewInMemoryExperimentLogger(), nil
 }

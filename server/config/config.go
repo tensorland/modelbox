@@ -34,15 +34,19 @@ type PostgresConfig struct {
 	Password string `toml:"password"`
 	DbName   string `toml:"dbname"`
 }
-
+type TimescaleDbConfig struct {
+	PostgresConfig
+}
 type ServerConfig struct {
 	StorageBackend    string                   `toml:"blob_storage"`
 	MetadataBackend   string                   `toml:"metadata_storage"`
+	MetricsBackend    string                   `toml:"metrics_storage"`
 	ListenAddr        string                   `toml:"listen_addr"`
 	FileStorage       *FileStorageConfig       `toml:"blob_storage_filesystem"`
 	IntegratedStorage *IntegratedStorageConfig `toml:"metadata_storage_integrated"`
 	MySQLConfig       *MySQLConfig             `toml:"metadata_storage_mysql"`
 	PostgresConfig    *PostgresConfig          `toml:"metadata_storage_postgres"`
+	TimescaleDb       *TimescaleDbConfig       `toml:"metrics_storage_timescaledb"`
 	PromAddr          string                   `toml:"prometheus_addr"`
 }
 
@@ -80,6 +84,7 @@ func defaultServerConfig() *ServerConfig {
 	return &ServerConfig{
 		StorageBackend:  "file",
 		MetadataBackend: "integrated",
+		MetricsBackend:  "inmem",
 		ListenAddr:      ":8080",
 		PromAddr:        ":2112",
 	}

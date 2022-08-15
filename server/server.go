@@ -427,6 +427,7 @@ func (s *GrpcServer) WatchNamespace(
 
 func NewGrpcServer(
 	metadatStorage storage.MetadataStorage,
+	experimentLogger logging.ExperimentLogger,
 	blobStorageBuilder storage.BlobStorageBuilder,
 	lis net.Listener,
 	logger *zap.Logger,
@@ -437,7 +438,7 @@ func NewGrpcServer(
 	)
 	modelBoxServer := &GrpcServer{
 		metadataStorage:    metadatStorage,
-		experimentLogger:   logging.NewInMemoryExperimentLogger(),
+		experimentLogger:   experimentLogger,
 		grpcServer:         grpcServer,
 		blobStorageBuilder: blobStorageBuilder,
 		lis:                lis,

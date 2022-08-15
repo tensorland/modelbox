@@ -12,6 +12,7 @@ func TestServerConfig(t *testing.T) {
 	assert.Equal(t, ":8085", config.ListenAddr)
 	assert.Equal(t, "filesystem", config.StorageBackend)
 	assert.Equal(t, "integrated", config.MetadataBackend)
+	assert.Equal(t, "inmem", config.MetricsBackend)
 
 	assert.Equal(t, "/tmp/modelboxblobs", config.FileStorage.BaseDir)
 
@@ -36,4 +37,14 @@ func TestPostgresConfigTest(t *testing.T) {
 	assert.Equal(t, "postgres", config.PostgresConfig.User)
 	assert.Equal(t, "foo", config.PostgresConfig.Password)
 	assert.Equal(t, "modelbox", config.PostgresConfig.DbName)
+}
+
+func TestTimescaledbConfigTest(t *testing.T) {
+	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
+	assert.Nil(t, err)
+	assert.Equal(t, "172.17.0.4", config.TimescaleDb.Host)
+	assert.Equal(t, 5432, config.TimescaleDb.Port)
+	assert.Equal(t, "postgres", config.TimescaleDb.User)
+	assert.Equal(t, "foo", config.TimescaleDb.Password)
+	assert.Equal(t, "modelbox_metrics", config.TimescaleDb.DbName)
 }

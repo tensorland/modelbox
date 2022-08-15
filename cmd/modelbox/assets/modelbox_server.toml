@@ -6,6 +6,8 @@ blob_storage = "filesystem"
 # such as models and checkpoints, and lineage of artifacts
 metadata_storage = "integrated"
 
+metrics_storage = "inmem"
+
 # Interface on which the metadata service is listening for network connections
 listen_addr = ":8085"
 
@@ -31,3 +33,10 @@ port     = 3306
 username = "root"
 password = "foo"
 dbname   = "modelbox"
+
+[metrics_storage_timescaledb]
+host = "172.17.0.4"
+port = 5432
+username = "postgres"
+password = "foo"
+dbname   = "modelbox_metrics"

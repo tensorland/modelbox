@@ -98,6 +98,10 @@ func (t *TimescaleDbLogger) GetFloatLogs(ctx context.Context, parentId string) (
 	return logs, err
 }
 
+func (*TimescaleDbLogger) Backend() string {
+	return "inmemory"
+}
+
 func (t *TimescaleDbLogger) transact(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	tx, err := t.db.BeginTxx(ctx, nil)
 	if err != nil {

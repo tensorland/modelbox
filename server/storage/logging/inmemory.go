@@ -39,3 +39,7 @@ func (i *InMemoryExperimentLogger) GetFloatLogs(ctx context.Context, parentId st
 	}
 	return logs, nil
 }
+
+func (*InMemoryExperimentLogger) Backend() string {
+	return "inmemory"
+}

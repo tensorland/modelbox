@@ -67,7 +67,7 @@ func NewTimescaleDbLogger(config *TimescaleDbConfig, logger *zap.Logger) (*Times
 	}, nil
 }
 
-func (t *TimescaleDbLogger) LogFloats(ctx context.Context, parentId string, key string, value *FloatLog) error {
+func (t *TimescaleDbLogger) LogFloats(ctx context.Context, parentId, key string, value *FloatLog) error {
 	row := &MetricsSchema{
 		Time:      time.Now(),
 		ParentId:  parentId,

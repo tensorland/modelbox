@@ -13,7 +13,7 @@ type FloatLog struct {
 	WallClock uint64
 }
 type ExperimentLogger interface {
-	LogFloats(ctx context.Context, parentId string, key string, value *FloatLog) error
+	LogFloats(ctx context.Context, parentId, key string, value *FloatLog) error
 
 	GetFloatLogs(ctx context.Context, parentId string) (map[string][]*FloatLog, error)
 

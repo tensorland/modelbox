@@ -19,10 +19,10 @@ func WriteServerConfigToFile(path string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0600)
+	return os.WriteFile(path, data, 0o600)
 }
 
-func CreateSchema(configPath string, schema string, logger *zap.Logger) error {
+func CreateSchema(configPath, schema string, logger *zap.Logger) error {
 	config, err := svrConfig.NewServerConfig(configPath)
 	if err != nil {
 		return nil
@@ -39,7 +39,7 @@ func WriteClientConfigToFile(path string) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0600)
+	return os.WriteFile(path, data, 0o600)
 }
 
 type ClientUi struct {
@@ -155,7 +155,7 @@ func (u *ClientUi) ListCheckpoints(experimentId string) error {
 	return nil
 }
 
-func (u *ClientUi) DownloadCheckpoint(id string, path string) error {
+func (u *ClientUi) DownloadCheckpoint(id, path string) error {
 	resp, err := u.client.DownloadBlob(id, path)
 	if err != nil {
 		return err

@@ -6,9 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	ConfigPath string
-)
+var ConfigPath string
 
 var rootCmd = &cobra.Command{
 	Use:   "modelbox",

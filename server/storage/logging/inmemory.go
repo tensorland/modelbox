@@ -18,7 +18,7 @@ func NewInMemoryExperimentLogger() *InMemoryExperimentLogger {
 	}
 }
 
-func (i *InMemoryExperimentLogger) LogFloats(ctx context.Context, parentId string, key string, value *FloatLog) error {
+func (i *InMemoryExperimentLogger) LogFloats(ctx context.Context, parentId, key string, value *FloatLog) error {
 	i.floatLogsLock.Lock()
 	defer i.floatLogsLock.Unlock()
 	compoundKey := fmt.Sprintf("%s-%s", parentId, key)

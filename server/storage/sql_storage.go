@@ -25,6 +25,8 @@ const (
 
 	MODEL_VERSION_GET = "select name, model_id, version, description, ml_framework, unique_tags, created_at, updated_at from model_versions where id = ?"
 
+	MODEL_VERSION_LIST = "select name, model_id, version, description, ml_framework, unique_tags, created_at, updated_at from model_versions where model_id = ?"
+
 	BLOB_MULTI_WRITE = "insert into blobs(id, parent_id, metadata) VALUES "
 
 	BLOBSET_GET = "select id, parent_id, metadata from blobs where parent_id=?"
@@ -291,7 +293,23 @@ func (s *SQLStorage) ListModelVersions(
 	ctx context.Context,
 	model string,
 ) ([]*ModelVersion, error) {
-	return nil, nil
+	modelVersions := []*ModelVersion{}
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		rows := []ModelVersionSchema{}
+		if err := tx.SelectContext(ctx, &rows, s.db.Rebind(MODEL_VERSION_LIST), model); err != nil {
+			return err
+		}
+		for _, row := range rows {
+			fileSet, err := s.getFileSetForParent(tx, row.Id)
+			if err != nil {
+				return err
+			}
+			modelVersions = append(modelVersions, row.ToModelVersion(fileSet))
+		}
+
+		return nil
+	})
+	return modelVersions, err
 }
 
 func (e *SQLStorage) WriteFiles(ctx context.Context, blobs FileSet) error {

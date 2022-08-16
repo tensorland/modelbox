@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -90,9 +91,9 @@ func (s *StorageInterfaceTestSuite) TestObjectCreateIdempotency() {
 func (s *StorageInterfaceTestSuite) TestCreateModel() {
 	description := "a large translation model based on gpt3"
 	m := NewModel("blender", OWNER, NAMESPACE, TASK, description)
-	blob1 := NewFileMetadata(m.Id, "/foo/bar", "checksum123", TextFile, 0, 0)
-	blob2 := NewFileMetadata(m.Id, "/foo/pipe", "checksum345", ModelFile, 0, 0)
-	m.SetFiles([]*FileMetadata{blob1, blob2})
+	blob1 := artifacts.NewFileMetadata(m.Id, "/foo/bar", "checksum123", artifacts.TextFile, 0, 0)
+	blob2 := artifacts.NewFileMetadata(m.Id, "/foo/pipe", "checksum345", artifacts.ModelFile, 0, 0)
+	m.SetFiles([]*artifacts.FileMetadata{blob1, blob2})
 	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
 	metaData := map[string]*structpb.Value{"foo": metaVal}
 	ctx := context.Background()
@@ -109,9 +110,9 @@ func (s *StorageInterfaceTestSuite) TestListModels() {
 	description := "a large translation model based on gpt3"
 	namespace := "namespace-x"
 	m := NewModel("blender", OWNER, namespace, TASK, description)
-	blob1 := NewFileMetadata(m.Id, "/foo/bar", "checksum123", TextFile, 0, 0)
-	blob2 := NewFileMetadata(m.Id, "/foo/pipe", "checksum345", ModelFile, 0, 0)
-	m.SetFiles([]*FileMetadata{blob1, blob2})
+	blob1 := artifacts.NewFileMetadata(m.Id, "/foo/bar", "checksum123", artifacts.TextFile, 0, 0)
+	blob2 := artifacts.NewFileMetadata(m.Id, "/foo/pipe", "checksum345", artifacts.ModelFile, 0, 0)
+	m.SetFiles([]*artifacts.FileMetadata{blob1, blob2})
 	ctx := context.Background()
 	_, err := s.storageIf.CreateModel(ctx, m, nil)
 	assert.Nil(s.t, err)
@@ -123,7 +124,7 @@ func (s *StorageInterfaceTestSuite) TestListModels() {
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateModelVersion() {
-	blobs := []*FileMetadata{}
+	blobs := []*artifacts.FileMetadata{}
 	mvName := "test-version"
 	version := "1"
 	description := "testing"
@@ -162,7 +163,7 @@ func (s *StorageInterfaceTestSuite) TestListModelVersions() {
 		"1",
 		description,
 		Pytorch,
-		[]*FileMetadata{},
+		[]*artifacts.FileMetadata{},
 		uniqueTags,
 	)
 	_, err := s.storageIf.CreateModelVersion(context.Background(), mv, metaData)
@@ -173,7 +174,7 @@ func (s *StorageInterfaceTestSuite) TestListModelVersions() {
 		"2",
 		description,
 		Pytorch,
-		[]*FileMetadata{},
+		[]*artifacts.FileMetadata{},
 		uniqueTags,
 	)
 	fmt.Println(mv.Id)
@@ -188,9 +189,9 @@ func (s *StorageInterfaceTestSuite) TestListModelVersions() {
 
 func (s *StorageInterfaceTestSuite) TestWriteBlobs() {
 	ctx := context.Background()
-	blob1 := NewFileMetadata(MODEL_NAME, "/foo/bar", "checksum123", TextFile, 0, 0)
-	blob2 := NewFileMetadata(MODEL_NAME, "/foo/pipe", "checksum345", ModelFile, 0, 0)
-	blobs := []*FileMetadata{blob1, blob2}
+	blob1 := artifacts.NewFileMetadata(MODEL_NAME, "/foo/bar", "checksum123", artifacts.TextFile, 0, 0)
+	blob2 := artifacts.NewFileMetadata(MODEL_NAME, "/foo/pipe", "checksum345", artifacts.ModelFile, 0, 0)
+	blobs := []*artifacts.FileMetadata{blob1, blob2}
 	err := s.storageIf.WriteFiles(ctx, blobs)
 	assert.Nil(s.t, err)
 

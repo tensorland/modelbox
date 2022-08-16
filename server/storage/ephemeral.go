@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"github.com/fatih/structs"
 	"github.com/ugorji/go/codec"
 	bolt "go.etcd.io/bbolt"
@@ -325,7 +326,7 @@ func (e *EphemeralStorage) GetModelVersion(ctx context.Context, id string) (*Mod
 	return &modelVersion, err
 }
 
-func (e *EphemeralStorage) WriteFiles(_ context.Context, files FileSet) error {
+func (e *EphemeralStorage) WriteFiles(_ context.Context, files artifacts.FileSet) error {
 	for _, file := range files {
 		if err := e.writeBytes(file, file.Id, FILES, nil); err != nil {
 			return err
@@ -334,14 +335,14 @@ func (e *EphemeralStorage) WriteFiles(_ context.Context, files FileSet) error {
 	return nil
 }
 
-func (e *EphemeralStorage) GetFiles(ctx context.Context, parentId string) (FileSet, error) {
-	files := []*FileMetadata{}
+func (e *EphemeralStorage) GetFiles(ctx context.Context, parentId string) (artifacts.FileSet, error) {
+	files := []*artifacts.FileMetadata{}
 	err := e.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(FILES)
 		c := b.Cursor()
 		handle := new(codec.MsgpackHandle)
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			var file FileMetadata
+			var file artifacts.FileMetadata
 			decoder := codec.NewDecoderBytes(v, handle)
 			if err := decoder.Decode(&file); err != nil {
 				return err
@@ -367,8 +368,8 @@ func (e *EphemeralStorage) Backend() *BackendInfo {
 	return &BackendInfo{Name: "boltdb"}
 }
 
-func (e *EphemeralStorage) GetFile(ctx context.Context, id string) (*FileMetadata, error) {
-	file := FileMetadata{}
+func (e *EphemeralStorage) GetFile(ctx context.Context, id string) (*artifacts.FileMetadata, error) {
+	file := artifacts.FileMetadata{}
 	err := e.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(FILES)
 		out := b.Get([]byte(id))

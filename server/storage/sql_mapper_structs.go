@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/diptanu/modelbox/server/storage/artifacts"
+	"github.com/diptanu/modelbox/server/utils"
 	"github.com/jmoiron/sqlx/types"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -22,7 +24,7 @@ type ModelSchema struct {
 	UpdatedAt int64  `db:"updated_at"`
 }
 
-func (m *ModelSchema) ToModel(files FileSet) *Model {
+func (m *ModelSchema) ToModel(files artifacts.FileSet) *Model {
 	model := &Model{
 		Id:          m.Id,
 		Name:        m.Name,
@@ -30,7 +32,7 @@ func (m *ModelSchema) ToModel(files FileSet) *Model {
 		Namespace:   m.Namespace,
 		Task:        m.Task,
 		Description: m.Desc,
-		Files:       []*FileMetadata{},
+		Files:       []*artifacts.FileMetadata{},
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 	}
@@ -66,7 +68,7 @@ type ModelVersionSchema struct {
 	UpdatedAt  int64            `db:"updated_at"`
 }
 
-func (m *ModelVersionSchema) ToModelVersion(files FileSet) *ModelVersion {
+func (m *ModelVersionSchema) ToModelVersion(files artifacts.FileSet) *ModelVersion {
 	modelVersion := &ModelVersion{
 		Id:          m.Id,
 		Name:        m.Name,
@@ -96,8 +98,8 @@ func ModelVersionToSchema(mv *ModelVersion) *ModelVersionSchema {
 	}
 }
 
-func ToFileSet(rows []FileSchema) ([]*FileMetadata, error) {
-	fileSet := make([]*FileMetadata, len(rows))
+func ToFileSet(rows []FileSchema) ([]*artifacts.FileMetadata, error) {
+	fileSet := make([]*artifacts.FileMetadata, len(rows))
 	for i, row := range rows {
 		file, err := row.ToFile()
 		if err != nil {
@@ -114,9 +116,9 @@ type FileSchema struct {
 	Meta     types.JSONText `db:"metadata"`
 }
 
-func (b *FileSchema) ToFile() (*FileMetadata, error) {
+func (b *FileSchema) ToFile() (*artifacts.FileMetadata, error) {
 	type BlobMeta struct {
-		Type      FileMIMEType
+		Type      artifacts.FileMIMEType
 		Path      string
 		Checksum  string
 		CreatedAt int64
@@ -127,7 +129,7 @@ func (b *FileSchema) ToFile() (*FileMetadata, error) {
 		return nil, err
 	}
 
-	return &FileMetadata{
+	return &artifacts.FileMetadata{
 		Id:        b.Id,
 		ParentId:  b.ParentId,
 		Type:      meta.Type,
@@ -185,7 +187,7 @@ type CheckpointSchema struct {
 	UpdatedAt  int64 `db:"updated_at"`
 }
 
-func (c *CheckpointSchema) ToCheckpoint(files FileSet) *Checkpoint {
+func (c *CheckpointSchema) ToCheckpoint(files artifacts.FileSet) *Checkpoint {
 	return &Checkpoint{
 		Id:           c.Id,
 		ExperimentId: c.Experiment,
@@ -228,8 +230,8 @@ func toMetadataSchema(parentId string, metadata map[string]*structpb.Value) []*M
 	rows := []*MetadataSchema{}
 	for k, v := range metadata {
 		h := sha1.New()
-		hashString(h, parentId)
-		hashString(h, k)
+		utils.HashString(h, parentId)
+		utils.HashString(h, k)
 		id := fmt.Sprintf("%x", h.Sum(nil))
 		m := &MetadataSchema{
 			Id:       id,

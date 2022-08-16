@@ -64,6 +64,10 @@ service ModelStore {
   // Get metrics logged for an experiment, model or checkpoint.
   rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
 
+  // Log an event from any system interacting with metadata of a experiment, models or
+  // using a trained model or checkpoint.
+  rpc LogEvent(LogEventRequest) returns (LogEventResponse);
+
   // Streams change events in any of objects such as experiments, models, etc, for a given namespace
   // Response is a json representation of the new state of the obejct
   rpc WatchNamespace(WatchNamespaceRequest) returns (stream WatchNamespaceResponse);
@@ -382,3 +386,22 @@ message ListMetadataRequest {
 message ListMetadataResponse {
   map<string, google.protobuf.Value> metadata = 1;
 }
+
+message EventSource {
+  string name = 1;
+}
+
+/**
+ * Contains information about an event being logged about
+ * an experiment or a model or a checkpoint by any system interacting 
+ * or using the object.
+ */
+message LogEventRequest {
+  string parent_id = 1;
+  string name = 2;
+  EventSource source = 3;
+  google.protobuf.Timestamp wallclock_time = 4;
+  Metadata metadata = 5;
+}
+
+message LogEventResponse {}

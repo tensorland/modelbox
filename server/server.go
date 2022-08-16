@@ -10,6 +10,7 @@ import (
 
 	pb "github.com/diptanu/modelbox/client-go/proto"
 	"github.com/diptanu/modelbox/server/storage"
+	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"github.com/diptanu/modelbox/server/storage/logging"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"go.uber.org/zap"
@@ -22,7 +23,7 @@ type GrpcServer struct {
 	grpcServer         *grpc.Server
 	metadataStorage    storage.MetadataStorage
 	experimentLogger   logging.ExperimentLogger
-	blobStorageBuilder storage.BlobStorageBuilder
+	blobStorageBuilder artifacts.BlobStorageBuilder
 
 	lis    net.Listener
 	logger *zap.Logger
@@ -42,7 +43,7 @@ func (s *GrpcServer) CreateModel(
 		req.Task,
 		req.Description,
 	)
-	model.SetFiles(storage.NewFileSetFromProto(req.Files))
+	model.SetFiles(NewFileSetFromProto(req.Files))
 	if _, err := s.metadataStorage.CreateModel(ctx, model, req.Metadata.Metadata); err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func (s *GrpcServer) CreateModelVersion(
 		req.Version,
 		req.Description,
 		storage.MLFramework(req.Framework),
-		storage.NewFileSetFromProto(req.Files),
+		NewFileSetFromProto(req.Files),
 		req.UniqueTags,
 	)
 	if _, err := s.metadataStorage.CreateModelVersion(ctx, modelVersion, req.Metadata.Metadata); err != nil {
@@ -92,7 +93,7 @@ func (s *GrpcServer) ListModels(ctx context.Context,
 			Namespace:   m.Namespace,
 			Task:        m.Task,
 			Description: m.Description,
-			Files:       m.Files.ToProto(),
+			Files:       FileSetToProto(&m.Files),
 		}
 	}
 	return &pb.ListModelsResponse{Models: apiModels}, nil
@@ -103,7 +104,7 @@ func (s *GrpcServer) CreateExperiment(
 	ctx context.Context,
 	req *pb.CreateExperimentRequest,
 ) (*pb.CreateExperimentResponse, error) {
-	fwk := storage.MLFrameworkFromProto(req.Framework)
+	fwk := MLFrameworkFromProto(req.Framework)
 	experiment := storage.NewExperiment(
 		req.Name,
 		req.Owner,
@@ -137,7 +138,7 @@ func (s *GrpcServer) ListExperiments(
 			Name:      e.Name,
 			Owner:     e.Owner,
 			Namespace: e.Namespace,
-			Framework: storage.MLFrameworkToProto(e.Framework),
+			Framework: MLFrameworkToProto(e.Framework),
 			CreatedAt: timestamppb.New(time.Unix(e.CreatedAt, 0)),
 			UpdatedAt: timestamppb.New(time.Unix(e.UpdatedAt, 0)),
 		}
@@ -154,7 +155,7 @@ func (s *GrpcServer) CreateCheckpoint(
 		req.Epoch,
 		req.Metrics,
 	)
-	checkpoint.SetFiles(storage.NewFileSetFromProto(req.Files))
+	checkpoint.SetFiles(NewFileSetFromProto(req.Files))
 	if _, err := s.metadataStorage.CreateCheckpoint(ctx, checkpoint, req.Metadata.Metadata); err != nil {
 		return nil, fmt.Errorf("unable to create checkpoint: %v", err)
 	}
@@ -179,7 +180,7 @@ func (s *GrpcServer) ListCheckpoints(
 				ParentId:  b.ParentId,
 				Path:      b.Path,
 				Checksum:  b.Checksum,
-				FileType:  storage.FileTypeToProto(b.Type),
+				FileType:  FileTypeToProto(b.Type),
 				CreatedAt: timestamppb.New(time.Unix(b.CreatedAt, 0)),
 				UpdatedAt: timestamppb.New(time.Unix(b.UpdatedAt, 0)),
 			}
@@ -207,9 +208,9 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 		return fmt.Errorf("the first message needs to be checkpoint metadata")
 	}
 
-	blobInfo := storage.NewFileMetadata(meta.ParentId, "", meta.Checksum, storage.FileTypeFromProto(meta.FileType), 0, 0)
+	blobInfo := artifacts.NewFileMetadata(meta.ParentId, "", meta.Checksum, FileTypeFromProto(meta.FileType), 0, 0)
 	blobStorage := s.blobStorageBuilder.Build()
-	if err := blobStorage.Open(blobInfo, storage.Write); err != nil {
+	if err := blobStorage.Open(blobInfo, artifacts.Write); err != nil {
 		return err
 	}
 	defer blobStorage.Close()
@@ -219,7 +220,7 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 		return fmt.Errorf("unable to update blob info for checkpoint")
 	}
 	blobInfo.Path = path
-	if err := s.metadataStorage.WriteFiles(stream.Context(), storage.FileSet{blobInfo}); err != nil {
+	if err := s.metadataStorage.WriteFiles(stream.Context(), artifacts.FileSet{blobInfo}); err != nil {
 		// TODO This is not great, we should create a new error type and throw and check on the error type
 		// or code.
 		if strings.HasPrefix(err.Error(), "unable to create blobs for model: Error 1062") {
@@ -258,7 +259,7 @@ func (s *GrpcServer) DownloadFile(
 		return fmt.Errorf("unable to retreive blob metadata: %v", err)
 	}
 	blobStorage := s.blobStorageBuilder.Build()
-	if err := blobStorage.Open(blobInfo, storage.Read); err != nil {
+	if err := blobStorage.Open(blobInfo, artifacts.Read); err != nil {
 		return fmt.Errorf("unable to create blob storage intf: %v", err)
 	}
 	defer blobStorage.Close()
@@ -268,7 +269,7 @@ func (s *GrpcServer) DownloadFile(
 				Id:        blobInfo.Id,
 				ParentId:  blobInfo.ParentId,
 				Checksum:  blobInfo.Checksum,
-				FileType:  storage.FileTypeToProto(blobInfo.Type),
+				FileType:  FileTypeToProto(blobInfo.Type),
 				Path:      blobInfo.Path,
 				CreatedAt: timestamppb.New(time.Unix(blobInfo.CreatedAt, 0)),
 				UpdatedAt: timestamppb.New(time.Unix(blobInfo.UpdatedAt, 0)),
@@ -305,7 +306,7 @@ func (s *GrpcServer) DownloadFile(
 }
 
 func (s *GrpcServer) TrackArtifacts(ctx context.Context, req *pb.TrackArtifactsRequest) (*pb.TrackArtifactsResponse, error) {
-	files := storage.NewFileSetFromProto(req.Files)
+	files := NewFileSetFromProto(req.Files)
 	if err := s.metadataStorage.WriteFiles(ctx, files); err != nil {
 		if strings.HasPrefix(err.Error(), "unable to create blobs for model: Error 1062:") {
 			goto respond
@@ -392,6 +393,10 @@ func (s *GrpcServer) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) 
 	return &pb.GetMetricsResponse{Metrics: protoMetrics}, nil
 }
 
+func (s *GrpcServer) LogEvent(ctx context.Context, req *pb.LogEventRequest) (*pb.LogEventResponse, error) {
+	return nil, nil
+}
+
 func (s *GrpcServer) WatchNamespace(
 	req *pb.WatchNamespaceRequest,
 	stream pb.ModelStore_WatchNamespaceServer,
@@ -427,7 +432,7 @@ func (s *GrpcServer) WatchNamespace(
 
 func NewGrpcServer(
 	metadatStorage storage.MetadataStorage,
-	blobStorageBuilder storage.BlobStorageBuilder,
+	blobStorageBuilder artifacts.BlobStorageBuilder,
 	lis net.Listener,
 	logger *zap.Logger,
 ) *GrpcServer {

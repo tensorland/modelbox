@@ -9,6 +9,7 @@ import (
 
 	"github.com/diptanu/modelbox/server/config"
 	"github.com/diptanu/modelbox/server/storage"
+	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"go.uber.org/zap"
 )
 
@@ -34,7 +35,7 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	if err != nil {
 		return nil, err
 	}
-	fileStorageBuilder, err := storage.NewBlobStorageBuilder(config, logger)
+	fileStorageBuilder, err := artifacts.NewBlobStorageBuilder(config, logger)
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("couldn't build basedire %v", err))
 	}

@@ -394,7 +394,8 @@ func (s *GrpcServer) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) 
 }
 
 func (s *GrpcServer) LogEvent(ctx context.Context, req *pb.LogEventRequest) (*pb.LogEventResponse, error) {
-	return nil, nil
+	event := storage.NewEvent(req.ParentId, req.Source.Name, req.Name, req.WallclockTime.AsTime(), req.Metadata.Metadata)
+	return &pb.LogEventResponse{}, s.metadataStorage.LogEvent(ctx, req.ParentId, event)
 }
 
 func (s *GrpcServer) WatchNamespace(

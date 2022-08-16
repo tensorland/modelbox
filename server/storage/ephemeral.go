@@ -39,7 +39,7 @@ type EphemeralStorage struct {
 }
 
 func NewEphemeralStorage(path string, logger *zap.Logger) (*EphemeralStorage, error) {
-	db, err := bolt.Open(path, 0666, nil)
+	db, err := bolt.Open(path, 0o666, nil)
 	if err != err {
 		return nil, err
 	}
@@ -261,10 +261,6 @@ func (e *EphemeralStorage) GetModel(_ context.Context, id string) (*Model, error
 	return &model, err
 }
 
-func (e *EphemeralStorage) ListModelVersions(_ context.Context, modelId string) ([]*ModelVersion, error) {
-	return nil, nil
-}
-
 func (e *EphemeralStorage) ListModels(_ context.Context, namespace string) ([]*Model, error) {
 	models := make([]*Model, 0)
 	err := e.db.View(func(tx *bolt.Tx) error {
@@ -284,6 +280,27 @@ func (e *EphemeralStorage) ListModels(_ context.Context, namespace string) ([]*M
 		return nil
 	})
 	return models, err
+}
+
+func (e *EphemeralStorage) ListModelVersions(_ context.Context, modelId string) ([]*ModelVersion, error) {
+	modelVersions := []*ModelVersion{}
+	err := e.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(MODEL_VERSIONS)
+		c := b.Cursor()
+		handle := new(codec.MsgpackHandle)
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var mv ModelVersion
+			decoder := codec.NewDecoderBytes(v, handle)
+			if err := decoder.Decode(&mv); err != nil {
+				return err
+			}
+			if mv.ModelId == modelId {
+				modelVersions = append(modelVersions, &mv)
+			}
+		}
+		return nil
+	})
+	return modelVersions, err
 }
 
 func (e *EphemeralStorage) CreateModelVersion(ctx context.Context, modelVersion *ModelVersion, metadata SerializableMetadata) (*CreateModelVersionResult, error) {

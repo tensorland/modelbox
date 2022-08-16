@@ -29,9 +29,6 @@ func (s *PostgresTestSuite) SetupSuite() {
 }
 
 func (s *PostgresTestSuite) TearDownSuite() {
-	if err := s.pqStorage.Close(); err != nil {
-		s.T().Fatalf("unable to close db: %v", err)
-	}
 	if err := s.pqStorage.DropDb(); err != nil {
 		s.T().Fatalf("unable to drop db: %v", err)
 	}

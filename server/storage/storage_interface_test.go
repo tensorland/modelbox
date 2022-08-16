@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -147,6 +148,42 @@ func (s *StorageInterfaceTestSuite) TestCreateModelVersion() {
 	assert.Equal(s.t, version, mv1.Version)
 	assert.Equal(s.t, description, mv1.Description)
 	assert.Equal(s.t, uniqueTags, mv1.UniqueTags)
+}
+
+func (s *StorageInterfaceTestSuite) TestListModelVersions() {
+	modelId := "some-reandom-model"
+	description := "testing"
+	uniqueTags := SerializableTags([]string{"foo", "bar"})
+	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
+	metaData := map[string]*structpb.Value{"foo": metaVal}
+	mv := NewModelVersion(
+		"test-version1",
+		modelId,
+		"1",
+		description,
+		Pytorch,
+		[]*FileMetadata{},
+		uniqueTags,
+	)
+	_, err := s.storageIf.CreateModelVersion(context.Background(), mv, metaData)
+	assert.Nil(s.t, err)
+	mv1 := NewModelVersion(
+		"test-version-2",
+		modelId,
+		"2",
+		description,
+		Pytorch,
+		[]*FileMetadata{},
+		uniqueTags,
+	)
+	fmt.Println(mv.Id)
+	fmt.Println(mv1.Id)
+	_, err = s.storageIf.CreateModelVersion(context.Background(), mv1, metaData)
+	assert.Nil(s.t, err)
+
+	mvs, err := s.storageIf.ListModelVersions(context.Background(), modelId)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, 2, len(mvs))
 }
 
 func (s *StorageInterfaceTestSuite) TestWriteBlobs() {

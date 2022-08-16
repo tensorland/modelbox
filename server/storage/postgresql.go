@@ -19,7 +19,6 @@ type postgresDriverUtils struct{}
 
 func (*postgresDriverUtils) isDuplicate(err error) bool {
 	if driverErr, ok := err.(*pq.Error); ok {
-		fmt.Println("Diptanu ", driverErr.Code)
 		if driverErr.Code == "23505" {
 			return true
 		}
@@ -80,6 +79,7 @@ func (p *PostgresStorage) DropDb() error {
 	defer db.Close()
 
 	p.dropConnections(p.db, p.config.DbName)
+	p.db.Close()
 	_, err = db.Exec(fmt.Sprintf("DROP DATABASE %s", p.config.DbName))
 	return err
 }

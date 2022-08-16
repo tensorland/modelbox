@@ -33,6 +33,33 @@ func (s *SerializableMetadata) Scan(value interface{}) error {
 	return json.Unmarshal(b, &s)
 }
 
+type Event struct {
+	Id              string
+	ParentId        string
+	Name            string
+	Source          string
+	SourceWallclock uint64
+	Metadata        map[string]*structpb.Value
+}
+
+func NewEvent(parentId, source, name string, wallclock time.Time, metadata map[string]*structpb.Value) *Event {
+	h := sha1.New()
+	utils.HashString(h, parentId)
+	utils.HashString(h, name)
+	utils.HashString(h, source)
+	utils.HashUint64(h, uint64(wallclock.Unix()))
+	utils.HashMeta(h, metadata)
+	id := fmt.Sprintf("%x", h.Sum(nil))
+	return &Event{
+		Id:              id,
+		ParentId:        parentId,
+		Name:            name,
+		Source:          source,
+		SourceWallclock: uint64(wallclock.Unix()),
+		Metadata:        metadata,
+	}
+}
+
 type ChangeEvent struct {
 	ObjectId   string
 	Time       time.Time
@@ -359,6 +386,8 @@ type MetadataStorage interface {
 	ListMetadata(ctx context.Context, parentId string) (map[string]*structpb.Value, error)
 
 	ListChanges(ctx context.Context, namespace string, since time.Time) ([]*ChangeEvent, error)
+
+	LogEvent(ctx context.Context, parentId string, event *Event) error
 
 	Close() error
 }

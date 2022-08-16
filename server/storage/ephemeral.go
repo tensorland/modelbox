@@ -24,6 +24,7 @@ var (
 	FILES          = []byte("files")
 	METADATA       = []byte("metadata")
 	MUTATIONS      = []byte("mutations")
+	EVENTS         = []byte("events")
 )
 
 // itob returns an 8-byte big endian representation of v.
@@ -59,6 +60,15 @@ func NewEphemeralStorage(path string, logger *zap.Logger) (*EphemeralStorage, er
 			return err
 		}
 		if _, err := tx.CreateBucketIfNotExists(FILES); err != nil {
+			return err
+		}
+		if _, err := tx.CreateBucketIfNotExists(EVENTS); err != nil {
+			return err
+		}
+		if _, err := tx.CreateBucketIfNotExists(MUTATIONS); err != nil {
+			return err
+		}
+		if _, err := tx.CreateBucketIfNotExists(METADATA); err != nil {
 			return err
 		}
 		return nil
@@ -432,4 +442,9 @@ func (e *EphemeralStorage) ListChanges(ctx context.Context, namespace string, si
 		return nil
 	})
 	return events, err
+}
+
+func (e *EphemeralStorage) LogEvent(ctx context.Context, parentId string, event *Event) error {
+	id := fmt.Sprintf("%s-%s", parentId, event.Id)
+	return e.writeBytes(event, id, EVENTS, nil)
 }

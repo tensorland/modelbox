@@ -38,9 +38,13 @@ const (
 
 	METADATA_LIST = "select id, parent_id, metadata from metadata where parent_id=?"
 
-	EVENT_CREATE = "insert into mutation_events (mutation_time, action, object_id, object_type, parent_id, namespace, payload) VALUES(:mutation_time, :action, :object_id, :object_type, :parent_id, :namespace, :payload)"
+	MUTATION_CREATE = "insert into mutation_events (mutation_time, action, object_id, object_type, parent_id, namespace, payload) VALUES(:mutation_time, :action, :object_id, :object_type, :parent_id, :namespace, :payload)"
 
-	EVENT_NS_LIST = "select mutation_id, mutation_time, action, object_id, object_type, parent_id, namespace, payload from mutation_events where namespace =? and mutation_time>=?"
+	MUTATION_NS_LIST = "select mutation_id, mutation_time, action, object_id, object_type, parent_id, namespace, payload from mutation_events where namespace =? and mutation_time>=?"
+
+	EVENT_CREATE = "insert into events (id, parent_id, name, source_name, wallclock, metadata) VALUES(:id, :parent_id, :name, :source_name, :wallclock, :metadata)"
+
+	EVENTS_LIST = "insert into events (id, parent_id, name, source_name, wallclock, metadata) VALUES(:id, :parent_id, :name, :source_name, :wallclock, :metadata)"
 )
 
 type driverUtils interface {
@@ -53,6 +57,8 @@ type driverUtils interface {
 	createCheckpoint() string
 
 	createModel() string
+
+	listEventsForObject() string
 }
 
 type SQLStorage struct {
@@ -381,13 +387,13 @@ func (s *SQLStorage) ListMetadata(ctx context.Context, parentId string) (map[str
 }
 
 func (s *SQLStorage) createMutationEvent(ctx context.Context, tx *sqlx.Tx, event *MutationEventSchema) error {
-	_, err := tx.NamedExecContext(ctx, EVENT_CREATE, event)
+	_, err := tx.NamedExecContext(ctx, MUTATION_CREATE, event)
 	return err
 }
 
 func (s *SQLStorage) ListChanges(ctx context.Context, namespace string, since time.Time) ([]*ChangeEvent, error) {
 	rows := []MutationEventSchema{}
-	if err := s.db.SelectContext(ctx, &rows, s.db.Rebind(EVENT_NS_LIST), namespace, since.Unix()); err != nil {
+	if err := s.db.SelectContext(ctx, &rows, s.db.Rebind(MUTATION_NS_LIST), namespace, since.Unix()); err != nil {
 		return nil, fmt.Errorf("unable to list mutation events: %v", err)
 	}
 
@@ -439,6 +445,21 @@ func (s *SQLStorage) writeFileSet(ctx context.Context, tx *sqlx.Tx, files artifa
 	}
 
 	return nil
+}
+
+func (s *SQLStorage) LogEvent(ctx context.Context, parentId string, event *Event) error {
+	return s.transact(ctx, func(tx *sqlx.Tx) error {
+		row := &EventSchema{
+			Id:        event.Id,
+			ParentId:  parentId,
+			Name:      event.Name,
+			Source:    event.Source,
+			Wallclock: event.SourceWallclock,
+			Metadata:  map[string]*structpb.Value{},
+		}
+		_, err := tx.NamedExecContext(ctx, EVENT_CREATE, row)
+		return err
+	})
 }
 
 func (s *SQLStorage) transact(ctx context.Context, fn func(*sqlx.Tx) error) error {

@@ -42,6 +42,10 @@ func (*postgresDriverUtils) createModel() string {
 	return "insert into models(id, name, owner, namespace, task, description, created_at, updated_at) values(:id, :name, :owner, :namespace, :task, :description, :created_at, :updated_at) ON CONFLICT (id) DO UPDATE SET updated_at = EXCLUDED.updated_at"
 }
 
+func (*postgresDriverUtils) listEventsForObject() string {
+	return "select id, parent_id, name, source_name, wallclock, metadata from events where parent_id=$1"
+}
+
 type PostgresStorage struct {
 	*SQLStorage
 	db     *sqlx.DB

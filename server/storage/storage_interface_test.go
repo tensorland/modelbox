@@ -231,3 +231,11 @@ func (s *StorageInterfaceTestSuite) TestUpdateMetadata() {
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, 1, len(meta4))
 }
+
+func (s *StorageInterfaceTestSuite) TestCreateEvent() {
+	val, _ := structpb.NewValue(map[string]interface{}{"name1": "val1", "name2": 5})
+	meta := map[string]*structpb.Value{"/tmp/hola": val}
+	event := NewEvent("parent1", "trainer-1", "write-chk-step1", time.Now(), meta)
+	err := s.storageIf.LogEvent(context.Background(), "parent1", event)
+	assert.Nil(s.t, err)
+}

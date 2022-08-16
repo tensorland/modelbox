@@ -72,3 +72,12 @@ CREATE TABLE IF NOT EXISTS mutation_events (
    namespace VARCHAR(40),
    payload JSON
 );
+
+CREATE TABLE IF NOT EXISTS events (
+   id VARCHAR(40) PRIMARY KEY,
+   parent_id VARCHAR(40) NOT NULL,
+   name TEXT,
+   source_name TEXT,
+   wallclock BIGINT,
+   metadata JSON
+);

@@ -11,7 +11,6 @@ import (
 )
 
 func Compress(src string, writers ...io.Writer) error {
-
 	// ensure the src actually exists before trying to tar it
 	if _, err := os.Stat(src); err != nil {
 		return fmt.Errorf("unable to tar files - %v", err)
@@ -27,7 +26,6 @@ func Compress(src string, writers ...io.Writer) error {
 
 	// walk path
 	return filepath.Walk(src, func(file string, fi os.FileInfo, err error) error {
-
 		// return on any error
 		if err != nil {
 			return err
@@ -111,7 +109,7 @@ func UnCompressDir(dst string, r io.Reader) error {
 		// if its a dir and it doesn't exist create it
 		case tar.TypeDir:
 			if _, err := os.Stat(target); err != nil {
-				if err := os.MkdirAll(target, 0755); err != nil {
+				if err := os.MkdirAll(target, 0o755); err != nil {
 					return err
 				}
 			}

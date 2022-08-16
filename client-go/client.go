@@ -65,7 +65,7 @@ func NewModelBoxClient(addr string) (*ModelBoxClient, error) {
 	return &ModelBoxClient{conn: conn, client: client}, nil
 }
 
-func (m *ModelBoxClient) CreateExperiment(name string, owner string, namespace string, framework string) (string, error) {
+func (m *ModelBoxClient) CreateExperiment(name, owner, namespace, framework string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
 	defer cancel()
 	req := &proto.CreateExperimentRequest{
@@ -150,7 +150,7 @@ func (m *ModelBoxClient) CreateCheckpoint(chk *ApiCreateCheckpoint) (*proto.Crea
 	return response, nil
 }
 
-func (m *ModelBoxClient) UploadFile(path string, parentId string, t storage.FileMIMEType) (*FileUploadResponse, error) {
+func (m *ModelBoxClient) UploadFile(path, parentId string, t storage.FileMIMEType) (*FileUploadResponse, error) {
 	// This makes us read the file twice, this could be simplified
 	// if we do bidirectional stream and send the
 	// checkpoint at the end of the strem to the server to validate the file
@@ -206,7 +206,7 @@ func (m *ModelBoxClient) UploadFile(path string, parentId string, t storage.File
 	return &FileUploadResponse{resp.FileId, checksum}, nil
 }
 
-func (m *ModelBoxClient) DownloadBlob(id string, path string) (*CheckpointDownloadResponse, error) {
+func (m *ModelBoxClient) DownloadBlob(id, path string) (*CheckpointDownloadResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
 	defer cancel()
 	req := &proto.DownloadFileRequest{

@@ -73,7 +73,8 @@ func (s *SQLStorage) CreateExperiment(
 	result := &CreateExperimentResult{}
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := FromExperimentToSchema(experiment)
-		_, err := tx.NamedExec(
+		_, err := tx.NamedExecContext(
+			ctx,
 			s.createExperiment(),
 			schema,
 		)
@@ -86,7 +87,7 @@ func (s *SQLStorage) CreateExperiment(
 			return fmt.Errorf("unable to write experiment to db: %v", err)
 		}
 		result.ExperimentId = experiment.Id
-		if err := s.writeMetadata(tx, result.ExperimentId, metadata); err != nil {
+		if err := s.writeMetadata(ctx, tx, result.ExperimentId, metadata); err != nil {
 			return fmt.Errorf("can't write metadata: %v", err)
 		}
 		event := &MutationEventSchema{
@@ -119,10 +120,10 @@ func (s *SQLStorage) CreateCheckpoint(
 			}
 			return fmt.Errorf("unable to write checkpoint: %v", err)
 		}
-		if err := s.writeMetadata(tx, c.Id, metadata); err != nil {
+		if err := s.writeMetadata(ctx, tx, c.Id, metadata); err != nil {
 			return fmt.Errorf("can't write metadata: %v", err)
 		}
-		return s.writeFileSet(tx, c.Files)
+		return s.writeFileSet(ctx, tx, c.Files)
 	})
 	return &CreateCheckpointResult{CheckpointId: c.Id}, err
 }
@@ -156,7 +157,7 @@ func (s *SQLStorage) ListCheckpoints(
 			return err
 		}
 		for _, row := range rows {
-			files, err := s.getFileSetForParent(tx, row.Id)
+			files, err := s.getFileSetForParent(ctx, tx, row.Id)
 			if err != nil {
 				return err
 			}
@@ -201,10 +202,10 @@ func (s *SQLStorage) CreateModel(ctx context.Context, model *Model, metadata Ser
 			}
 			return fmt.Errorf("unable to create model: %v", err)
 		}
-		if err := s.writeMetadata(tx, model.Id, metadata); err != nil {
+		if err := s.writeMetadata(ctx, tx, model.Id, metadata); err != nil {
 			return fmt.Errorf("can't write metadata: %v", err)
 		}
-		return s.writeFileSet(tx, model.Files)
+		return s.writeFileSet(ctx, tx, model.Files)
 	})
 	return &CreateModelResult{ModelId: model.Id}, err
 }
@@ -216,7 +217,7 @@ func (s *SQLStorage) GetModel(ctx context.Context, id string) (*Model, error) {
 		if err := tx.Get(&modelSchema, s.db.Rebind(MODEL_GET), id); err != nil {
 			return err
 		}
-		fileSet, err := s.getFileSetForParent(tx, id)
+		fileSet, err := s.getFileSetForParent(ctx, tx, id)
 		if err != nil {
 			return fmt.Errorf("unable to get query fileset: %v", err)
 		}
@@ -234,7 +235,7 @@ func (s *SQLStorage) ListModels(ctx context.Context, namespace string) ([]*Model
 			return fmt.Errorf("can't query: %v", err)
 		}
 		for _, modelRow := range modelRows {
-			fileSet, err := s.getFileSetForParent(tx, modelRow.Id)
+			fileSet, err := s.getFileSetForParent(ctx, tx, modelRow.Id)
 			if err != nil {
 				return err
 			}
@@ -261,10 +262,10 @@ func (s *SQLStorage) CreateModelVersion(
 			}
 			return fmt.Errorf("unable to create model version: %v", err)
 		}
-		if err := s.writeMetadata(tx, modelVersion.Id, metadata); err != nil {
+		if err := s.writeMetadata(ctx, tx, modelVersion.Id, metadata); err != nil {
 			return fmt.Errorf("can't write metadata: %v", err)
 		}
-		return s.writeFileSet(tx, modelVersion.Files)
+		return s.writeFileSet(ctx, tx, modelVersion.Files)
 	})
 	if err != nil {
 		return nil, err
@@ -279,7 +280,7 @@ func (s *SQLStorage) GetModelVersion(ctx context.Context, id string) (*ModelVers
 		if err := tx.Get(&modelVersionSchema, s.db.Rebind(MODEL_VERSION_GET), id); err != nil {
 			return err
 		}
-		fileSet, err := s.getFileSetForParent(tx, id)
+		fileSet, err := s.getFileSetForParent(ctx, tx, id)
 		if err != nil {
 			return err
 		}
@@ -300,7 +301,7 @@ func (s *SQLStorage) ListModelVersions(
 			return err
 		}
 		for _, row := range rows {
-			fileSet, err := s.getFileSetForParent(tx, row.Id)
+			fileSet, err := s.getFileSetForParent(ctx, tx, row.Id)
 			if err != nil {
 				return err
 			}
@@ -314,14 +315,14 @@ func (s *SQLStorage) ListModelVersions(
 
 func (e *SQLStorage) WriteFiles(ctx context.Context, blobs FileSet) error {
 	return e.transact(ctx, func(tx *sqlx.Tx) error {
-		return e.writeFileSet(tx, blobs)
+		return e.writeFileSet(ctx, tx, blobs)
 	})
 }
 
 func (e *SQLStorage) GetFiles(ctx context.Context, parentId string) (FileSet, error) {
 	var blobs FileSet
 	err := e.transact(ctx, func(tx *sqlx.Tx) error {
-		blobSet, err := e.getFileSetForParent(tx, parentId)
+		blobSet, err := e.getFileSetForParent(ctx, tx, parentId)
 		blobs = blobSet
 		return err
 	})
@@ -332,7 +333,7 @@ func (s *SQLStorage) GetFile(ctx context.Context, id string) (*FileMetadata, err
 	var blob FileMetadata
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		var blobRow FileSchema
-		if err := tx.Get(&blobRow, s.db.Rebind(BLOB_GET), id); err != nil {
+		if err := tx.GetContext(ctx, &blobRow, s.db.Rebind(BLOB_GET), id); err != nil {
 			return fmt.Errorf("unable to get query blobs: %v", err)
 		}
 
@@ -349,10 +350,10 @@ func (s *SQLStorage) GetFile(ctx context.Context, id string) (*FileMetadata, err
 	return &blob, nil
 }
 
-func (s *SQLStorage) writeMetadata(tx *sqlx.Tx, parentId string, metadata map[string]*structpb.Value) error {
+func (s *SQLStorage) writeMetadata(ctx context.Context, tx *sqlx.Tx, parentId string, metadata map[string]*structpb.Value) error {
 	rows := toMetadataSchema(parentId, metadata)
 	for _, row := range rows {
-		if _, err := tx.NamedExec(s.updateMetadata(), row); err != nil {
+		if _, err := tx.NamedExecContext(ctx, s.updateMetadata(), row); err != nil {
 			return fmt.Errorf("unable to write to db: %v", err)
 		}
 	}
@@ -361,7 +362,7 @@ func (s *SQLStorage) writeMetadata(tx *sqlx.Tx, parentId string, metadata map[st
 
 func (s *SQLStorage) UpdateMetadata(ctx context.Context, parentId string, metadata map[string]*structpb.Value) error {
 	return s.transact(ctx, func(tx *sqlx.Tx) error {
-		return s.writeMetadata(tx, parentId, metadata)
+		return s.writeMetadata(ctx, tx, parentId, metadata)
 	})
 }
 
@@ -369,7 +370,7 @@ func (s *SQLStorage) ListMetadata(ctx context.Context, parentId string) (map[str
 	meta := map[string]*structpb.Value{}
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		rows := []*MetadataSchema{}
-		if err := s.db.Select(&rows, s.db.Rebind(METADATA_LIST), parentId); err != nil {
+		if err := s.db.SelectContext(ctx, &rows, s.db.Rebind(METADATA_LIST), parentId); err != nil {
 			return err
 		}
 		meta = toMetadata(rows)
@@ -379,13 +380,13 @@ func (s *SQLStorage) ListMetadata(ctx context.Context, parentId string) (map[str
 }
 
 func (s *SQLStorage) createMutationEvent(ctx context.Context, tx *sqlx.Tx, event *MutationEventSchema) error {
-	_, err := tx.NamedExec(EVENT_CREATE, event)
+	_, err := tx.NamedExecContext(ctx, EVENT_CREATE, event)
 	return err
 }
 
 func (s *SQLStorage) ListChanges(ctx context.Context, namespace string, since time.Time) ([]*ChangeEvent, error) {
 	rows := []MutationEventSchema{}
-	if err := s.db.Select(&rows, s.db.Rebind(EVENT_NS_LIST), namespace, since.Unix()); err != nil {
+	if err := s.db.SelectContext(ctx, &rows, s.db.Rebind(EVENT_NS_LIST), namespace, since.Unix()); err != nil {
 		return nil, fmt.Errorf("unable to list mutation events: %v", err)
 	}
 
@@ -403,9 +404,9 @@ func (s *SQLStorage) ListChanges(ctx context.Context, namespace string, since ti
 	return result, nil
 }
 
-func (s *SQLStorage) getFileSetForParent(tx *sqlx.Tx, parentId string) (FileSet, error) {
+func (s *SQLStorage) getFileSetForParent(ctx context.Context, tx *sqlx.Tx, parentId string) (FileSet, error) {
 	blobRows := []FileSchema{}
-	if err := tx.Select(&blobRows, s.db.Rebind(BLOBSET_GET), parentId); err != nil {
+	if err := tx.SelectContext(ctx, &blobRows, s.db.Rebind(BLOBSET_GET), parentId); err != nil {
 		return nil, fmt.Errorf("unable to get query blobset: %v", err)
 	}
 	blobSet, err := ToFileSet(blobRows)
@@ -415,7 +416,7 @@ func (s *SQLStorage) getFileSetForParent(tx *sqlx.Tx, parentId string) (FileSet,
 	return blobSet, nil
 }
 
-func (s *SQLStorage) writeFileSet(tx *sqlx.Tx, files FileSet) error {
+func (s *SQLStorage) writeFileSet(ctx context.Context, tx *sqlx.Tx, files FileSet) error {
 	if files == nil {
 		return nil
 	}
@@ -431,7 +432,7 @@ func (s *SQLStorage) writeFileSet(tx *sqlx.Tx, files FileSet) error {
 	}
 	sqlStr = sqlStr[0 : len(sqlStr)-1]
 	if len(files) > 0 {
-		if _, err := tx.Exec(s.db.Rebind(sqlStr), vals...); err != nil {
+		if _, err := tx.ExecContext(ctx, s.db.Rebind(sqlStr), vals...); err != nil {
 			return fmt.Errorf("unable to create blobs for model: %v", err)
 		}
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"github.com/fatih/structs"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -313,14 +314,14 @@ func (s *SQLStorage) ListModelVersions(
 	return modelVersions, err
 }
 
-func (e *SQLStorage) WriteFiles(ctx context.Context, blobs FileSet) error {
+func (e *SQLStorage) WriteFiles(ctx context.Context, blobs artifacts.FileSet) error {
 	return e.transact(ctx, func(tx *sqlx.Tx) error {
 		return e.writeFileSet(ctx, tx, blobs)
 	})
 }
 
-func (e *SQLStorage) GetFiles(ctx context.Context, parentId string) (FileSet, error) {
-	var blobs FileSet
+func (e *SQLStorage) GetFiles(ctx context.Context, parentId string) (artifacts.FileSet, error) {
+	var blobs artifacts.FileSet
 	err := e.transact(ctx, func(tx *sqlx.Tx) error {
 		blobSet, err := e.getFileSetForParent(ctx, tx, parentId)
 		blobs = blobSet
@@ -329,8 +330,8 @@ func (e *SQLStorage) GetFiles(ctx context.Context, parentId string) (FileSet, er
 	return blobs, err
 }
 
-func (s *SQLStorage) GetFile(ctx context.Context, id string) (*FileMetadata, error) {
-	var blob FileMetadata
+func (s *SQLStorage) GetFile(ctx context.Context, id string) (*artifacts.FileMetadata, error) {
+	var blob artifacts.FileMetadata
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		var blobRow FileSchema
 		if err := tx.GetContext(ctx, &blobRow, s.db.Rebind(BLOB_GET), id); err != nil {
@@ -404,7 +405,7 @@ func (s *SQLStorage) ListChanges(ctx context.Context, namespace string, since ti
 	return result, nil
 }
 
-func (s *SQLStorage) getFileSetForParent(ctx context.Context, tx *sqlx.Tx, parentId string) (FileSet, error) {
+func (s *SQLStorage) getFileSetForParent(ctx context.Context, tx *sqlx.Tx, parentId string) (artifacts.FileSet, error) {
 	blobRows := []FileSchema{}
 	if err := tx.SelectContext(ctx, &blobRows, s.db.Rebind(BLOBSET_GET), parentId); err != nil {
 		return nil, fmt.Errorf("unable to get query blobset: %v", err)
@@ -416,7 +417,7 @@ func (s *SQLStorage) getFileSetForParent(ctx context.Context, tx *sqlx.Tx, paren
 	return blobSet, nil
 }
 
-func (s *SQLStorage) writeFileSet(ctx context.Context, tx *sqlx.Tx, files FileSet) error {
+func (s *SQLStorage) writeFileSet(ctx context.Context, tx *sqlx.Tx, files artifacts.FileSet) error {
 	if files == nil {
 		return nil
 	}

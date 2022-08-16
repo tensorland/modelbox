@@ -10,7 +10,8 @@ import (
 	"time"
 
 	"github.com/diptanu/modelbox/client-go/proto"
-	"github.com/diptanu/modelbox/server/storage"
+	"github.com/diptanu/modelbox/server"
+	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -150,7 +151,7 @@ func (m *ModelBoxClient) CreateCheckpoint(chk *ApiCreateCheckpoint) (*proto.Crea
 	return response, nil
 }
 
-func (m *ModelBoxClient) UploadFile(path, parentId string, t storage.FileMIMEType) (*FileUploadResponse, error) {
+func (m *ModelBoxClient) UploadFile(path, parentId string, t artifacts.FileMIMEType) (*FileUploadResponse, error) {
 	// This makes us read the file twice, this could be simplified
 	// if we do bidirectional stream and send the
 	// checkpoint at the end of the strem to the server to validate the file
@@ -169,7 +170,7 @@ func (m *ModelBoxClient) UploadFile(path, parentId string, t storage.FileMIMETyp
 		StreamFrame: &proto.UploadFileRequest_Metadata{
 			Metadata: &proto.FileMetadata{
 				ParentId: parentId,
-				FileType: storage.FileTypeToProto(t),
+				FileType: server.FileTypeToProto(t),
 				Checksum: checksum,
 			},
 		},

@@ -96,6 +96,11 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.GetMetricsRequest.SerializeToString,
                 response_deserializer=service__pb2.GetMetricsResponse.FromString,
                 )
+        self.LogEvent = channel.unary_unary(
+                '/modelbox.ModelStore/LogEvent',
+                request_serializer=service__pb2.LogEventRequest.SerializeToString,
+                response_deserializer=service__pb2.LogEventResponse.FromString,
+                )
         self.WatchNamespace = channel.unary_stream(
                 '/modelbox.ModelStore/WatchNamespace',
                 request_serializer=service__pb2.WatchNamespaceRequest.SerializeToString,
@@ -222,6 +227,14 @@ class ModelStoreServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def LogEvent(self, request, context):
+        """Log an event from any system interacting with metadata of a experiment, models or
+        using a trained model or checkpoint.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def WatchNamespace(self, request, context):
         """Streams change events in any of objects such as experiments, models, etc, for a given namespace
         Response is a json representation of the new state of the obejct
@@ -312,6 +325,11 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     servicer.GetMetrics,
                     request_deserializer=service__pb2.GetMetricsRequest.FromString,
                     response_serializer=service__pb2.GetMetricsResponse.SerializeToString,
+            ),
+            'LogEvent': grpc.unary_unary_rpc_method_handler(
+                    servicer.LogEvent,
+                    request_deserializer=service__pb2.LogEventRequest.FromString,
+                    response_serializer=service__pb2.LogEventResponse.SerializeToString,
             ),
             'WatchNamespace': grpc.unary_stream_rpc_method_handler(
                     servicer.WatchNamespace,
@@ -600,6 +618,23 @@ class ModelStore(object):
         return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/GetMetrics',
             service__pb2.GetMetricsRequest.SerializeToString,
             service__pb2.GetMetricsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def LogEvent(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/LogEvent',
+            service__pb2.LogEventRequest.SerializeToString,
+            service__pb2.LogEventResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

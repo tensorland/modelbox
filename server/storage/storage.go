@@ -7,17 +7,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"hash"
-	"io"
-	"strconv"
 	"time"
 
 	"github.com/diptanu/modelbox/client-go/proto"
 	"github.com/diptanu/modelbox/server/config"
+	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"github.com/diptanu/modelbox/server/storage/logging"
+	"github.com/diptanu/modelbox/server/utils"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type SerializableMetadata map[string]*structpb.Value
@@ -64,18 +62,6 @@ const (
 	Keras
 )
 
-type FileMIMEType uint8
-
-const (
-	UnknownFile FileMIMEType = iota
-	CheckpointFile
-	ModelFile
-	TextFile
-	ImageFile
-	AudioFile
-	VideoFile
-)
-
 type SerializableTags []string
 
 func (s *SerializableTags) Scan(val interface{}) error {
@@ -114,173 +100,12 @@ func (s SerializableMetrics) Value() (driver.Value, error) {
 	return json.Marshal(s)
 }
 
-type FileSet []*FileMetadata
-
-func NewFileSetFromProto(pb []*proto.FileMetadata) FileSet {
-	files := make([]*FileMetadata, len(pb))
-	for i, b := range pb {
-		files[i] = NewFileMetadata(
-			b.ParentId,
-			b.Path,
-			b.Checksum,
-			FileMIMEType(b.FileType),
-			b.CreatedAt.AsTime().Unix(),
-			b.UpdatedAt.AsTime().Unix(),
-		)
-	}
-	return files
-}
-
-func (f *FileSet) ToProto() []*proto.FileMetadata {
-	files := make([]*proto.FileMetadata, len(*f))
-	for i, f := range *f {
-		files[i] = &proto.FileMetadata{
-			Id:        f.Id,
-			ParentId:  f.ParentId,
-			FileType:  FileTypeToProto(f.Type),
-			Checksum:  f.Checksum,
-			Path:      f.Path,
-			CreatedAt: timestamppb.New(time.Unix(f.CreatedAt, 0)),
-			UpdatedAt: timestamppb.New(time.Unix(f.UpdatedAt, 0)),
-		}
-	}
-	return files
-}
-
-/*
- * FileMetadata are metadata about files and other blobs such as models.
- * They can be associated with any modelbox object.
- */
-type FileMetadata struct {
-	Id        string
-	ParentId  string
-	Type      FileMIMEType
-	Path      string
-	Checksum  string
-	CreatedAt int64
-	UpdatedAt int64
-}
-
-func (b *FileMetadata) CreateId() {
-	h := sha1.New()
-	hashString(h, b.ParentId)
-	hashInt(h, int(b.Type))
-	hashString(h, b.Checksum)
-	b.Id = fmt.Sprintf("%x", h.Sum(nil))
-}
-
-func (b *FileMetadata) ToJson() ([]byte, error) {
-	bytes, err := json.Marshal(b)
-	if err != nil {
-		return nil, err
-	}
-	return bytes, nil
-}
-
 type BackendInfo struct {
 	Name string
 }
 
 func (b BackendInfo) String() string {
 	return b.Name
-}
-
-func NewFileMetadata(
-	parent, path, checksum string,
-	blobType FileMIMEType,
-	createdAt, updatedAt int64,
-) *FileMetadata {
-	currentTime := time.Now().Unix()
-	if createdAt == 0 {
-		createdAt = currentTime
-	}
-	if updatedAt == 0 {
-		updatedAt = currentTime
-	}
-	blob := &FileMetadata{
-		ParentId:  parent,
-		Path:      path,
-		Checksum:  checksum,
-		Type:      blobType,
-		CreatedAt: createdAt,
-		UpdatedAt: updatedAt,
-	}
-	blob.CreateId()
-	return blob
-}
-
-func MLFrameworkFromProto(fwk proto.MLFramework) MLFramework {
-	switch fwk {
-	case proto.MLFramework_PYTORCH:
-		return Pytorch
-	case proto.MLFramework_KERAS:
-		return Keras
-	}
-	return Unknown
-}
-
-func MLFrameworkToProto(fwk MLFramework) proto.MLFramework {
-	switch fwk {
-	case Pytorch:
-		return proto.MLFramework_PYTORCH
-	case Keras:
-		return proto.MLFramework_KERAS
-	}
-	return proto.MLFramework_UNKNOWN
-}
-
-func FileTypeFromProto(t proto.FileType) FileMIMEType {
-	switch t {
-	case proto.FileType_CHECKPOINT:
-		return CheckpointFile
-	case proto.FileType_MODEL:
-		return ModelFile
-	}
-	return UnknownFile
-}
-
-func FileTypeToProto(t FileMIMEType) proto.FileType {
-	switch t {
-	case CheckpointFile:
-		return proto.FileType_CHECKPOINT
-	case ModelFile:
-		return proto.FileType_MODEL
-	case TextFile:
-		return proto.FileType_TEXT
-	case ImageFile:
-		return proto.FileType_IMAGE
-	case AudioFile:
-		return proto.FileType_AUDIO
-	case VideoFile:
-		return proto.FileType_VIDEO
-	}
-	return proto.FileType_UNDEFINED
-}
-
-type FileOpenMode uint8
-
-const (
-	Read FileOpenMode = iota
-	Write
-)
-
-type CheckpointState int
-
-const (
-	CheckpointInitalized CheckpointState = iota
-	CheckpointReady
-)
-
-func hashString(h hash.Hash, s string) {
-	_, _ = io.WriteString(h, s)
-}
-
-func hashUint64(h hash.Hash, i uint64) {
-	_, _ = io.WriteString(h, strconv.FormatUint(i, 10))
-}
-
-func hashInt(h hash.Hash, i int) {
-	_, _ = io.WriteString(h, strconv.Itoa(i))
 }
 
 type Experiment struct {
@@ -315,8 +140,8 @@ func NewExperiment(
 
 func (e *Experiment) Hash() string {
 	h := sha1.New()
-	hashString(h, e.Name)
-	hashString(h, e.Namespace)
+	utils.HashString(h, e.Name)
+	utils.HashString(h, e.Namespace)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
@@ -337,7 +162,7 @@ type Checkpoint struct {
 	Id           string
 	ExperimentId string
 	Epoch        uint64
-	Files        FileSet
+	Files        artifacts.FileSet
 	Metrics      SerializableMetrics
 	CreatedAt    int64
 	UpdtedAt     int64
@@ -360,21 +185,21 @@ func NewCheckpoint(
 	return chk
 }
 
-func (c *Checkpoint) SetFiles(files FileSet) {
+func (c *Checkpoint) SetFiles(files artifacts.FileSet) {
 	c.Files = files
 }
 
 func GetCheckpointID(experiment string, epoch uint64) string {
 	h := sha1.New()
-	hashString(h, experiment)
-	hashUint64(h, epoch)
+	utils.HashString(h, experiment)
+	utils.HashUint64(h, epoch)
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func (c *Checkpoint) CreateId() {
 	h := sha1.New()
-	hashString(h, c.ExperimentId)
-	hashUint64(h, c.Epoch)
+	utils.HashString(h, c.ExperimentId)
+	utils.HashUint64(h, c.Epoch)
 	c.Id = fmt.Sprintf("%x", h.Sum(nil))
 }
 
@@ -385,7 +210,7 @@ type Model struct {
 	Namespace   string
 	Task        string
 	Description string
-	Files       FileSet
+	Files       artifacts.FileSet
 	CreatedAt   int64
 	UpdatedAt   int64
 }
@@ -407,12 +232,12 @@ func NewModel(name, owner, namespace, task, description string) *Model {
 
 func (m *Model) CreateId() {
 	h := sha1.New()
-	hashString(h, m.Name)
-	hashString(h, m.Namespace)
+	utils.HashString(h, m.Name)
+	utils.HashString(h, m.Namespace)
 	m.Id = fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (m *Model) SetFiles(files FileSet) {
+func (m *Model) SetFiles(files artifacts.FileSet) {
 	m.Files = files
 }
 
@@ -423,7 +248,7 @@ type ModelVersion struct {
 	Version     string
 	Description string
 	Framework   MLFramework
-	Files       FileSet
+	Files       artifacts.FileSet
 	UniqueTags  SerializableTags
 	CreatedAt   int64
 	UpdatedAt   int64
@@ -431,7 +256,7 @@ type ModelVersion struct {
 
 func NewModelVersion(name, model, version, description string,
 	framework MLFramework,
-	files []*FileMetadata,
+	files []*artifacts.FileMetadata,
 	uniqueTags []string,
 ) *ModelVersion {
 	currentTime := time.Now().Unix()
@@ -452,9 +277,9 @@ func NewModelVersion(name, model, version, description string,
 
 func (m *ModelVersion) CreateId() {
 	h := sha1.New()
-	hashString(h, m.ModelId)
-	hashString(h, m.Version)
-	hashString(h, m.Name)
+	utils.HashString(h, m.ModelId)
+	utils.HashString(h, m.Version)
+	utils.HashString(h, m.Name)
 	m.Id = fmt.Sprintf("%x", h.Sum(nil))
 }
 
@@ -523,11 +348,11 @@ type MetadataStorage interface {
 
 	Backend() *BackendInfo
 
-	WriteFiles(context.Context, FileSet) error
+	WriteFiles(context.Context, artifacts.FileSet) error
 
-	GetFiles(ctx context.Context, parentId string) (FileSet, error)
+	GetFiles(ctx context.Context, parentId string) (artifacts.FileSet, error)
 
-	GetFile(ctx context.Context, id string) (*FileMetadata, error)
+	GetFile(ctx context.Context, id string) (*artifacts.FileMetadata, error)
 
 	UpdateMetadata(ctx context.Context, parentId string, metadata map[string]*structpb.Value) error
 
@@ -572,27 +397,4 @@ func NewMetadataStorage(
 			}, logger)
 	}
 	return nil, fmt.Errorf("unknown metadata backend: %v", svrConfig.MetadataBackend)
-}
-
-func NewBlobStorageBuilder(
-	svrConfig *config.ServerConfig,
-	logger *zap.Logger,
-) (BlobStorageBuilder, error) {
-	switch svrConfig.StorageBackend {
-	case config.BLOB_STORAGE_BACKEND_FS:
-		return NewFileBlobStorageBuilder(svrConfig.FileStorage.BaseDir, logger)
-	}
-	return nil, fmt.Errorf("unknown blob storage backend: %v", svrConfig.StorageBackend)
-}
-
-type BlobStorage interface {
-	Open(blob *FileMetadata, mode FileOpenMode) error
-
-	GetPath() (string, error)
-
-	io.ReadWriteCloser
-}
-
-type BlobStorageBuilder interface {
-	Build() BlobStorage
 }

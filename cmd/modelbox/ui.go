@@ -10,6 +10,7 @@ import (
 	client "github.com/diptanu/modelbox/client-go"
 	svrConfig "github.com/diptanu/modelbox/server/config"
 	"github.com/diptanu/modelbox/server/storage"
+	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"github.com/olekukonko/tablewriter"
 	"go.uber.org/zap"
 )
@@ -116,7 +117,7 @@ func (u *ClientUi) UploadCheckpoint(path, experimentId string, epoch uint64, upl
 	if !upload {
 		return nil
 	}
-	uploadResp, err := u.client.UploadFile(path, resp.CheckpointId, storage.CheckpointFile)
+	uploadResp, err := u.client.UploadFile(path, resp.CheckpointId, artifacts.CheckpointFile)
 	if err != nil {
 		println("unable to upload checkpoint: ", err.Error())
 		return nil

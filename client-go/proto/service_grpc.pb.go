@@ -55,6 +55,9 @@ type ModelStoreClient interface {
 	LogMetrics(ctx context.Context, in *LogMetricsRequest, opts ...grpc.CallOption) (*LogMetricsResponse, error)
 	// Get metrics logged for an experiment, model or checkpoint.
 	GetMetrics(ctx context.Context, in *GetMetricsRequest, opts ...grpc.CallOption) (*GetMetricsResponse, error)
+	// Log an event from any system interacting with metadata of a experiment, models or
+	// using a trained model or checkpoint.
+	LogEvent(ctx context.Context, in *LogEventRequest, opts ...grpc.CallOption) (*LogEventResponse, error)
 	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error)
@@ -260,6 +263,15 @@ func (c *modelStoreClient) GetMetrics(ctx context.Context, in *GetMetricsRequest
 	return out, nil
 }
 
+func (c *modelStoreClient) LogEvent(ctx context.Context, in *LogEventRequest, opts ...grpc.CallOption) (*LogEventResponse, error) {
+	out := new(LogEventResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/LogEvent", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *modelStoreClient) WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error) {
 	stream, err := c.cc.NewStream(ctx, &ModelStore_ServiceDesc.Streams[2], "/modelbox.ModelStore/WatchNamespace", opts...)
 	if err != nil {
@@ -329,6 +341,9 @@ type ModelStoreServer interface {
 	LogMetrics(context.Context, *LogMetricsRequest) (*LogMetricsResponse, error)
 	// Get metrics logged for an experiment, model or checkpoint.
 	GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error)
+	// Log an event from any system interacting with metadata of a experiment, models or
+	// using a trained model or checkpoint.
+	LogEvent(context.Context, *LogEventRequest) (*LogEventResponse, error)
 	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error
@@ -386,6 +401,9 @@ func (UnimplementedModelStoreServer) LogMetrics(context.Context, *LogMetricsRequ
 }
 func (UnimplementedModelStoreServer) GetMetrics(context.Context, *GetMetricsRequest) (*GetMetricsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMetrics not implemented")
+}
+func (UnimplementedModelStoreServer) LogEvent(context.Context, *LogEventRequest) (*LogEventResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LogEvent not implemented")
 }
 func (UnimplementedModelStoreServer) WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error {
 	return status.Errorf(codes.Unimplemented, "method WatchNamespace not implemented")
@@ -702,6 +720,24 @@ func _ModelStore_GetMetrics_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModelStore_LogEvent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LogEventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).LogEvent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/LogEvent",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).LogEvent(ctx, req.(*LogEventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ModelStore_WatchNamespace_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(WatchNamespaceRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -785,6 +821,10 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetMetrics",
 			Handler:    _ModelStore_GetMetrics_Handler,
+		},
+		{
+			MethodName: "LogEvent",
+			Handler:    _ModelStore_LogEvent_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

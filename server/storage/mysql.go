@@ -43,6 +43,10 @@ func (*mySQLDriverUtils) createModel() string {
 	return "insert into models(id, name, owner, namespace, task, description, created_at, updated_at) values(:id, :name, :owner, :namespace, :task, :description, :created_at, :updated_at)"
 }
 
+func (*mySQLDriverUtils) listEventsForObject() string {
+	return "select id, parent_id, name, source_name, wallclock, metadata from events where parent_id=?"
+}
+
 type MySqlStorage struct {
 	*SQLStorage
 	db     *sqlx.DB

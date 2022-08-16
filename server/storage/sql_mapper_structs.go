@@ -268,3 +268,12 @@ type MutationEventSchema struct {
 	Namespace    string
 	Payload      SerializablePayload
 }
+
+type EventSchema struct {
+	Id        string
+	ParentId  string `db:"parent_id"`
+	Name      string
+	Source    string `db:"source_name"`
+	Wallclock uint64
+	Metadata  SerializableMetadata `db:"metadata"`
+}

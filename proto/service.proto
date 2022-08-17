@@ -68,6 +68,9 @@ service ModelStore {
   // using a trained model or checkpoint.
   rpc LogEvent(LogEventRequest) returns (LogEventResponse);
 
+  // List events logged for an experiment/model, etc.
+  rpc ListEvents(ListEventsRequest) returns (ListEventsResponse);
+
   // Streams change events in any of objects such as experiments, models, etc, for a given namespace
   // Response is a json representation of the new state of the obejct
   rpc WatchNamespace(WatchNamespaceRequest) returns (stream WatchNamespaceResponse);
@@ -391,6 +394,13 @@ message EventSource {
   string name = 1;
 }
 
+message Event {
+  string name = 2;
+  EventSource source = 3;
+  google.protobuf.Timestamp wallclock_time = 4;
+  Metadata metadata = 5;
+}
+
 /**
  * Contains information about an event being logged about
  * an experiment or a model or a checkpoint by any system interacting 
@@ -405,3 +415,12 @@ message LogEventRequest {
 }
 
 message LogEventResponse {}
+
+message ListEventsRequest {
+  string parent_id = 1;
+  google.protobuf.Timestamp since = 2;
+}
+
+message ListEventsResponse {
+  repeated Event events = 1;
+}

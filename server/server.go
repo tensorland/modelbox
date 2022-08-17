@@ -398,6 +398,23 @@ func (s *GrpcServer) LogEvent(ctx context.Context, req *pb.LogEventRequest) (*pb
 	return &pb.LogEventResponse{}, s.metadataStorage.LogEvent(ctx, req.ParentId, event)
 }
 
+func (s *GrpcServer) ListEvents(ctx context.Context, req *pb.ListEventsRequest) (*pb.ListEventsResponse, error) {
+	events, err := s.metadataStorage.ListEvents(ctx, req.ParentId)
+	if err != nil {
+		return nil, err
+	}
+	apiEvents := make([]*pb.Event, len(events))
+	for i, event := range events {
+		apiEvents[i] = &pb.Event{
+			Name:          event.Name,
+			Source:        &pb.EventSource{Name: event.Source},
+			WallclockTime: timestamppb.New(time.Unix(int64(event.SourceWallclock), 0)),
+			Metadata:      &pb.Metadata{Metadata: event.Metadata},
+		}
+	}
+	return &pb.ListEventsResponse{Events: apiEvents}, nil
+}
+
 func (s *GrpcServer) WatchNamespace(
 	req *pb.WatchNamespaceRequest,
 	stream pb.ModelStore_WatchNamespaceServer,

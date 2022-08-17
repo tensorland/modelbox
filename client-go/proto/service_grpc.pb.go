@@ -58,6 +58,8 @@ type ModelStoreClient interface {
 	// Log an event from any system interacting with metadata of a experiment, models or
 	// using a trained model or checkpoint.
 	LogEvent(ctx context.Context, in *LogEventRequest, opts ...grpc.CallOption) (*LogEventResponse, error)
+	// List events logged for an experiment/model, etc.
+	ListEvents(ctx context.Context, in *ListEventsRequest, opts ...grpc.CallOption) (*ListEventsResponse, error)
 	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error)
@@ -272,6 +274,15 @@ func (c *modelStoreClient) LogEvent(ctx context.Context, in *LogEventRequest, op
 	return out, nil
 }
 
+func (c *modelStoreClient) ListEvents(ctx context.Context, in *ListEventsRequest, opts ...grpc.CallOption) (*ListEventsResponse, error) {
+	out := new(ListEventsResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/ListEvents", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *modelStoreClient) WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error) {
 	stream, err := c.cc.NewStream(ctx, &ModelStore_ServiceDesc.Streams[2], "/modelbox.ModelStore/WatchNamespace", opts...)
 	if err != nil {
@@ -344,6 +355,8 @@ type ModelStoreServer interface {
 	// Log an event from any system interacting with metadata of a experiment, models or
 	// using a trained model or checkpoint.
 	LogEvent(context.Context, *LogEventRequest) (*LogEventResponse, error)
+	// List events logged for an experiment/model, etc.
+	ListEvents(context.Context, *ListEventsRequest) (*ListEventsResponse, error)
 	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error
@@ -404,6 +417,9 @@ func (UnimplementedModelStoreServer) GetMetrics(context.Context, *GetMetricsRequ
 }
 func (UnimplementedModelStoreServer) LogEvent(context.Context, *LogEventRequest) (*LogEventResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LogEvent not implemented")
+}
+func (UnimplementedModelStoreServer) ListEvents(context.Context, *ListEventsRequest) (*ListEventsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListEvents not implemented")
 }
 func (UnimplementedModelStoreServer) WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error {
 	return status.Errorf(codes.Unimplemented, "method WatchNamespace not implemented")
@@ -738,6 +754,24 @@ func _ModelStore_LogEvent_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModelStore_ListEvents_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListEventsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).ListEvents(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/ListEvents",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).ListEvents(ctx, req.(*ListEventsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ModelStore_WatchNamespace_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(WatchNamespaceRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -825,6 +859,10 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LogEvent",
 			Handler:    _ModelStore_LogEvent_Handler,
+		},
+		{
+			MethodName: "ListEvents",
+			Handler:    _ModelStore_ListEvents_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

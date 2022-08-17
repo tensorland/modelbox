@@ -10,7 +10,7 @@ import (
 
 	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"github.com/fatih/structs"
-	"github.com/ugorji/go/codec"
+	"github.com/vmihailenco/msgpack/v5"
 	bolt "go.etcd.io/bbolt"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -108,8 +108,10 @@ func (e *EphemeralStorage) GetExperiment(_ context.Context, id string) (*Experim
 	err := e.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(EXPERIMENTS)
 		exp := b.Get([]byte(id))
-		decoder := codec.NewDecoderBytes(exp, new(codec.MsgpackHandle))
-		return decoder.Decode(&experiment)
+		if exp == nil {
+			return fmt.Errorf("unable to find experiment with id: %v", id)
+		}
+		return msgpack.Unmarshal(exp, &experiment)
 	})
 	return &experiment, err
 }
@@ -119,11 +121,9 @@ func (e *EphemeralStorage) ListExperiments(_ context.Context, namespace string) 
 	err := e.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(EXPERIMENTS)
 		c := b.Cursor()
-		handle := new(codec.MsgpackHandle)
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var experiment Experiment
-			decoder := codec.NewDecoderBytes(v, handle)
-			if err := decoder.Decode(&experiment); err != nil {
+			if err := msgpack.Unmarshal(v, &experiment); err != nil {
 				return err
 			}
 			if experiment.Namespace != namespace {
@@ -153,11 +153,9 @@ func (e *EphemeralStorage) ListCheckpoints(_ context.Context, experimentId strin
 	err := e.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(CHECKPOINTS)
 		c := b.Cursor()
-		handle := new(codec.MsgpackHandle)
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var checkpoint Checkpoint
-			decoder := codec.NewDecoderBytes(v, handle)
-			if err := decoder.Decode(&checkpoint); err != nil {
+			if err := msgpack.Unmarshal(v, &checkpoint); err != nil {
 				return err
 			}
 			if checkpoint.ExperimentId != experimentId {
@@ -171,12 +169,11 @@ func (e *EphemeralStorage) ListCheckpoints(_ context.Context, experimentId strin
 }
 
 func (e *EphemeralStorage) writeBytes(obj interface{}, id string, bucket []byte, mutation *ChangeEvent) error {
-	var encodedBytes []byte
-	encoder := codec.NewEncoderBytes(&encodedBytes, new(codec.MsgpackHandle))
-	if err := encoder.Encode(obj); err != nil {
-		return err
+	encodedBytes, err := msgpack.Marshal(obj)
+	if err != nil {
+		return fmt.Errorf("unable to encode object to msgpack: %v", err)
 	}
-	err := e.db.Update(func(tx *bolt.Tx) error {
+	return e.db.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists(bucket)
 		if err != nil {
 			return err
@@ -199,7 +196,6 @@ func (e *EphemeralStorage) writeBytes(obj interface{}, id string, bucket []byte,
 		}
 		return nil
 	})
-	return err
 }
 
 func (e *EphemeralStorage) writeJsonBytes(obj interface{}, id string, bucket []byte, mutation *ChangeEvent) error {
@@ -240,8 +236,7 @@ func (e *EphemeralStorage) GetCheckpoint(_ context.Context, id string) (*Checkpo
 		if cp == nil {
 			return fmt.Errorf("not found")
 		}
-		decoder := codec.NewDecoderBytes(cp, new(codec.MsgpackHandle))
-		return decoder.Decode(&checkpoint)
+		return msgpack.Unmarshal(cp, &checkpoint)
 	})
 	if err != nil {
 		return nil, err
@@ -266,8 +261,10 @@ func (e *EphemeralStorage) GetModel(_ context.Context, id string) (*Model, error
 	err := e.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(MODELS)
 		exp := b.Get([]byte(id))
-		decoder := codec.NewDecoderBytes(exp, new(codec.MsgpackHandle))
-		return decoder.Decode(&model)
+		if exp == nil {
+			return fmt.Errorf("no model found with key %v", id)
+		}
+		return msgpack.Unmarshal(exp, &model)
 	})
 	return &model, err
 }
@@ -277,11 +274,9 @@ func (e *EphemeralStorage) ListModels(_ context.Context, namespace string) ([]*M
 	err := e.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(MODELS)
 		c := b.Cursor()
-		handle := new(codec.MsgpackHandle)
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var model Model
-			decoder := codec.NewDecoderBytes(v, handle)
-			if err := decoder.Decode(&model); err != nil {
+			if err := msgpack.Unmarshal(v, &model); err != nil {
 				return err
 			}
 			if model.Namespace == namespace {
@@ -298,11 +293,9 @@ func (e *EphemeralStorage) ListModelVersions(_ context.Context, modelId string) 
 	err := e.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(MODEL_VERSIONS)
 		c := b.Cursor()
-		handle := new(codec.MsgpackHandle)
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var mv ModelVersion
-			decoder := codec.NewDecoderBytes(v, handle)
-			if err := decoder.Decode(&mv); err != nil {
+			if err := msgpack.Unmarshal(v, &mv); err != nil {
 				return err
 			}
 			if mv.ModelId == modelId {
@@ -330,8 +323,10 @@ func (e *EphemeralStorage) GetModelVersion(ctx context.Context, id string) (*Mod
 	err := e.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(MODEL_VERSIONS)
 		exp := b.Get([]byte(id))
-		decoder := codec.NewDecoderBytes(exp, new(codec.MsgpackHandle))
-		return decoder.Decode(&modelVersion)
+		if exp == nil {
+			return fmt.Errorf("unable to find model version with id: %v", id)
+		}
+		return msgpack.Unmarshal(exp, &modelVersion)
 	})
 	return &modelVersion, err
 }
@@ -350,11 +345,9 @@ func (e *EphemeralStorage) GetFiles(ctx context.Context, parentId string) (artif
 	err := e.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket(FILES)
 		c := b.Cursor()
-		handle := new(codec.MsgpackHandle)
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var file artifacts.FileMetadata
-			decoder := codec.NewDecoderBytes(v, handle)
-			if err := decoder.Decode(&file); err != nil {
+			if err := msgpack.Unmarshal(v, &file); err != nil {
 				return err
 			}
 			if file.ParentId == parentId {
@@ -386,8 +379,7 @@ func (e *EphemeralStorage) GetFile(ctx context.Context, id string) (*artifacts.F
 		if out == nil {
 			return fmt.Errorf("blob with id: %v not present", id)
 		}
-		decoder := codec.NewDecoderBytes(out, new(codec.MsgpackHandle))
-		return decoder.Decode(&file)
+		return msgpack.Unmarshal(out, &file)
 	})
 	return &file, err
 }
@@ -446,5 +438,32 @@ func (e *EphemeralStorage) ListChanges(ctx context.Context, namespace string, si
 
 func (e *EphemeralStorage) LogEvent(ctx context.Context, parentId string, event *Event) error {
 	id := fmt.Sprintf("%s-%s", parentId, event.Id)
-	return e.writeBytes(event, id, EVENTS, nil)
+	encodedBytes, err := msgpack.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("unable to encode object to msgpack: %v", err)
+	}
+	return e.db.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists(EVENTS)
+		if err != nil {
+			return err
+		}
+		return bucket.Put([]byte(id), encodedBytes)
+	})
+}
+
+func (e *EphemeralStorage) ListEvents(ctx context.Context, parentId string) ([]*Event, error) {
+	events := []*Event{}
+	err := e.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket(EVENTS).Cursor()
+		byteId := []byte(parentId)
+		for k, v := c.First(); k != nil && bytes.HasPrefix(k, byteId); k, v = c.Next() {
+			var event Event
+			if err := json.Unmarshal(v, &event); err != nil {
+				return fmt.Errorf("unable to decode event from json : %v", err)
+			}
+			events = append(events, &event)
+		}
+		return nil
+	})
+	return events, err
 }

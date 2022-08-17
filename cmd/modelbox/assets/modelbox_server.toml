@@ -5,12 +5,12 @@ blob_storage = "filesystem"
 
 # Storage system used for storing metadata related to training artifacts
 # such as models and checkpoints, and lineage of artifacts
-# Possible values - integrated, mysql, postgres
-metadata_storage = "integrated"
+# Possible values - ephemeral, mysql, postgres
+metadata_storage = "ephemeral"
 
 # Storage system to use for storing metrics.
-# Possible values - inmem, timescaledb
-metrics_storage = "inmem"
+# Possible values - inmemory, timescaledb
+metrics_storage = "inmemory"
 
 # Interface on which the metadata service is listening for network connections
 listen_addr = ":8085"

@@ -8,12 +8,15 @@ import (
 )
 
 const (
-	METADATA_BACKEND_MYSQL      = "mysql"
-	METADATA_BACKEND_POSTGRES   = "postgres"
-	METADATA_BACKEND_INTEGRATED = "integrated"
+	METADATA_BACKEND_MYSQL     = "mysql"
+	METADATA_BACKEND_POSTGRES  = "postgres"
+	METADATA_BACKEND_EPHEMERAL = "ephemeral"
 
 	BLOB_STORAGE_BACKEND_FS = "filesystem"
 	BLOB_STORAGE_BACKEND_S3 = "s3"
+
+	METRICS_STORAGE_TS       = "timescaledb"
+	METRICS_STORAGE_INMEMORY = "inmemory"
 )
 
 type MySQLConfig struct {

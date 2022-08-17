@@ -406,7 +406,7 @@ func NewMetadataStorage(
 	logger *zap.Logger,
 ) (MetadataStorage, error) {
 	switch svrConfig.MetadataBackend {
-	case config.METADATA_BACKEND_INTEGRATED:
+	case config.METADATA_BACKEND_EPHEMERAL:
 		return NewEphemeralStorage(svrConfig.IntegratedStorage.Path, logger)
 	case config.METADATA_BACKEND_MYSQL:
 		mysqlConfig := svrConfig.MySQLConfig

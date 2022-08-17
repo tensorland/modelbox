@@ -1,6 +1,6 @@
 module github.com/diptanu/modelbox
 
-go 1.18
+go 1.19
 
 require (
 	github.com/BurntSushi/toml v1.1.0
@@ -14,7 +14,6 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.7.0
-	github.com/vmihailenco/msgpack v4.0.4+incompatible
 	github.com/vmihailenco/msgpack/v5 v5.3.5
 	go.etcd.io/bbolt v1.3.6
 	go.uber.org/zap v1.21.0
@@ -41,7 +40,6 @@ require (
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

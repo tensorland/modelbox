@@ -12,10 +12,10 @@ type InMemoryExperimentLogger struct {
 	floatLogsLock sync.RWMutex
 }
 
-func NewInMemoryExperimentLogger() *InMemoryExperimentLogger {
+func NewInMemoryExperimentLogger() (*InMemoryExperimentLogger, error) {
 	return &InMemoryExperimentLogger{
 		floatLogs: make(map[string][]*FloatLog),
-	}
+	}, nil
 }
 
 func (i *InMemoryExperimentLogger) LogFloats(ctx context.Context, parentId, key string, value *FloatLog) error {
@@ -38,4 +38,8 @@ func (i *InMemoryExperimentLogger) GetFloatLogs(ctx context.Context, parentId st
 		}
 	}
 	return logs, nil
+}
+
+func (*InMemoryExperimentLogger) Backend() string {
+	return "inmemory"
 }

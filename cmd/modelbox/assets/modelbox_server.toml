@@ -6,6 +6,10 @@ blob_storage = "filesystem"
 # such as models and checkpoints, and lineage of artifacts
 metadata_storage = "integrated"
 
+# Storage system to use for storing metrics.
+# Possible values - inmem, timescaledb
+metrics_storage = "inmem"
+
 # Interface on which the metadata service is listening for network connections
 listen_addr = ":8085"
 
@@ -25,9 +29,18 @@ username = "postgres"
 password = "foo"
 dbname   = "modelbox"
 
+# Additional configuration for metadata storage in MySQL 
 [metadata_storage_mysql]
 host     = "172.17.0.2"
 port     = 3306
 username = "root"
 password = "foo"
 dbname   = "modelbox"
+
+# Configuration optin for timescaledb
+[metrics_storage_timescaledb]
+host = "172.17.0.4"
+port = 5432
+username = "postgres"
+password = "foo"
+dbname   = "modelbox_metrics" 

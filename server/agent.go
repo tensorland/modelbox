@@ -10,6 +10,7 @@ import (
 	"github.com/diptanu/modelbox/server/config"
 	"github.com/diptanu/modelbox/server/storage"
 	"github.com/diptanu/modelbox/server/storage/artifacts"
+	"github.com/diptanu/modelbox/server/storage/logging"
 	"go.uber.org/zap"
 )
 
@@ -40,7 +41,13 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 		logger.Fatal(fmt.Sprintf("couldn't build basedire %v", err))
 	}
 	logger.Sugar().Infof("using storage backend: %v", metadataStorage.Backend())
-	server := NewGrpcServer(metadataStorage, fileStorageBuilder, lis, logger)
+	experimentLogger, err := logging.NewExperimentLogger(config, logger)
+	if err != nil {
+		return nil, err
+	}
+	logger.Sugar().Infof("using metrics backend: %v", experimentLogger.Backend())
+
+	server := NewGrpcServer(metadataStorage, fileStorageBuilder, experimentLogger, lis, logger)
 	return &Agent{
 		grpcServer: server,
 		storage:    metadataStorage,

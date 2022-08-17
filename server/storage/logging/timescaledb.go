@@ -180,3 +180,7 @@ func (t *TimescaleDbLogger) dropConnections(db *sqlx.DB, name string) {
 		t.logger.Sugar().Errorf("error dropping connections: %v", err)
 	}
 }
+
+func (*TimescaleDbLogger) Backend() string {
+	return "timescaledb"
+}

@@ -35,14 +35,22 @@ type PostgresConfig struct {
 	DbName   string `toml:"dbname"`
 }
 
+// Configuration for Timescaledb. Since it's postgres under the hood
+// we are adding all the base postgres config options
+type TimescaleDbConfig struct {
+	PostgresConfig
+}
+
 type ServerConfig struct {
 	StorageBackend    string                   `toml:"blob_storage"`
 	MetadataBackend   string                   `toml:"metadata_storage"`
+	MetricsBackend    string                   `toml:"metrics_storage"`
 	ListenAddr        string                   `toml:"listen_addr"`
 	FileStorage       *FileStorageConfig       `toml:"blob_storage_filesystem"`
 	IntegratedStorage *IntegratedStorageConfig `toml:"metadata_storage_integrated"`
 	MySQLConfig       *MySQLConfig             `toml:"metadata_storage_mysql"`
 	PostgresConfig    *PostgresConfig          `toml:"metadata_storage_postgres"`
+	TimescaleDb       *TimescaleDbConfig       `toml:"metrics_storage_timescaledb"`
 	PromAddr          string                   `toml:"prometheus_addr"`
 }
 
@@ -81,6 +89,7 @@ func defaultServerConfig() *ServerConfig {
 		StorageBackend:  "file",
 		MetadataBackend: "integrated",
 		ListenAddr:      ":8080",
+		MetricsBackend:  "inmem",
 		PromAddr:        ":2112",
 	}
 }

@@ -1,9 +1,11 @@
 # The storage system used for storing training artifacts
 # This is optional if modelbox is started as a metadata service
+# Possible values - filesystem, s3
 blob_storage = "filesystem"
 
 # Storage system used for storing metadata related to training artifacts
 # such as models and checkpoints, and lineage of artifacts
+# Possible values - integrated, mysql, postgres
 metadata_storage = "integrated"
 
 # Storage system to use for storing metrics.

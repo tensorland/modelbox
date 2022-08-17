@@ -14,6 +14,7 @@ import (
 	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"github.com/diptanu/modelbox/server/storage/logging"
 	"github.com/diptanu/modelbox/server/utils"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -58,6 +59,12 @@ func NewEvent(parentId, source, name string, wallclock time.Time, metadata map[s
 		SourceWallclock: uint64(wallclock.Unix()),
 		Metadata:        metadata,
 	}
+}
+
+var _ msgpack.Marshaler = (*Event)(nil)
+
+func (i *Event) MarshalMsgpack() ([]byte, error) {
+	return json.Marshal(i)
 }
 
 type ChangeEvent struct {
@@ -388,6 +395,8 @@ type MetadataStorage interface {
 	ListChanges(ctx context.Context, namespace string, since time.Time) ([]*ChangeEvent, error)
 
 	LogEvent(ctx context.Context, parentId string, event *Event) error
+
+	ListEvents(ctx context.Context, parentId string) ([]*Event, error)
 
 	Close() error
 }

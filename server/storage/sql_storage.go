@@ -462,6 +462,28 @@ func (s *SQLStorage) LogEvent(ctx context.Context, parentId string, event *Event
 	})
 }
 
+func (s *SQLStorage) ListEvents(ctx context.Context, parentId string) ([]*Event, error) {
+	events := []*Event{}
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		rows := []EventSchema{}
+		if err := s.db.SelectContext(ctx, &rows, s.listEventsForObject(), parentId); err != nil {
+			return err
+		}
+		for _, row := range rows {
+			events = append(events, &Event{
+				Id:              row.Id,
+				ParentId:        row.ParentId,
+				Name:            row.Name,
+				Source:          row.Source,
+				SourceWallclock: row.Wallclock,
+				Metadata:        row.Metadata,
+			})
+		}
+		return nil
+	})
+	return events, err
+}
+
 func (s *SQLStorage) transact(ctx context.Context, fn func(*sqlx.Tx) error) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {

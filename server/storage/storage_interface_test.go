@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -177,8 +176,6 @@ func (s *StorageInterfaceTestSuite) TestListModelVersions() {
 		[]*artifacts.FileMetadata{},
 		uniqueTags,
 	)
-	fmt.Println(mv.Id)
-	fmt.Println(mv1.Id)
 	_, err = s.storageIf.CreateModelVersion(context.Background(), mv1, metaData)
 	assert.Nil(s.t, err)
 
@@ -235,7 +232,13 @@ func (s *StorageInterfaceTestSuite) TestUpdateMetadata() {
 func (s *StorageInterfaceTestSuite) TestCreateEvent() {
 	val, _ := structpb.NewValue(map[string]interface{}{"name1": "val1", "name2": 5})
 	meta := map[string]*structpb.Value{"/tmp/hola": val}
-	event := NewEvent("parent1", "trainer-1", "write-chk-step1", time.Now(), meta)
-	err := s.storageIf.LogEvent(context.Background(), "parent1", event)
+	eventName := "write-chk-step1"
+	parentId := "parent1"
+	event := NewEvent(parentId, "trainer-1", eventName, time.Now(), meta)
+	err := s.storageIf.LogEvent(context.Background(), parentId, event)
 	assert.Nil(s.t, err)
+
+	events, err := s.storageIf.ListEvents(context.Background(), parentId)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, 1, len(events))
 }

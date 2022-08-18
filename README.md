@@ -4,28 +4,32 @@
 
 # AI Model Operations and Metadata Management Service
 
-ModelBox is an AI models and metadata management service. 
+ModelBox is an AI models and metadata management service. It can integrate with ML frameworks and other ML Operations systems to log and mine metadata, events and metrics related to Experiments, Models and Checkpoints. ModelBox integrates with a variety of storage platforms and provides a GRPC API which enables polyglot SDKs in Python, C++, Go, Rust, etc, to log metadata, metrics and integrate with inference services.
 
-It can integrate with Deep Learning frameworks to provide model checkpoint and artifact tracking. Optional features include serving AI models to inference engines and measuring their performance. 
-
-Additionally, ModelBox provides a pluggable storage interface to track metadata & artifacts related to models, and experiments producing checkpoints. 
+The service is very extensible, interfaces can be extended to support more storage services and metadata can be exported and watched by other systems to help with compliance, access control, auditing and deployment of models.
 
 ## Features
-- Python SDK to integrate with custom PyTorch (or any other ML framework) trainer.
-- Model versioning and lineage tracking of Models in relation to Experiments which created them.
-- Labelling models and checkpoints to track the environment they are deployed in, metrics, and other related metadata meaningful to users.
-- Integrates transparenly with DL Frameworks like PyTorch Lightning for checkpoint storage/retrieval, metadata and metrics logging.
-- Load production ready models in inference engines directly from ModelBox - clients in Python, Go, etc. Rust and C++ library are in the works.
+#### Experiment Metadata and Metrics Logging
+  - Log hyperparameters, models, checkpoints from experiments.
+  - Support for logging metrics during experiments - accuracy, loss during training, or resource usage of trainer during training. 
+#### Model Management
+  - Log metadata associated with a model such as binaries, notebooks, model metrics, etc. 
+  - Manage lineage of models with experiments, link to datasets used to train the model.
+  - Label models with metadata which are useful for operational purposes such as the environments they are deployed in, privacy sensitivity, etc.
+  - Load models and deployment artifacts in inference services directly from ModelBox. 
+#### Events 
+  - Log events related to training and models from trainers, workflow systems, other AI/Model operations services.
+  - Any changes made to experiment and model metadata, new models logged or deployed are logged as change events in the system automatically. Stream these events from other systems for any external workflows which needs to be invoked.
+#### SDK
+  - SDKs in Python, Go, Rust and C++ to integrate with ML frameworks and inference services.
+  - Use the SDK in training code or from even notebooks. 
+  - SDK is built on top of gRPC so really easy to extend into other languages or add features not available.
 
 ## Planned Features
-- Add retention policies written in any WASM compatible language which has all the model and checkpoint related metadata available.
+- Flexible metadata and model rention policies.
 - Add RBAC based access control for models and checkpoints for compliance.
-- Create a worker infrastructure which automatically transforms models, benchmarks for performance on inference hardware, etc, and update the model metadata.
-- Make the worker architecture pluggable such that users can write custom workers any language while the model, metrics and other metadata are available to the runtime, abstracting the storage and other infrastructure primitives.
-- Build Model Explainability features, such as exctracting information about shape of input and output tensors, types of layers used by the model, parameter counts, etc.
-- Build infrastructure to run known recipes for model optimazation for inference such as Layer Fusion, replacing transformer layers with more optimized implemenations such as Faster Transformer, quantization, model compression, etc.
-- Beyond being able to stream a model binary using the streaming api, build exporters which are more native to model deployment.
-
+- Automatic model benchmarking for performance(lantency and throughput) on inference targets.
+- Infrastucture for model transformation such that custom recipes can be applied to train models for optimizations for on-device or accelerator inference targets.
 
 ## Tutorials and Demos
 If you would like to jump straight in, we have some notebooks which demonstrates the usage of the Python SDK independently and with Pytorch and Pytorch Lightning.

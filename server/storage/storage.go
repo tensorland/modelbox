@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/diptanu/modelbox/client-go/proto"
+	"github.com/diptanu/modelbox/sdk-go/proto"
 	"github.com/diptanu/modelbox/server/config"
 	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"github.com/diptanu/modelbox/server/storage/logging"

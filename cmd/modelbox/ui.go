@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	client "github.com/diptanu/modelbox/client-go"
+	client "github.com/diptanu/modelbox/sdk-go"
 	svrConfig "github.com/diptanu/modelbox/server/config"
 	"github.com/diptanu/modelbox/server/storage"
 	"github.com/diptanu/modelbox/server/storage/artifacts"

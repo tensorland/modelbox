@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diptanu/modelbox/client-go/proto"
+	"github.com/diptanu/modelbox/sdk-go/proto"
 	"github.com/diptanu/modelbox/server"
 	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"google.golang.org/grpc"

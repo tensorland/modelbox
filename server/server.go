@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	pb "github.com/diptanu/modelbox/client-go/proto"
+	pb "github.com/diptanu/modelbox/sdk-go/proto"
 	"github.com/diptanu/modelbox/server/storage"
 	"github.com/diptanu/modelbox/server/storage/artifacts"
 	"github.com/diptanu/modelbox/server/storage/logging"

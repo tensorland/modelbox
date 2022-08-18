@@ -23,7 +23,11 @@ It integrates with various datastores and blob stores for metadata, metrics and 
 #### SDK
   - SDKs in Python, Go, Rust and C++ to integrate with ML frameworks and inference services.
   - SDK is built on top of gRPC so really easy to extend into other languages or add features not available.
-  - Use the SDK in training code or from even notebooks. 
+  - Use the SDK in training code or from even notebooks.
+#### Reliable and Easy to Use Control Plane
+  - Reliability and availability is at the centre of the design mission for ModelBox. Features and APIs are designed with relaibility in mind. For ex, the artifact store implements a streaming api for upload and download apis to ensure memory usage is controlled while serving really large files.
+  - Metrics related to the control plane - API latency, system resource usage, etc, are all available as Prometheus metrics.
+
 #### Extensibility
   - The interfaces for metadata, metrics and artifact storage can be extended to support more storage services.
 

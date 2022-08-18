@@ -4,9 +4,9 @@
 
 # AI Model Operations and Metadata Management Service
 
-ModelBox is an AI models and metadata management service. It can integrate with ML frameworks and other ML Operations systems to log and mine metadata, events and metrics related to Experiments, Models and Checkpoints. ModelBox integrates with a variety of storage platforms and provides a GRPC API which enables polyglot SDKs in Python, C++, Go, Rust, etc, to log metadata, metrics and integrate with inference services.
+ModelBox is an AI model and experiment metadata management service. It can integrate with ML frameworks and other services to log and mine metadata, events and metrics related to Experiments, Models and Checkpoints. 
 
-The service is very extensible, interfaces can be extended to support more storage services and metadata can be exported and watched by other systems to help with compliance, access control, auditing and deployment of models.
+It integrates with various datastores and blob stores for metadata, metrics and artifact stores. The service is very extensible, interfaces can be extended to support more storage services and metadata can be exported and watched by other systems to help with compliance, access control, auditing and deployment of models.
 
 ## Features
 #### Experiment Metadata and Metrics Logging
@@ -22,8 +22,10 @@ The service is very extensible, interfaces can be extended to support more stora
   - Any changes made to experiment and model metadata, new models logged or deployed are logged as change events in the system automatically. Stream these events from other systems for any external workflows which needs to be invoked.
 #### SDK
   - SDKs in Python, Go, Rust and C++ to integrate with ML frameworks and inference services.
-  - Use the SDK in training code or from even notebooks. 
   - SDK is built on top of gRPC so really easy to extend into other languages or add features not available.
+  - Use the SDK in training code or from even notebooks. 
+#### Extensibility
+  - The interfaces for metadata, metrics and artifact storage can be extended to support more storage services.
 
 ## Planned Features
 - Flexible metadata and model rention policies.
@@ -50,7 +52,8 @@ A model is an object to track common metadata, and to apply policies on models c
 A model version is a trained model, it includes the model binary, related files that a user wants to track - dataset file handles, any other metadata, model metrics, etc. Model versions are always related to a Model and all the policies created for a Model are applied to Model Versions.
 
 ### Experiment and Checkpoints
-Experiments are used to ingest model checkpoints created during a training run. ModelBox is not an experiment metadata tracker so there is no support for rich experiment management which are available on experiment trackers such as Weights and Biases, the experiment abstraction here exists so that we can track and ingest model checkpoints which eventually become model versions if they have good metrics and does well in benchmarks.
+Experiments are the abstraction to store metadata and events from training jobs which produces trained models. Checkpoints from experiments are automatically ingested and can be a means to get fault tolerant training or setup automatic conversions to models if the metrics are good.
+Some examples of metadata logged from an experiment are hyperparameters, structure and shape of the models, training accuracy, loss and other related metrics, hardware metrics of the trainer nodes, checkpoint binaries and even training code with depenendies, etc.
 
 ## Architecture
 ModelBox has the following components

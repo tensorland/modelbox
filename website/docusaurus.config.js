@@ -49,6 +49,10 @@ const config = {
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
         },
+        googleAnalytics: {
+          trackingID: 'G-5FXR0WKMER',
+          anonymizeIP: true,
+        },
       }),
     ],
   ],
@@ -59,7 +63,7 @@ const config = {
       navbar: {
         title: 'ModelBox',
         logo: {
-          alt: 'My Site Logo',
+          alt: 'ModelBox Logo',
           src: 'img/ModelBox3.png',
         },
         items: [

@@ -10,8 +10,8 @@ It integrates with various datastores and blob stores for metadata, metrics and 
 
 ## Features
 #### Experiment Metadata and Metrics Logging
-  - Log hyperparameters, models, checkpoints from experiments.
-  - Support for logging metrics during experiments - accuracy, loss during training, or resource usage of trainer during training. 
+  - Log hyperparameters, accuract/loss and other quality related metrics during training.
+  - Log trainer events such as dataloading and checkpoint operations, epoch start and end times which helps with debuging performance issues.
 #### Model Management
   - Log metadata associated with a model such as binaries, notebooks, model metrics, etc. 
   - Manage lineage of models with experiments, link to datasets used to train the model.

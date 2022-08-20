@@ -201,30 +201,30 @@ func (s *GrpcServer) ListCheckpoints(
 func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 	req, err := stream.Recv()
 	if err != nil {
-		return fmt.Errorf("unable to receive blob stream %v", err)
+		return fmt.Errorf("unable to receive file stream %v", err)
 	}
 	meta := req.GetMetadata()
 	if meta == nil {
 		return fmt.Errorf("the first message needs to be checkpoint metadata")
 	}
 
-	blobInfo := artifacts.NewFileMetadata(meta.ParentId, "", meta.Checksum, FileTypeFromProto(meta.FileType), 0, 0)
+	fileMetadata := artifacts.NewFileMetadata(meta.ParentId, "", meta.Checksum, FileTypeFromProto(meta.FileType), 0, 0)
 	blobStorage := s.blobStorageBuilder.Build()
-	if err := blobStorage.Open(blobInfo, artifacts.Write); err != nil {
+	if err := blobStorage.Open(fileMetadata, artifacts.Write); err != nil {
 		return err
 	}
 	defer blobStorage.Close()
 
 	path, err := blobStorage.GetPath()
 	if err != nil {
-		return fmt.Errorf("unable to update blob info for checkpoint")
+		return fmt.Errorf("unable to update file info for checkpoint")
 	}
-	blobInfo.Path = path
-	if err := s.metadataStorage.WriteFiles(stream.Context(), artifacts.FileSet{blobInfo}); err != nil {
+	fileMetadata.Path = path
+	if err := s.metadataStorage.WriteFiles(stream.Context(), artifacts.FileSet{fileMetadata}); err != nil {
 		// TODO This is not great, we should create a new error type and throw and check on the error type
 		// or code.
 		if strings.HasPrefix(err.Error(), "unable to create blobs for model: Error 1062") {
-			stream.SendAndClose(&pb.UploadFileResponse{FileId: blobInfo.Id})
+			stream.SendAndClose(&pb.UploadFileResponse{FileId: fileMetadata.Id})
 			return nil
 		}
 		return fmt.Errorf("unable to create blob metadata: %v", err)
@@ -245,8 +245,8 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 		}
 		totalBytes += uint64(n)
 	}
-	stream.SendAndClose(&pb.UploadFileResponse{FileId: blobInfo.Id})
-	s.logger.Info(fmt.Sprintf("checkpoint with id: %v tot bytes: %v", blobInfo.Id, totalBytes))
+	stream.SendAndClose(&pb.UploadFileResponse{FileId: fileMetadata.Id})
+	s.logger.Info(fmt.Sprintf("checkpoint with id: %v tot bytes: %v", fileMetadata.Id, totalBytes))
 	return nil
 }
 
@@ -254,30 +254,30 @@ func (s *GrpcServer) DownloadFile(
 	req *pb.DownloadFileRequest,
 	stream pb.ModelStore_DownloadFileServer,
 ) error {
-	blobInfo, err := s.metadataStorage.GetFile(stream.Context(), req.FileId)
+	fileMetadata, err := s.metadataStorage.GetFile(stream.Context(), req.FileId)
 	if err != nil {
 		return fmt.Errorf("unable to retreive blob metadata: %v", err)
 	}
 	blobStorage := s.blobStorageBuilder.Build()
-	if err := blobStorage.Open(blobInfo, artifacts.Read); err != nil {
+	if err := blobStorage.Open(fileMetadata, artifacts.Read); err != nil {
 		return fmt.Errorf("unable to create blob storage intf: %v", err)
 	}
 	defer blobStorage.Close()
 	blobMeta := pb.DownloadFileResponse{
 		StreamFrame: &pb.DownloadFileResponse_Metadata{
 			Metadata: &pb.FileMetadata{
-				Id:        blobInfo.Id,
-				ParentId:  blobInfo.ParentId,
-				Checksum:  blobInfo.Checksum,
-				FileType:  FileTypeToProto(blobInfo.Type),
-				Path:      blobInfo.Path,
-				CreatedAt: timestamppb.New(time.Unix(blobInfo.CreatedAt, 0)),
-				UpdatedAt: timestamppb.New(time.Unix(blobInfo.UpdatedAt, 0)),
+				Id:        fileMetadata.Id,
+				ParentId:  fileMetadata.ParentId,
+				Checksum:  fileMetadata.Checksum,
+				FileType:  FileTypeToProto(fileMetadata.Type),
+				Path:      fileMetadata.Path,
+				CreatedAt: timestamppb.New(time.Unix(fileMetadata.CreatedAt, 0)),
+				UpdatedAt: timestamppb.New(time.Unix(fileMetadata.UpdatedAt, 0)),
 			},
 		},
 	}
 	if err := stream.Send(&blobMeta); err != nil {
-		return fmt.Errorf("unable to send blob metadata: %v", err)
+		return fmt.Errorf("unable to send file metadata: %v", err)
 	}
 	buf := make([]byte, 1024)
 	totalBytes := 0

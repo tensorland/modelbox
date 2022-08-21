@@ -30,7 +30,7 @@ const FeatureList = [
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-         Measure performance metrics such as throughput and accuracy.
+         Measure performance metrics such as throughput and accuracy of models.
          Write deployment checks based on metrics to automatically tag models to promote to production.
       </>
     ),

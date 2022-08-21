@@ -5,21 +5,10 @@ authors: [diptanu]
 tags: [announcement, hello, modelbox]
 ---
 
-[Docusaurus blogging features](https://docusaurus.io/docs/blog) are powered by the [blog plugin](https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-blog).
+ModelBox is a new AI experimentation and model operations service. AI Metadata services are integrated mainly into larger platforms and impose a specific workflow on the users. Most of the tools in this space are also SAAS services, such as HuggingFace, Neptune AI, etc. 
 
-Simply add Markdown files (or folders) to the `blog` directory.
+The number of open source services that provide the primitives of logging metadata from experiments, model store/registry are few, and to mention services that are hackable and extendable to suit the needs of an organization with a specific workflow. We try to change that with ModelBox, by building the service with an interface first approach and having implementations that use specific storage technologies, etc. The API of ModelBox uses gRPC, with SDKs built around the API in the most popular languages used by engineers making AI services today.
 
-Regular blog authors can be added to `authors.yml`.
+In the coming weeks or months, we will write more about how ModelBox can be used to solve common use cases while developing models and help with serving and evaluating trained models.
 
-The blog post date can be extracted from filenames, such as:
-
-- `2019-05-30-welcome.md`
-- `2019-05-30-welcome/index.md`
-
-A blog post folder can be convenient to co-locate blog post images:
-
-![Docusaurus Plushie](./docusaurus-plushie-banner.jpeg)
-
-The blog supports tags as well!
-
-**And if you don't want a blog**: just delete this directory, and use `blog: false` in your Docusaurus config.
+Please get in touch with us on the GitHub Discussions or Discord if you want to be involved with the project! 

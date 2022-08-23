@@ -1,6 +1,6 @@
 <p align="center"><img src="https://raw.githubusercontent.com/diptanu/modelbox/main/docs/images/ModelBox1.png" width="300" height="150"></p>
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/diptanu/modelbox/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/diptanu/modelbox/tree/main)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/tensorland/modelbox/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/tensorland/modelbox/tree/main)
 
 # AI Model Operations and Metadata Management Service
 

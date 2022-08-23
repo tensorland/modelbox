@@ -16,7 +16,7 @@ const config = {
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: 'diptanu', // Usually your GitHub org/user name.
+  organizationName: 'tensorland', // Usually your GitHub org/user name.
   projectName: 'modelbox', // Usually your repo name.
 
   // Even if you don't use internalization, you can use this field to set useful
@@ -75,7 +75,7 @@ const config = {
           },
           {to: '/blog', label: 'Blog', position: 'left'},
           {
-            href: 'https://github.com/diptanu/modelbox',
+            href: 'https://github.com/tensorland/modelbox',
             label: 'GitHub',
             position: 'right',
           },
@@ -98,7 +98,7 @@ const config = {
             items: [
               {
                 label: 'GitHub Discussions',
-                href: 'https://github.com/diptanu/modelbox/discussions',
+                href: 'https://github.com/tensorland/modelbox/discussions',
               },
               {
                 label: 'Discord',
@@ -119,7 +119,7 @@ const config = {
               },
               {
                 label: 'GitHub',
-                href: 'https://github.com/diptanu/modelbox',
+                href: 'https://github.com/tensorland/modelbox',
               },
             ],
           },

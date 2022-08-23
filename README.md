@@ -92,10 +92,10 @@ Currently, they are part of the ModelStore gRPC service, but the plan is to sepa
 The ModelBox CLI provides an interface to interact with the Metadata API and Blob Storage API and create and download models and all other aspects of the service.
 
 ### SDK and Client Libraries
-The SDK/client libraries are meant for integration with Deep Learning and ML frameworks to integrate ModelBox with the experiment code which creates the model and other training artifacts. The libraries can also be used with applications or control planes which wants to use ModelBox in a larger in house Machine Learning platform.
+The SDK/client libraries are meant for integration with Deep Learning and ML frameworks to integrate ModelBox with the experiment code which creates the model and other training artifacts. The libraries can also be used with applications or control planes that want to use ModelBox in a larger in-house Machine Learning platform.
 
 ### High-Level Architecture
-![Model Box High-Level Architecture!](docs/images/ModelBox_HighLevel.png "Model Box High Level Architecture")
+![Model Box High-Level Architecture!](docs/images/ModelBox_HighLevel.png "Model Box High-Level Architecture")
 
 
 ## Configuration

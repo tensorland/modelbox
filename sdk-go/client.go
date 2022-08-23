@@ -183,7 +183,7 @@ func (m *ModelBoxClient) UploadFile(path, parentId string, t artifacts.FileMIMET
 		return nil, err
 	}
 
-	bytes := make([]byte, 1024)
+	bytes := make([]byte, 1024000)
 	for {
 		n, e := f.Read(bytes)
 		if e != nil && e != io.EOF {

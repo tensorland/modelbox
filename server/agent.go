@@ -40,7 +40,7 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	if err != nil {
 		logger.Fatal(fmt.Sprintf("couldn't build basedire %v", err))
 	}
-	logger.Sugar().Infof("using storage backend: %v", metadataStorage.Backend())
+	logger.Sugar().Infof("using metadata backend: %v, artifacts backend: %v ", metadataStorage.Backend(), fileStorageBuilder.Backend())
 	experimentLogger, err := logging.NewExperimentLogger(config, logger)
 	if err != nil {
 		return nil, err

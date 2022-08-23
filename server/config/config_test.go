@@ -10,13 +10,21 @@ func TestServerConfig(t *testing.T) {
 	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
 	assert.Nil(t, err)
 	assert.Equal(t, ":8085", config.ListenAddr)
-	assert.Equal(t, "filesystem", config.StorageBackend)
-	assert.Equal(t, "integrated", config.MetadataBackend)
-	assert.Equal(t, "inmem", config.MetricsBackend)
+	assert.Equal(t, "filesystem", config.ArtifactStorageBackend)
+	assert.Equal(t, "ephemeral", config.MetadataBackend)
+	assert.Equal(t, "inmemory", config.MetricsBackend)
 
 	assert.Equal(t, "/tmp/modelboxblobs", config.FileStorage.BaseDir)
 
 	assert.Equal(t, "/tmp/modelbox.dat", config.IntegratedStorage.Path)
+}
+
+func TestS3Config(t *testing.T) {
+	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
+	assert.Nil(t, err)
+	assert.NotNil(t, config.S3Storage)
+	assert.Equal(t, "us-east-1", config.S3Storage.Region)
+	assert.Equal(t, "modelbox-artifacts", config.S3Storage.Bucket)
 }
 
 func TestMySQLConfig(t *testing.T) {

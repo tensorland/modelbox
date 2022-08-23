@@ -1,7 +1,7 @@
 # The storage system used for storing training artifacts
 # This is optional if modelbox is started as a metadata service
 # Possible values - filesystem, s3
-blob_storage = "filesystem"
+artifact_storage = "filesystem"
 
 # Storage system used for storing metadata related to training artifacts
 # such as models and checkpoints, and lineage of artifacts
@@ -16,8 +16,12 @@ metrics_storage = "inmemory"
 listen_addr = ":8085"
 
 # Additional configuration for filesystem based blob_storage
-[blob_storage_filesystem]
+[artifact_storage_filesystem]
 base_dir = "/tmp/modelboxblobs"
+
+[artifact_storage_s3]
+region = "us-east-1"
+bucket = "modelbox-artifacts"
 
 # Additional configuration for integrated metadata storage
 [metadata_storage_integrated]

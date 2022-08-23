@@ -208,9 +208,9 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 		return fmt.Errorf("the first message needs to be checkpoint metadata")
 	}
 	fileMetadata := artifacts.NewFileMetadata(meta.ParentId, "", meta.Checksum, FileTypeFromProto(meta.FileType), 0, 0)
-	blobStorage := s.blobStorageBuilder.Build()
-	if err := blobStorage.Open(fileMetadata, artifacts.Write); err != nil {
-		return err
+	blobStorage, err := s.blobStorageBuilder.BuildWriter(fileMetadata)
+	if err != nil {
+		return fmt.Errorf("unable to build artifact storage client: %v", err)
 	}
 	defer blobStorage.Close()
 
@@ -258,9 +258,9 @@ func (s *GrpcServer) DownloadFile(
 	if err != nil {
 		return fmt.Errorf("unable to retreive blob metadata: %v", err)
 	}
-	blobStorage := s.blobStorageBuilder.Build()
-	if err := blobStorage.Open(fileMetadata, artifacts.Read); err != nil {
-		return fmt.Errorf("unable to create blob storage intf: %v", err)
+	blobStorage, err := s.blobStorageBuilder.BuildReader(fileMetadata)
+	if err != nil {
+		return fmt.Errorf("unable to build artifact storage client: %v", err)
 	}
 	defer blobStorage.Close()
 	blobMeta := pb.DownloadFileResponse{

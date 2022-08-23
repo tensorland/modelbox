@@ -87,25 +87,33 @@ const (
 	Write
 )
 
-type BlobStorage interface {
-	Open(blob *FileMetadata, mode FileOpenMode) error
-
+type BlobStorageWriter interface {
 	GetPath() (string, error)
 
-	io.ReadWriteCloser
+	io.WriteCloser
+}
+
+type BlobStorageReader interface {
+	io.ReadCloser
 }
 
 type BlobStorageBuilder interface {
-	Build() BlobStorage
+	BuildWriter(*FileMetadata) (BlobStorageWriter, error)
+
+	BuildReader(*FileMetadata) (BlobStorageReader, error)
+
+	Backend() string
 }
 
 func NewBlobStorageBuilder(
 	svrConfig *config.ServerConfig,
 	logger *zap.Logger,
 ) (BlobStorageBuilder, error) {
-	switch svrConfig.StorageBackend {
+	switch svrConfig.ArtifactStorageBackend {
 	case config.BLOB_STORAGE_BACKEND_FS:
 		return NewFileBlobStorageBuilder(svrConfig.FileStorage.BaseDir, logger)
+	case config.BLOB_STORAGE_BACKEND_S3:
+		return NewS3StorageBuilder(svrConfig.S3Storage, logger), nil
 	}
-	return nil, fmt.Errorf("unknown blob storage backend: %v", svrConfig.StorageBackend)
+	return nil, fmt.Errorf("unknown blob storage backend: %v", svrConfig.ArtifactStorageBackend)
 }

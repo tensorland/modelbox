@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	id   string
-	path string
+	parentId string
+	path     string
 )
 
 var artifactsCmd = &cobra.Command{
@@ -22,7 +22,20 @@ var downloadCmd = &cobra.Command{
 		if err != nil {
 			zap.L().Sugar().Panicf("unable to create client: %v", err)
 		}
-		if err := client.DownloadCheckpoint(id, path); err != nil {
+		if err := client.DownloadCheckpoint(parentId, path); err != nil {
+			zap.L().Sugar().Panicf("unable to download artifact: %v", err)
+		}
+	},
+}
+
+var uploadCmd = &cobra.Command{
+	Use: "upload",
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := NewClientUi(ConfigPath)
+		if err != nil {
+			zap.L().Sugar().Panicf("unable to create client: %v", err)
+		}
+		if err := client.UploadArtifact(path, parentId); err != nil {
 			zap.L().Sugar().Panicf("unable to download artifact: %v", err)
 		}
 	},
@@ -31,7 +44,11 @@ var downloadCmd = &cobra.Command{
 func init() {
 	clientCmd.AddCommand(artifactsCmd)
 	artifactsCmd.AddCommand(downloadCmd)
+	artifactsCmd.AddCommand(uploadCmd)
 
-	downloadCmd.Flags().StringVar(&id, "id", "", "id of the artifact to download")
+	downloadCmd.Flags().StringVar(&parentId, "id", "", "id of the artifact to download")
 	downloadCmd.Flags().StringVar(&path, "path", "", "path to download the artifact")
+
+	uploadCmd.Flags().StringVar(&parentId, "parent-id", "", "parent id of the artifact to download")
+	uploadCmd.Flags().StringVar(&path, "path", "", "path of the artifact to upload")
 }

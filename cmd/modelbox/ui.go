@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/olekukonko/tablewriter"
 	client "github.com/tensorland/modelbox/sdk-go"
 	svrConfig "github.com/tensorland/modelbox/server/config"
 	"github.com/tensorland/modelbox/server/storage"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
-	"github.com/olekukonko/tablewriter"
 	"go.uber.org/zap"
 )
 
@@ -156,6 +156,7 @@ func (u *ClientUi) ListCheckpoints(experimentId string) error {
 	return nil
 }
 
+// TODO Rename this to download artifact
 func (u *ClientUi) DownloadCheckpoint(id, path string) error {
 	resp, err := u.client.DownloadBlob(id, path)
 	if err != nil {
@@ -165,6 +166,17 @@ func (u *ClientUi) DownloadCheckpoint(id, path string) error {
 	u.table.Append([]string{id, path, resp.Checksum})
 	u.table.Render()
 
+	return nil
+}
+
+func (u *ClientUi) UploadArtifact(path, parentId string) error {
+	resp, err := u.client.UploadFile(path, parentId, artifacts.ModelFile)
+	if err != nil {
+		return fmt.Errorf("unable to upload artifact: %v", err)
+	}
+	u.table.SetHeader([]string{"ID", "Checksum"})
+	u.table.Append([]string{resp.Id, resp.Checksum})
+	u.table.Render()
 	return nil
 }
 

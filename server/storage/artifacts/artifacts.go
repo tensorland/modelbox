@@ -7,8 +7,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/diptanu/modelbox/server/config"
-	"github.com/diptanu/modelbox/server/utils"
+	"github.com/tensorland/modelbox/server/config"
+	"github.com/tensorland/modelbox/server/utils"
 	"go.uber.org/zap"
 )
 

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diptanu/modelbox/server/storage/artifacts"
+	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/types/known/structpb"
 )

@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/diptanu/modelbox/server/storage/artifacts"
-	"github.com/diptanu/modelbox/server/utils"
+	"github.com/tensorland/modelbox/server/storage/artifacts"
+	"github.com/tensorland/modelbox/server/utils"
 	"github.com/jmoiron/sqlx/types"
 	"google.golang.org/protobuf/types/known/structpb"
 )

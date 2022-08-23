@@ -4,7 +4,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/diptanu/modelbox/server/config"
+	"github.com/tensorland/modelbox/server/config"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )

@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"strings"
 
-	client "github.com/diptanu/modelbox/sdk-go"
-	svrConfig "github.com/diptanu/modelbox/server/config"
-	"github.com/diptanu/modelbox/server/storage"
-	"github.com/diptanu/modelbox/server/storage/artifacts"
+	client "github.com/tensorland/modelbox/sdk-go"
+	svrConfig "github.com/tensorland/modelbox/server/config"
+	"github.com/tensorland/modelbox/server/storage"
+	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/olekukonko/tablewriter"
 	"go.uber.org/zap"
 )

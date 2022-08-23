@@ -3,9 +3,9 @@ package server
 import (
 	"time"
 
-	"github.com/diptanu/modelbox/sdk-go/proto"
-	"github.com/diptanu/modelbox/server/storage"
-	"github.com/diptanu/modelbox/server/storage/artifacts"
+	"github.com/tensorland/modelbox/sdk-go/proto"
+	"github.com/tensorland/modelbox/server/storage"
+	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 

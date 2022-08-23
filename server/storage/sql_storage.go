@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/diptanu/modelbox/server/storage/artifacts"
+	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/fatih/structs"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"

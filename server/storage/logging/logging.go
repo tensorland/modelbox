@@ -3,7 +3,7 @@ package logging
 import (
 	"context"
 
-	"github.com/diptanu/modelbox/server/config"
+	"github.com/tensorland/modelbox/server/config"
 	"go.uber.org/zap"
 )
 

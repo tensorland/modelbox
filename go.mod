@@ -1,4 +1,4 @@
-module github.com/diptanu/modelbox
+module github.com/tensorland/modelbox
 
 go 1.19
 

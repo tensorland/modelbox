@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diptanu/modelbox/sdk-go/proto"
-	"github.com/diptanu/modelbox/server"
-	"github.com/diptanu/modelbox/server/storage/artifacts"
+	"github.com/tensorland/modelbox/sdk-go/proto"
+	"github.com/tensorland/modelbox/server"
+	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/structpb"

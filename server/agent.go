@@ -7,10 +7,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/diptanu/modelbox/server/config"
-	"github.com/diptanu/modelbox/server/storage"
-	"github.com/diptanu/modelbox/server/storage/artifacts"
-	"github.com/diptanu/modelbox/server/storage/logging"
+	"github.com/tensorland/modelbox/server/config"
+	"github.com/tensorland/modelbox/server/storage"
+	"github.com/tensorland/modelbox/server/storage/artifacts"
+	"github.com/tensorland/modelbox/server/storage/logging"
 	"go.uber.org/zap"
 )
 

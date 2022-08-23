@@ -10,20 +10,20 @@ It integrates with various datastores and blob stores for metadata, metrics and 
 
 ## Features
 #### Experiment Metadata and Metrics Logging
-- Log hyperparameters, accuract/loss and other quality related metrics during training.
-- Log trainer events such as dataloading and checkpoint operations, epoch start and end times which helps with debuging performance issues.
+- Log hyperparameters, accuracy/loss and other quality-related metrics during training.
+- Log trainer events such as data-loading and checkpoint operations, epoch start and end times which help with debugging performance issues.
 
 #### Model Management
 
 - Log metadata associated with a model such as binaries, notebooks, model metrics, etc.
-- Manage lineage of models with experiments, link to datasets used to train the model.
-- Label models with metadata which are useful for operational purposes such as the environments they are deployed in, privacy sensitivity, etc.
+- Manage lineage of models with experiments, and datasets used to train the model.
+- Label models with metadata that are useful for operational purposes such as the environments they are deployed in, privacy sensitivity, etc.
 - Load models and deployment artifacts in inference services directly from ModelBox.
 
 #### Events
 
 - Log events about the system/trainer state during training and models from experiment jobs, workflow systems and other AI/Model operations services.
-- Any changes made to experiment and model metadata, new models logged or deployed are logged as change events in the system automatically. Stream these events from other systems for any external workflows which needs to be invoked.
+- Any changes made to experiment and model metadata, new models logged or deployed are logged as change events in the system automatically. Stream these events from other systems for any external workflows which need to be invoked.
 
 #### SDK
 
@@ -33,7 +33,7 @@ It integrates with various datastores and blob stores for metadata, metrics and 
 
 #### Reliable and Easy to Use Control Plane
 
-- Reliability and availability is at the centre of the design mission for ModelBox. Features and APIs are designed with relaibility in mind. For ex, the artifact store implements a streaming api for upload and download apis to ensure memory usage is controlled while serving really large files.
+- Reliability and availability are at the center of the design mission for ModelBox. Features and APIs are designed with reliability in mind. For example, the artifact store implements a streaming API for upload and download APIs to ensure memory usage is controlled while serving really large files.
 - Metrics related to the control plane - API latency, system resource usage, etc, are all available as Prometheus metrics.
 
 #### Extensibility

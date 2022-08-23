@@ -33,7 +33,7 @@ It integrates with various datastores and blob stores for metadata, metrics and 
 
 ## Planned Features
 - Flexible metadata and model retention policies.
-- Add RBAC=based access control for models and checkpoints for compliance.
+- Add RBAC-based access control for models and checkpoints for compliance.
 - Automatic model benchmarking for performance(latency and throughput) on inference targets.
 - Infrastructure for model transformation such that custom recipes can be applied to train models for optimizations for on-device or accelerator inference targets.
 

@@ -13,9 +13,9 @@ It integrates with various datastores and blob stores for metadata, metrics and 
   - Log hyperparameters, accuracy/loss and other model quality-related metrics during training.
   - Log trainer events such as data-loading and checkpoint operations, epoch start and end times which help with debugging performance issues.
 #### Model Management
-  - Log metadata associated with a model such as binaries, notebooks, model metrics, etc. 
+  - Log metadata associated with a model such as binaries, notebooks and model metrics.
   - Manage lineage of models with experiments and datasets used to train the model.
-  - Label models with metadata that are useful for operational purposes such as the environments they are deployed in, privacy sensitivity, etc.
+  - Label models with metadata that are useful for operational purposes such as the environments they are deployed in and privacy sensitivity.
   - Load models and deployment artifacts in inference services directly from ModelBox. 
 #### Events 
   - Log events about the system/trainer state during training and models from experiment jobs, workflow systems and other AI/Model operations services.
@@ -26,7 +26,7 @@ It integrates with various datastores and blob stores for metadata, metrics and 
   - Use the SDK in training code or from even notebooks.
 #### Reliable and Easy to Use Control Plane
   - Reliability and availability are at the center of the design mission for ModelBox. Features and APIs are designed with reliability in mind. For example, the artifact store implements a streaming API for uploading and downloading artifacts to ensure memory usage is controlled while serving really large files.
-  - Metrics related to the control plane - API latency, system resource usage, etc, are all available as Prometheus metrics.
+  - Operational metrics related to the control plane are available as Prometheus metrics.
 
 #### Extensibility
   - The interfaces for metadata, metrics and artifact storage can be extended to support more storage services.
@@ -53,11 +53,11 @@ A Namespace is a mechanism to organize related models or models published by a t
 A model is an object to track common metadata and to apply policies on models created by experiments to solve a machine learning task. For example, datasets to evaluate all trained models of a task can be tracked using this object. Users can also add rules around retention policies of trained versions, setting up policies for labeling a trained model if it has better metrics on a dataset, and meets all other criteria.
 
 ### Model Version
-A model version is a trained model, it includes the model binary, related files that a user wants to track - dataset file handles, any other metadata, model metrics, etc. Model versions are always related to a Model and all the policies created for a Model are applied to Model Versions.
+A model version is a trained model, it includes the model binary, related files that a user wants to track such as dataset file handles, any other metadata and model metrics. Model versions are always related to a Model and all the policies created for a Model are applied to Model Versions.
 
 ### Experiment and Checkpoints
 Experiments are the abstraction to store metadata and events from training jobs that produce models. Checkpoints from experiments can be automatically ingested and can be a means to get fault-tolerant training using the Python SDK. Users of PyTorch Lightning can also use the included lightning logger for automatically logging experiment metadata and training artifacts.
-Some examples of metadata logged from an experiment are hyperparameters, structure and shape of the models, training accuracy, loss and other related metrics, hardware metrics of the trainer nodes, checkpoint binaries and even training code with dependencies, etc.
+Some examples of metadata logged from an experiment are hyperparameters, structure and shape of the models, training accuracy, loss and other related metrics, hardware metrics of the trainer nodes, checkpoint binaries and training code with dependencies.
 
 ### Metrics
 Metrics can be logged for experiments and models. Metrics are key, value pairs, the value being a series of float, tensor(serialized as strings), or even bytes that are logged over time. Every metric log can have a step and wallclock attribute associated with them which makes them useful in tracking things like accuracy during training or hardware metrics. 
@@ -82,14 +82,14 @@ ModelBox has the following components
 - Client Libraries 
 
 ### Metadata Server
-Meta Data Server is responsible for tracking metadata around models which are created by the training frameworks or users who are uploading trained models and other training artifacts. The Meta Data server exposes a GRPC endpoint for clients to communicate with the server. The metadata server has a pluggable architecture to allow using various databases such as MySQL, Postgres, etc. Additional datastore support can be very easily added by implementing the metadata storage interface.
+Meta Data Server is responsible for tracking metadata around models which are created by the training frameworks or users who are uploading trained models and other training artifacts. The Meta Data server exposes a GRPC endpoint for clients to communicate with the server. Supported databases for the metadata service are MySQL, PostgreSQL and an ephemeral storage engine. Additional datastore support can be very easily added by implementing the metadata storage interface.
 
 ### Blob Serving Capabilities
 ModelBox provides APIs for clients to upload training artifacts and download models in a streaming fashion. The blob serving capability is stateless and hence they can be scaled based on your serving needs.
 Currently, they are part of the ModelStore gRPC service, but the plan is to separate the control plane and blob serving APIs so that ModelBox can be run in a blob server mode. This will allow isolating the artifact streaming capability to a separate cluster for performance.
 
 ### CLI
-The ModelBox CLI provides an interface to interact with the Metadata API and Blob Storage API and create and download models and all other aspects of the service.
+The ModelBox CLI provides an interface to interact with the metadata and artifact storage APIs.
 
 ### SDK and Client Libraries
 The SDK/client libraries are meant for integration with Deep Learning and ML frameworks to integrate ModelBox with the experiment code which creates the model and other training artifacts. The libraries can also be used with applications or control planes that want to use ModelBox in a larger in-house Machine Learning platform.

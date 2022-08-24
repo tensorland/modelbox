@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	pb "github.com/tensorland/modelbox/sdk-go/proto"
 	"github.com/tensorland/modelbox/server/storage"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/tensorland/modelbox/server/storage/logging"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -44,7 +44,7 @@ func (s *GrpcServer) CreateModel(
 		req.Description,
 	)
 	model.SetFiles(NewFileSetFromProto(req.Files))
-	if _, err := s.metadataStorage.CreateModel(ctx, model, req.Metadata.Metadata); err != nil {
+	if _, err := s.metadataStorage.CreateModel(ctx, model, getMetadataOrDefault(req.Metadata)); err != nil {
 		return nil, err
 	}
 	return &pb.CreateModelResponse{Id: model.Id}, nil
@@ -63,7 +63,7 @@ func (s *GrpcServer) CreateModelVersion(
 		NewFileSetFromProto(req.Files),
 		req.UniqueTags,
 	)
-	if _, err := s.metadataStorage.CreateModelVersion(ctx, modelVersion, req.Metadata.Metadata); err != nil {
+	if _, err := s.metadataStorage.CreateModelVersion(ctx, modelVersion, getMetadataOrDefault(req.Metadata)); err != nil {
 		return nil, fmt.Errorf("unable to create model version: %v", err)
 	}
 	return &pb.CreateModelVersionResponse{ModelVersion: modelVersion.Id}, nil
@@ -112,7 +112,7 @@ func (s *GrpcServer) CreateExperiment(
 		req.ExternalId,
 		fwk,
 	)
-	result, err := s.metadataStorage.CreateExperiment(ctx, experiment, req.Metadata.Metadata)
+	result, err := s.metadataStorage.CreateExperiment(ctx, experiment, getMetadataOrDefault(req.Metadata))
 	if err != nil {
 		return nil, err
 	}
@@ -156,7 +156,7 @@ func (s *GrpcServer) CreateCheckpoint(
 		req.Metrics,
 	)
 	checkpoint.SetFiles(NewFileSetFromProto(req.Files))
-	if _, err := s.metadataStorage.CreateCheckpoint(ctx, checkpoint, req.Metadata.Metadata); err != nil {
+	if _, err := s.metadataStorage.CreateCheckpoint(ctx, checkpoint, getMetadataOrDefault(req.Metadata)); err != nil {
 		return nil, fmt.Errorf("unable to create checkpoint: %v", err)
 	}
 	return &pb.CreateCheckpointResponse{CheckpointId: checkpoint.Id}, nil
@@ -207,7 +207,6 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 	if meta == nil {
 		return fmt.Errorf("the first message needs to be checkpoint metadata")
 	}
-
 	fileMetadata := artifacts.NewFileMetadata(meta.ParentId, "", meta.Checksum, FileTypeFromProto(meta.FileType), 0, 0)
 	blobStorage := s.blobStorageBuilder.Build()
 	if err := blobStorage.Open(fileMetadata, artifacts.Write); err != nil {
@@ -229,6 +228,7 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 		}
 		return fmt.Errorf("unable to create blob metadata: %v", err)
 	}
+	fileMetadata.Path = path
 	var totalBytes uint64 = 0
 	for {
 		req, err := stream.Recv()
@@ -321,7 +321,7 @@ respond:
 }
 
 func (s *GrpcServer) UpdateMetadata(ctx context.Context, req *pb.UpdateMetadataRequest) (*pb.UpdateMetadataResponse, error) {
-	if err := s.metadataStorage.UpdateMetadata(ctx, req.ParentId, req.Metadata.Metadata); err != nil {
+	if err := s.metadataStorage.UpdateMetadata(ctx, req.ParentId, getMetadataOrDefault(req.Metadata)); err != nil {
 		return nil, err
 	}
 	updatedAt := timestamppb.New(time.Now())
@@ -394,7 +394,7 @@ func (s *GrpcServer) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) 
 }
 
 func (s *GrpcServer) LogEvent(ctx context.Context, req *pb.LogEventRequest) (*pb.LogEventResponse, error) {
-	event := storage.NewEvent(req.ParentId, req.Source.Name, req.Name, req.WallclockTime.AsTime(), req.Metadata.Metadata)
+	event := storage.NewEvent(req.ParentId, req.Source.Name, req.Name, req.WallclockTime.AsTime(), getMetadataOrDefault(req.Metadata))
 	return &pb.LogEventResponse{}, s.metadataStorage.LogEvent(ctx, req.ParentId, event)
 }
 

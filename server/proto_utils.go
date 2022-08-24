@@ -6,6 +6,7 @@ import (
 	"github.com/tensorland/modelbox/sdk-go/proto"
 	"github.com/tensorland/modelbox/server/storage"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
+	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -86,4 +87,11 @@ func FileTypeToProto(t artifacts.FileMIMEType) proto.FileType {
 		return proto.FileType_VIDEO
 	}
 	return proto.FileType_UNDEFINED
+}
+
+func getMetadataOrDefault(meta *proto.Metadata) map[string]*structpb.Value {
+	if meta != nil {
+		return meta.Metadata
+	}
+	return nil
 }

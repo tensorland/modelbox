@@ -45,22 +45,23 @@ type TimescaleDbConfig struct {
 }
 
 type ServerConfig struct {
-	StorageBackend    string                   `toml:"blob_storage"`
-	MetadataBackend   string                   `toml:"metadata_storage"`
-	MetricsBackend    string                   `toml:"metrics_storage"`
-	ListenAddr        string                   `toml:"listen_addr"`
-	FileStorage       *FileStorageConfig       `toml:"blob_storage_filesystem"`
-	IntegratedStorage *IntegratedStorageConfig `toml:"metadata_storage_integrated"`
-	MySQLConfig       *MySQLConfig             `toml:"metadata_storage_mysql"`
-	PostgresConfig    *PostgresConfig          `toml:"metadata_storage_postgres"`
-	TimescaleDb       *TimescaleDbConfig       `toml:"metrics_storage_timescaledb"`
-	PromAddr          string                   `toml:"prometheus_addr"`
+	ArtifactStorageBackend string                   `toml:"artifact_storage"`
+	MetadataBackend        string                   `toml:"metadata_storage"`
+	MetricsBackend         string                   `toml:"metrics_storage"`
+	ListenAddr             string                   `toml:"listen_addr"`
+	FileStorage            *FileStorageConfig       `toml:"artifact_storage_filesystem"`
+	S3Storage              *S3StorageConfig         `toml:"artifact_storage_s3"`
+	IntegratedStorage      *IntegratedStorageConfig `toml:"metadata_storage_integrated"`
+	MySQLConfig            *MySQLConfig             `toml:"metadata_storage_mysql"`
+	PostgresConfig         *PostgresConfig          `toml:"metadata_storage_postgres"`
+	TimescaleDb            *TimescaleDbConfig       `toml:"metrics_storage_timescaledb"`
+	PromAddr               string                   `toml:"prometheus_addr"`
 }
 
 // Merges empty values of itself with non-empty values of anotherConfig
 func (c *ServerConfig) Merge(anotherConfig *ServerConfig) {
-	if c.StorageBackend == "" {
-		c.StorageBackend = anotherConfig.StorageBackend
+	if c.ArtifactStorageBackend == "" {
+		c.ArtifactStorageBackend = anotherConfig.ArtifactStorageBackend
 	}
 
 	if c.MetadataBackend == "" {
@@ -83,17 +84,22 @@ type FileStorageConfig struct {
 	BaseDir string `toml:"base_dir"`
 }
 
+type S3StorageConfig struct {
+	Region string `toml:"region"`
+	Bucket string `toml:"bucket"`
+}
+
 type IntegratedStorageConfig struct {
 	Path string `toml:"path"`
 }
 
 func defaultServerConfig() *ServerConfig {
 	return &ServerConfig{
-		StorageBackend:  "file",
-		MetadataBackend: "integrated",
-		ListenAddr:      ":8080",
-		MetricsBackend:  "inmem",
-		PromAddr:        ":2112",
+		ArtifactStorageBackend: "file",
+		MetadataBackend:        "integrated",
+		ListenAddr:             ":8080",
+		MetricsBackend:         "inmem",
+		PromAddr:               ":2112",
 	}
 }
 

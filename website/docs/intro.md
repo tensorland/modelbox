@@ -4,37 +4,38 @@ sidebar_position: 1
 
 # Introduction
 
-ModelBox is an AI model and experiment metadata management service. It provides primitives such as metadata management, model storage, distribution and versioning for Deep Learning frameworks.
+ModelBox is an AI model and experiment metadata management service. It provides primitives such as metadata management, model storage, distribution, and versioning for Deep Learning frameworks.
 
-The service is very extensible, interfaces can be extended to support more storage services and metadata can be exported and watched by other systems to help with compliance, access control, auditing and deployment of models.
+Metadata and events can be exported as a stream by other systems to facilitate bespoke workflows such as compliance, access control, auditing, and deployment of models.
 
 ## Features
 #### Experiment Metadata and Metrics Logging
-- Log hyperparameters, accuracy/loss and other quality-related metrics during training.
-- Log trainer events such as data-loading and checkpoint operations, epoch start and end times which help with debugging performance issues.
+- Log hyperparameters, accuracy/loss, and other quality-related metrics during training.
+- Log trainer events such as data-loading and checkpoint operations, epoch start and end times which help debug performance issues.
 
 #### Model Management
-- Log metadata associated with a model such as binaries, notebooks, model metrics, etc.
-- Manage lineage of models with experiments, and datasets used to train the model.
-- Label models with metadata that are useful for operational purposes such as the environments they are deployed in, privacy sensitivity, etc.
+- Log metadata associated with a model, such as binaries, notebooks, model metrics, etc.
+- Manage the lineage of models with experiments and datasets used to train the model.
+- Label models with valuable metadata for operational purposes, such as the services consuming them, privacy sensitivity, etc.
 - Load models and deployment artifacts in inference services directly from ModelBox.
 
 #### Events
-- Log events about the system/trainer state during training and models from experiment jobs, workflow systems and other AI/Model operations services.
-- Any changes made to experiment and model metadata, new models logged or deployed are logged as change events in the system automatically. Stream these events from other systems for any external workflows which need to be invoked.
+- Log events about the system/trainer state during training and models from experiment jobs, workflow systems and, other AI/MLOps services.
+- Any changes made to experiment and model metadata are logged as change events in the system. 
+- External systems can watch events in real-time and trigger custom workflows.
 
 #### SDK
 - SDKs in Python, Go, Rust and C++ to integrate with ML frameworks and inference services.
-- SDK is built on top of gRPC so really easy to extend into other languages or add features not available.
-- Use the SDK in training code or from even notebooks.
+- SDK is built on top of gRPC.
 
 #### Reliable and Easy to Use Control Plane
-- Reliability and availability are at the center of the design mission for ModelBox. Features and APIs are designed with reliability in mind. For example, the artifact store implements a streaming API for upload and download APIs to ensure memory usage is controlled while serving really large files.
-- Metrics related to the control plane - API latency, system resource usage, etc, are all available as Prometheus metrics.
+- Features and APIs are designed with reliability in mind.
+- The service is built and distributed as a single binary.
+- Metrics related to the control plane, such as API latency, database connection stats, and system resource usage, are available as Prometheus metrics.
 
 #### Extensibility
 - Hackable and Interface first design 
-- The service can be easily extended to support newer datastores and services for metrics, metadata and artifact storage.
+- More datastores and services for metrics, metadata, and artifact storage can be added easily.
 
 ## Supported storage backends
 
@@ -49,4 +50,4 @@ The service is very extensible, interfaces can be extended to support more stora
 
 #### Artifacts/Blobs
 - AWS S3
-- File System(Ephemeral, NFS, etc)
+- File System(Ephemeral, NFS)

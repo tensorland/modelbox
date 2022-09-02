@@ -1,3 +1,29 @@
+<!-- Output copied to clipboard! -->
+
+<!-----
+
+Yay, no errors, warnings, or alerts!
+
+Conversion time: 0.392 seconds.
+
+
+Using this Markdown file:
+
+1. Paste this output into your source file.
+2. See the notes and action items below regarding this conversion run.
+3. Check the rendered output (headings, lists, code blocks, tables) for proper
+   formatting and use a linkchecker before you publish this page.
+
+Conversion notes:
+
+* Docs to Markdown version 1.0β33
+* Fri Sep 02 2022 12:19:42 GMT-0700 (PDT)
+* Source doc: Install
+* This is a partial selection. Check to make sure intra-doc links work.
+* Tables are currently converted to HTML tables.
+----->
+
+
 ---
 
 sidebar_position: 2
@@ -24,12 +50,12 @@ The service consists of the following components -
 
 ## Evaluating ModelBox Locally
 
-The best way to evaluate ModelBox is to run it locally using ephemeral storage. This allows jumping straight to training new models and learning how to log, read and compare metadata using the SDK.
+The best way to evaluate ModelBox is to run it locally using ephemeral storage. This mode allows users to train new models and learn how to log, read and compare metadata using the SDK without thinking about deploying in a cluster.
 
 
 #### Configuration
 
-Generate the default config for ModelBox server, by default it generates configuration to run the server with ephemeral storage so no more changes to be made.
+Generate the default config for ModelBox server. The CLI has a command to generate the default config. It generates configuration to run the server with ephemeral storage.
 
 
 ```
@@ -91,14 +117,10 @@ $ modelbox server start -config-path ./path/to/modelbox_server.toml
 
 ## Production Deployment Scenarios
 
-In production, we expect you to use databases that are hosted and operated to provide high availability.
+In production, it is expected that HA data storage services are used for metadata and metrics storage, and the ModelBox server is also run in a HA mode.
 
 
 ### Custom Installation in Datacenter
-
-Installation of the service in a datacenter is fairly straightforward if a database for storing metadata is already available. 
-
-Change the configuration of the server to the appropriate databases first -
 
 
 ```
@@ -108,7 +130,7 @@ metrics_storage = "timescaledb"
 ```
 
 
-Once the configuration points to the appropriate datastorage services, the configuration section for the appropriate backends needs to be changed with the right credentials, schema name and such.
+Once the configuration points to the appropriate datastorage services, the sections for the appropriate backends needs to be changed with the right credentials, schema name, and such.
 
 Multiple instances of the servers should be run for high availability. The service metrics should be monitored, and the appropriate number of instances of services should be chosen to keep the API latency and resource usage of the server to reasonable limits.
 

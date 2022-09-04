@@ -39,6 +39,16 @@ metric_value = MetricValue(step=1, wallclock_time=12325, value=97.6)
 result = client.log_metrics(parent_id=experiment_id, key="val_accu", value=metric_value)
 ```
 
+#### Log Events
+Events can be logged while training models to make debugging and improve the observability of training workflows. Other MLOps and inference systems can also log events against a model to provide information about how and where a model is being consumed or transformed.
+
+The following code logs an event about checkpoint store event from a trainer and records the wallclock time and checkpoint size. The events could be read to troubleshoot performance issues of checkpoint write operations.
+```
+response = client.log_event(parent_id=experiment_id, event=Event(name="checkpoint_started", source=EventSource(name="trainer0"), wallclock_time=12345, metadata={"chk_size": 2345}))
+torch.save()
+response = client.log_event(parent_id=experiment_id, event=Event(name="checkpoint_finished", source=EventSource(name="trainer0"), wallclock_time=12500, metadata={"write_speed": "2Gbps"}))
+```
+
 ## gRPC API
 The grpc APIs that are used by the SDKs for logging experiment metadata - 
 

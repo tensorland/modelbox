@@ -1,35 +1,6 @@
-<!-- Output copied to clipboard! -->
-
-<!-----
-
-Yay, no errors, warnings, or alerts!
-
-Conversion time: 0.392 seconds.
-
-
-Using this Markdown file:
-
-1. Paste this output into your source file.
-2. See the notes and action items below regarding this conversion run.
-3. Check the rendered output (headings, lists, code blocks, tables) for proper
-   formatting and use a linkchecker before you publish this page.
-
-Conversion notes:
-
-* Docs to Markdown version 1.0β33
-* Fri Sep 02 2022 12:19:42 GMT-0700 (PDT)
-* Source doc: Install
-* This is a partial selection. Check to make sure intra-doc links work.
-* Tables are currently converted to HTML tables.
------>
-
-
 ---
-
 sidebar_position: 2
-
 ---
-
 
 # Install and Operation 
 
@@ -40,8 +11,6 @@ ModelBox can be installed and run in several models depending on the use case. H
 
 The service consists of the following components -
 
-
-
 1. ModelBox Server - The central control plane of ModelBox stores metadata related to experiments and models.
 2. Metadata Storage Backend - Storage service for experiment and model metadata.
 3. Blob Server - The server can be optionally run in the blob serving mode, where it only offers APIs to download and upload artifacts.
@@ -51,7 +20,6 @@ The service consists of the following components -
 ## Evaluating ModelBox Locally
 
 The best way to evaluate ModelBox is to run it locally using ephemeral storage. This mode allows users to train new models and learn how to log, read and compare metadata using the SDK without thinking about deploying in a cluster.
-
 
 #### Configuration
 

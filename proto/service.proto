@@ -2,7 +2,7 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/struct.proto";
 
-option go_package = "github.com/tensorland/modelbox/client/proto";
+option go_package = "github.com/tensorland/modelbox/sdk-go/proto";
 
 package modelbox;
 
@@ -408,13 +408,12 @@ message Event {
  */
 message LogEventRequest {
   string parent_id = 1;
-  string name = 2;
-  EventSource source = 3;
-  google.protobuf.Timestamp wallclock_time = 4;
-  Metadata metadata = 5;
+  Event event = 2;
 }
 
-message LogEventResponse {}
+message LogEventResponse {
+  google.protobuf.Timestamp created_at = 1;
+}
 
 message ListEventsRequest {
   string parent_id = 1;

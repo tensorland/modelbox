@@ -14,7 +14,15 @@ from concurrent import futures
 from google.protobuf.struct_pb2 import Value
 from google.protobuf import json_format, timestamp_pb2
 
-from modelbox.modelbox import ModelBoxClient, MLFramework, Artifact, ArtifactMime, MetricValue
+from modelbox.modelbox import (
+    ModelBoxClient,
+    MLFramework,
+    Artifact,
+    ArtifactMime,
+    MetricValue,
+    Event,
+    EventSource,
+)
 from modelbox import service_pb2_grpc
 from modelbox import service_pb2
 
@@ -38,7 +46,8 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
 
     def CreateExperiment(self, request, context):
         experiment_resp = service_pb2.CreateExperimentResponse(
-            experiment_id=self._fake.uuid4(), experiment_exists=True,
+            experiment_id=self._fake.uuid4(),
+            experiment_exists=True,
         )
         return experiment_resp
 
@@ -61,7 +70,9 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
         c2 = service_pb2.Checkpoint(
             id=self._fake.uuid4(), epoch=24, experiment_id=self._fake.uuid4()
         )
-        resp = service_pb2.ListCheckpointsResponse(checkpoints=[c1, c2],)
+        resp = service_pb2.ListCheckpointsResponse(
+            checkpoints=[c1, c2],
+        )
         return resp
 
     def ListExperiments(self, request, context):
@@ -77,7 +88,9 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
             namespace="langtech",
             owner="owner@owner.org",
         )
-        resp = service_pb2.ListExperimentsResponse(experiments=[e1, e2],)
+        resp = service_pb2.ListExperimentsResponse(
+            experiments=[e1, e2],
+        )
         return resp
 
     def UploadFile(self, request_iterator, context):
@@ -110,14 +123,24 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
     def ListMetadata(self, request, context):
         payload = Value()
         json_format.ParseDict({"key": "value"}, payload)
-        return service_pb2.ListMetadataResponse(metadata={'/tmp': payload})
+        return service_pb2.ListMetadataResponse(metadata={"/tmp": payload})
 
     def TrackArtifacts(self, request, context):
         return service_pb2.TrackArtifactsResponse(num_files_tracked=2)
 
     def ListModels(self, request, context):
         models = []
-        models.append(service_pb2.Model(id=self._fake.uuid4(), name="gpt", owner="owner@owner.org", namespace="langtech", description="long description", task="mytask", files=[]))
+        models.append(
+            service_pb2.Model(
+                id=self._fake.uuid4(),
+                name="gpt",
+                owner="owner@owner.org",
+                namespace="langtech",
+                description="long description",
+                task="mytask",
+                files=[],
+            )
+        )
         resp = service_pb2.ListModelsResponse(models=models)
         return resp
 
@@ -128,6 +151,11 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
         values = [service_pb2.MetricsValue(step=1, wallclock_time=500, f_val=0.45)]
         m = service_pb2.Metrics(key="foo", values=values)
         return service_pb2.GetMetricsResponse(metrics=[m])
+
+    def LogEvent(self, request, context):
+        return service_pb2.LogEventResponse(
+            created_at=timestamp_pb2.Timestamp(seconds=12345)
+        )
 
 
 # We are really testing whether the client actually works against the current version
@@ -245,13 +273,27 @@ class TestModelBoxApi(unittest.TestCase):
         self.assertEqual(1, len(resp.models))
 
     def test_log_metrics(self):
-        resp = self._client.log_metrics("parent_id1", "val_accu", MetricValue(step=1, wallclock_time=500, value=0.234))
+        resp = self._client.log_metrics(
+            "parent_id1",
+            "val_accu",
+            MetricValue(step=1, wallclock_time=500, value=0.234),
+        )
 
     def test_get_metrics(self):
         resp = self._client.get_metrics("foo")
 
     def test_metadata(self):
-        resp = self._client.update_metadata('parent1', 'foo', 'bar')
+        resp = self._client.update_metadata("parent1", "foo", "bar")
+
+    def test_log_event(self):
+        event = Event(
+            name="checkpoint_start",
+            source=EventSource(name="trainer1"),
+            wallclock_time=1234,
+            metadata={"key1": "value1"},
+        )
+        resp = self._client.log_event("parent-id1", event)
+        self.assertEqual(resp.created_at, 12345)
 
 
 if __name__ == "__main__":

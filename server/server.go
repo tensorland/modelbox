@@ -394,8 +394,14 @@ func (s *GrpcServer) GetMetrics(ctx context.Context, req *pb.GetMetricsRequest) 
 }
 
 func (s *GrpcServer) LogEvent(ctx context.Context, req *pb.LogEventRequest) (*pb.LogEventResponse, error) {
-	event := storage.NewEvent(req.ParentId, req.Source.Name, req.Name, req.WallclockTime.AsTime(), getMetadataOrDefault(req.Metadata))
-	return &pb.LogEventResponse{}, s.metadataStorage.LogEvent(ctx, req.ParentId, event)
+	if req.Event == nil {
+		return nil, fmt.Errorf("event can't be nil")
+	}
+	if req.Event.Source == nil {
+		return nil, fmt.Errorf("event source can't be nil")
+	}
+	event := storage.NewEvent(req.ParentId, req.Event.Source.Name, req.Event.Name, req.Event.WallclockTime.AsTime(), getMetadataOrDefault(req.Event.Metadata))
+	return &pb.LogEventResponse{CreatedAt: timestamppb.Now()}, s.metadataStorage.LogEvent(ctx, req.ParentId, event)
 }
 
 func (s *GrpcServer) ListEvents(ctx context.Context, req *pb.ListEventsRequest) (*pb.ListEventsResponse, error) {

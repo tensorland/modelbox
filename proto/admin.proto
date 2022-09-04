@@ -1,0 +1,25 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/tensorland/modelbox/sdk-go/proto";
+
+package modelbox;
+
+// The RPC interface used by the workers
+service ModelBoxAdmin {
+  // Workers heartbeat with the server about their presence
+  // and work progress periodically
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}
+
+message NodeInfo {
+  string host_name = 1;
+  string arc = 2;
+}
+
+message HeartbeatRequest {
+  NodeInfo node = 1;
+  google.protobuf.Timestamp at = 20;
+}
+
+message HeartbeatResponse {}

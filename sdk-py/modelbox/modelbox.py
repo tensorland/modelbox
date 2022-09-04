@@ -1,3 +1,4 @@
+from curses import meta
 from importlib.metadata import metadata
 from typing import Dict, List, Any, Union
 from typing_extensions import Self
@@ -10,7 +11,7 @@ import grpc
 from . import service_pb2
 from . import service_pb2_grpc
 from google.protobuf.struct_pb2 import Value
-from google.protobuf import json_format 
+from google.protobuf import json_format
 from google.protobuf.timestamp_pb2 import Timestamp
 
 DEFAULT_NAMESPACE = "default"
@@ -65,6 +66,24 @@ class Artifact:
     mime_type: ArtifactMime
     checksum: str = ""
     id: str = ""
+
+
+@dataclass
+class EventSource:
+    name: str
+
+
+@dataclass
+class Event:
+    name: str
+    source: EventSource
+    wallclock_time: int
+    metadata: Dict
+
+
+@dataclass
+class LogEventResponse:
+    created_at: int
 
 
 @dataclass
@@ -142,7 +161,7 @@ class Model:
     namespace: str
     task: str
     description: str
-    metadata: Dict 
+    metadata: Dict
     artifacts: List[Artifact]
 
 
@@ -166,8 +185,8 @@ class ListModelsResult:
 
 @dataclass
 class MetricValue:
-    step: int 
-    wallclock_time: int 
+    step: int
+    wallclock_time: int
     value: Union[float, str, bytes]
 
 
@@ -228,7 +247,7 @@ class ModelBoxClient:
                     namespace=m.namespace,
                     task=m.task,
                     description=m.description,
-                    metadata={}, #TODO Fix this when we pull meta from top level objects 
+                    metadata={},  # TODO Fix this when we pull meta from top level objects
                     artifacts=artifacts,
                 )
             )
@@ -284,18 +303,26 @@ class ModelBoxClient:
         )
         response = self._client.CreateExperiment(req)
         return CreateExperimentResult(
-            response.experiment_id, response.experiment_exists,
+            response.experiment_id,
+            response.experiment_exists,
         )
 
     def create_checkpoint(
-        self, experiment: str, epoch: int, path: str, metrics: Dict, file_checksum="",
+        self,
+        experiment: str,
+        epoch: int,
+        path: str,
+        metrics: Dict,
+        file_checksum="",
     ) -> CreateCheckpointResponse:
         req = service_pb2.CreateCheckpointRequest(
             experiment_id=experiment,
             epoch=epoch,
             files=[
                 service_pb2.FileMetadata(
-                    checksum=file_checksum, path=path, file_type=service_pb2.CHECKPOINT,
+                    checksum=file_checksum,
+                    path=path,
+                    file_type=service_pb2.CHECKPOINT,
                 )
             ],
             metrics=metrics,
@@ -369,7 +396,7 @@ class ModelBoxClient:
     ) -> UpdateMetadataResponse:
         json_value = Value()
         json_format.Parse(json.dumps(val), json_value)
-        meta = service_pb2.Metadata(metadata={key:json_value})
+        meta = service_pb2.Metadata(metadata={key: json_value})
         req = service_pb2.UpdateMetadataRequest(parent_id=parent_id, metadata=meta)
         resp = self._client.UpdateMetadata(req)
         return UpdateMetadataResponse(updated_at=resp.updated_at)
@@ -424,6 +451,23 @@ class ModelBoxClient:
             metrics[metric.key] = m
 
         return metrics
+
+    def log_event(self, parent_id: str, event: Event) -> LogEventResponse:
+        meta_dict = {}
+        for k, v in event.metadata.items():
+            json_value = Value()
+            json_format.Parse(json.dumps(v), json_value)
+            meta_dict[k] = json_value
+        req = service_pb2.LogEventRequest(
+            parent_id=parent_id,
+            event=service_pb2.Event(
+                name=event.name,
+                source=service_pb2.EventSource(name=event.source.name),
+                metadata=service_pb2.Metadata(metadata=meta_dict),
+            ),
+        )
+        ret = self._client.LogEvent(req)
+        return LogEventResponse(created_at=ret.created_at.ToSeconds())
 
     def _file_checksum(self, path) -> str:
         checksum = ""

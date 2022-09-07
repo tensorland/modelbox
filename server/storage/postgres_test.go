@@ -38,7 +38,7 @@ func TestPostgresTestSuite(t *testing.T) {
 	logger, _ := zap.NewProduction()
 	port, _ = strconv.ParseUint(env("POSTGRES_TEST_PORT", "5432"), 10, 64)
 	config := PostgresConfig{
-		Host:     env("POSTGRES_TEST_HOST", "172.17.0.3"),
+		Host:     env("POSTGRES_TEST_HOST", "172.20.0.5"),
 		Port:     int(port),
 		UserName: env("POSTGRES_TEST_USER", "postgres"),
 		Password: env("POSTGRES_TEST_PASS", "foo"),

@@ -1,7 +1,15 @@
 version: "3.9"
+networks:
+  dependencies:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+
 services:
   modelbox:
-    image: diptanu/modelbox:0.0.1-next-arm64v8 
+    image: diptanu/modelbox:0.0.1-next-amd64
+    profiles:
+      - local
     command: [ "server", "start", "--config-path=/app/config/modelbox.toml" ]
     volumes:
       - type: volume
@@ -10,5 +18,39 @@ services:
       - type: bind
         source: ./server/config
         target: "/app/config" # binds config file
+  postgres:
+    image: postgres
+    profiles:
+      - local
+      - unittests
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=foo
+    networks:
+        dependencies:
+            ipv4_address: 172.20.0.5
+  mysql:
+    image: mysql
+    profiles:
+      - local
+      - unittests
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    networks:
+        dependencies:
+            ipv4_address: 172.20.0.6
+    environment:
+      - MYSQL_ROOT_PASSWORD=foo
+  timescaledb:
+    image: timescale/timescaledb:latest-pg14
+    profiles:
+      - local
+      - unittests
+    restart: always
+    networks:
+        dependencies:
+            ipv4_address: 172.20.0.7
+    environment:
+      - POSTGRES_PASSWORD=foo
 volumes:
   data:

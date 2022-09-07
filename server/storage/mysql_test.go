@@ -30,7 +30,7 @@ func init() {
 	user = env("MYSQL_TEST_USER", "root")
 	pass = env("MYSQL_TEST_PASS", "foo")
 	prot = env("MYSQL_TEST_PROT", "tcp")
-	host = env("MYSQL_TEST_HOST", "172.17.0.2")
+	host = env("MYSQL_TEST_HOST", "172.20.0.6")
 	dbname = env("MYSQL_TEST_DBNAME", "gotest")
 }
 

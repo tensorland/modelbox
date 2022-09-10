@@ -244,11 +244,11 @@ class TestModelBoxApi(unittest.TestCase):
         )
         self.assertNotEqual("", resp.id)
 
-    def test_upload_file(self):
+    def test_upload_artifact(self):
         file_path = str(
             pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
         )
-        resp = self._client.upload_file("abc", file_path)
+        resp = self._client.upload_artifact("abc", file_path, artifact_type=ArtifactMime.Text)
         self.assertNotEqual("", resp.id)
 
     def test_download_artifact(self):

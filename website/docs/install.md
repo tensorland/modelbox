@@ -84,6 +84,8 @@ That's it! Once the server is started, the ModelBox SDK or CLI can be used to in
 
 In production, it is expected that HA data storage services are used for metadata and metrics storage. The ModelBox server should also run in a HA mode by running multiple instances of the server in a cluster. The service metrics should be monitored, and the appropriate number of instances of services should be chosen to keep the API latency and resource usage of the server to reasonable limits.
 
+![High Level Architecture](guides/img/ModelBox_HighLevel.png)
+
 ModelBox supports the following databases, metrics and blob storage services -
 
 ### Metadata Store 

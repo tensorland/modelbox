@@ -184,6 +184,19 @@ cd client-py
 pip install .
 ```
 
+### Test
+Spin up the test dependencies using docker - 
+```
+docker compose --profile unittests up -d
+```
+
+Run the tests for a particular package. For example, the following command runs the storage tests -
+```
+go test ./server/storage/...
+```
+
+Refer to the README inside sdk folders to learn how to run the tests for language-specific SDKs.
+
 ## Monitoring
 Metrics on the metadata server are exposed by the `/metrics` endpoint and can be collected by a Prometheus collector.
 The default port for the endpoint is `:2112` and can be configured in the server config.

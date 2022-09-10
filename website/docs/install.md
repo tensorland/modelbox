@@ -72,53 +72,32 @@ password = "foo"
 dbname   = "modelbox_metrics" 
 ```
 
-
-
 #### Start the Server 
 
-
 ```
 $ modelbox server start -config-path ./path/to/modelbox_server.toml
 ```
 
+That's it! Once the server is started, the ModelBox SDK or CLI can be used to interact with the service.
 
+## Thoughts on Production Deployment Scenarios
 
-## Production Deployment Scenarios
+In production, it is expected that HA data storage services are used for metadata and metrics storage. The ModelBox server should also run in a HA mode by running multiple instances of the server in a cluster. The service metrics should be monitored, and the appropriate number of instances of services should be chosen to keep the API latency and resource usage of the server to reasonable limits.
 
-In production, it is expected that HA data storage services are used for metadata and metrics storage, and the ModelBox server is also run in a HA mode.
+ModelBox supports the following databases, metrics and blob storage services -
 
+### Metadata Store 
+- MySQL
+- PostgreSQL
+- Ephemeral Storage
 
-### Custom Installation in Datacenter
+### Metrics Store
+- Timescaledb
+- Ephemeral Storage
 
-
-```
-artifact_storage = "s3"
-metadata_storage = "mysql"
-metrics_storage = "timescaledb"
-```
-
-
-Once the configuration points to the appropriate datastorage services, the sections for the appropriate backends needs to be changed with the right credentials, schema name, and such.
-
-Multiple instances of the servers should be run for high availability. The service metrics should be monitored, and the appropriate number of instances of services should be chosen to keep the API latency and resource usage of the server to reasonable limits.
-
-Once the configuration is changed start the servers -
-
-
-```
-$ modelbox server start -config-path ./path/to/modelbox_server.toml
-```
-
-
-
-### Kubernetes
-
-
-### AWS
-
-
-### GCP
-
+### Artifacts and Blob Storage
+- AWS S3
+- File System(Ephemeral, NFS)
 
 ## Build ModelBox 
 

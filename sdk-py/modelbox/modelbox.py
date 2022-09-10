@@ -135,11 +135,9 @@ class Experiment:
 class ListExperimentsResponse:
     experiments: List[Experiment]
 
-
 @dataclass
-class UploadFileResponse:
+class UploadArtifactResponse:
     id: str
-
 
 @dataclass
 class DownloadArtifactResponse:
@@ -356,12 +354,13 @@ class ModelBoxClient:
             experiments.append(e)
         return ListExperimentsResponse(experiments=experiments)
 
-    def _file_chunk_iterator(self, parent, path):
+    def _file_chunk_iterator(self, parent: str, path: str, artifact_type: ArtifactMime):
+        file_type = artifact_type.to_proto()
         checksum = self._file_checksum(path)
         file_meta = service_pb2.FileMetadata(
             parent_id=parent,
             checksum=checksum,
-            file_type=service_pb2.CHECKPOINT,
+            file_type=file_type,
             path=path,
         )
         yield service_pb2.UploadFileRequest(metadata=file_meta)
@@ -372,10 +371,10 @@ class ModelBoxClient:
                     break
                 yield service_pb2.UploadFileRequest(chunks=data)
 
-    def upload_file(self, parent: str, path: str) -> UploadFileResponse:
-        itr = self._file_chunk_iterator(parent, path)
+    def upload_artifact(self, parent: str, path: str, artifact_type: ArtifactMime) -> UploadArtifactResponse:
+        itr = self._file_chunk_iterator(parent, path, artifact_type)
         resp = self._client.UploadFile(itr)
-        return UploadFileResponse(id=resp.file_id)
+        return UploadArtifactResponse(id=resp.file_id)
 
     def download_artifact(self, id: str, path: str) -> DownloadArtifactResponse:
         req = service_pb2.DownloadFileRequest(file_id=id)

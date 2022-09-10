@@ -8,7 +8,8 @@ ModelBox integrates with metrics storage services to store training hardware, ex
 ## Python SDK
 Metrics can be logged against any object in ModelBox - models, experiments, specific model versions, etc. A `MetricValue` is logged for the object id at a given timestamp.
 
-The `MetricValue` being - 
+### API 
+* `MetricValue`
 ```
 class MetricValue:
     step: int
@@ -18,9 +19,9 @@ class MetricValue:
 
 The value could be a float to represent a scaler value or bytes or strings to represent serialized tensors.
 The `step` is optional and should be a real number if it represents the logical step at a given time of an experiment.
-The `wallclock` time is the phyical clock time at which the metric was logged.
+The `wallclock` time is the physical clock time at which the metric was logged.
 
-API -
+* SDK API
 
 ```
 log_metrics(self, parent_id: str, key: str, value: MetricValue)

@@ -38,7 +38,7 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	}
 	fileStorageBuilder, err := artifacts.NewBlobStorageBuilder(config, logger)
 	if err != nil {
-		logger.Fatal(fmt.Sprintf("couldn't build basedire %v", err))
+		logger.Fatal(fmt.Sprintf("couldn't build artifact storage driver: %v", err))
 	}
 	logger.Sugar().Infof("using metadata backend: %v, artifacts backend: %v ", metadataStorage.Backend(), fileStorageBuilder.Backend())
 	experimentLogger, err := logging.NewExperimentLogger(config, logger)

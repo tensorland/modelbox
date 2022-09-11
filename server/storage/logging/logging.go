@@ -2,6 +2,7 @@ package logging
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/tensorland/modelbox/server/config"
 	"go.uber.org/zap"
@@ -21,7 +22,7 @@ type ExperimentLogger interface {
 }
 
 func NewExperimentLogger(serverConfig *config.ServerConfig, logger *zap.Logger) (ExperimentLogger, error) {
-	if serverConfig.MetadataBackend == config.METRICS_STORAGE_TS {
+	if serverConfig.MetricsBackend == config.METRICS_STORAGE_TS {
 		return NewTimescaleDbLogger(&TimescaleDbConfig{
 			Host:     serverConfig.TimescaleDb.Host,
 			Port:     serverConfig.MySQLConfig.Port,
@@ -29,6 +30,8 @@ func NewExperimentLogger(serverConfig *config.ServerConfig, logger *zap.Logger) 
 			Password: serverConfig.TimescaleDb.Password,
 			DbName:   serverConfig.TimescaleDb.DbName,
 		}, logger)
+	} else if serverConfig.MetricsBackend == config.METRICS_STORAGE_INMEMORY {
+		return NewInMemoryExperimentLogger()
 	}
-	return NewInMemoryExperimentLogger()
+	return nil, fmt.Errorf("unable to create experiment logger for driver: %v", serverConfig.MetricsBackend)
 }

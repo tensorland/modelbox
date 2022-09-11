@@ -68,6 +68,10 @@ func (c *ServerConfig) Merge(anotherConfig *ServerConfig) {
 		c.MetadataBackend = anotherConfig.MetadataBackend
 	}
 
+	if c.MetricsBackend == "" {
+		c.MetricsBackend = anotherConfig.MetricsBackend
+	}
+
 	if c.ListenAddr == "" {
 		c.ListenAddr = anotherConfig.ListenAddr
 	}
@@ -95,10 +99,10 @@ type IntegratedStorageConfig struct {
 
 func defaultServerConfig() *ServerConfig {
 	return &ServerConfig{
-		ArtifactStorageBackend: "file",
-		MetadataBackend:        "integrated",
+		ArtifactStorageBackend: "filesystem",
+		MetadataBackend:        "ephemeral",
 		ListenAddr:             ":8080",
-		MetricsBackend:         "inmem",
+		MetricsBackend:         "inmemory",
 		PromAddr:               ":2112",
 	}
 }

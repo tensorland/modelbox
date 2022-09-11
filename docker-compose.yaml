@@ -4,20 +4,28 @@ networks:
     ipam:
       config:
         - subnet: 172.20.0.0/24
-
+  server:
+    ipam:
+      config:
+        - subnet: 172.21.0.0/24
 services:
   modelbox:
     image: diptanu/modelbox:0.0.1-next-amd64
     profiles:
       - local
-    command: [ "server", "start", "--config-path=/app/config/modelbox.toml" ]
+    command: ["/app/modelbox", "server", "start", "--config-path=/app/config/modelbox_server_compose.toml" ]
     volumes:
       - type: volume
         source: data
         target: /tmp # stores data
       - type: bind
-        source: ./server/config
+        source: ./cmd/modelbox/assets/
         target: "/app/config" # binds config file
+    networks:
+        server:
+            ipv4_address: 172.21.0.2
+        dependencies:
+             
   postgres:
     image: postgres
     profiles:
@@ -32,7 +40,6 @@ services:
   mysql:
     image: mysql
     profiles:
-      - local
       - unittests
     command: --default-authentication-plugin=mysql_native_password
     restart: always

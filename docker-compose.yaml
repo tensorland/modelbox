@@ -24,6 +24,7 @@ services:
     networks:
         server:
             ipv4_address: 172.21.0.2
+        dependencies:
              
   postgres:
     image: postgres

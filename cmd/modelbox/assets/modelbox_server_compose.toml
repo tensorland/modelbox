@@ -13,7 +13,7 @@ metadata_storage = "postgres"
 metrics_storage = "timescaledb"
 
 # Interface on which the metadata service is listening for network connections
-listen_addr = ":8085"
+listen_addr = "172.21.0.2:8085"
 
 # Additional configuration for filesystem based blob_storage
 [artifact_storage_filesystem]

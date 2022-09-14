@@ -24,7 +24,7 @@ type TimescaleDbTestSuite struct {
 }
 
 func (s *TimescaleDbTestSuite) SetupSuite() {
-	if err := s.ts.CreateSchema("../schemas/timescaledb/schema_ver_0.sql"); err != nil {
+	if err := s.ts.CreateSchema("../schemas/timescaledb/"); err != nil {
 		s.T().Fatalf("unable to load timescaledb schema: %v", err)
 	}
 }

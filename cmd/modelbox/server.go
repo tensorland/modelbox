@@ -7,6 +7,8 @@ import (
 	"go.uber.org/zap"
 )
 
+var metadataSchemaPath string
+
 var serverInitConfigCmd = &cobra.Command{
 	Use:   "init-config",
 	Short: "Creates a sample server config",
@@ -25,17 +27,14 @@ is created in the current directory. Help:
 }
 
 var createSchemaCmd = &cobra.Command{
-	Use:   "crate-schema --config-path /path/to/config --schema-path",
+	Use:   "create-schema --config-path /path/to/config --schema-path",
 	Short: "Creates the database schema for modelbox.",
 	Long: `Creates the database schema for modelbox. The database has to be
 reachable by the client. 
 ./modebox server create-schema --config-path /path/to/config --schema-path /path/to/schema`,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger, _ := zap.NewProduction()
-		configPath, _ := cmd.PersistentFlags().GetString("config-path")
-		schemaPath, _ := cmd.PersistentFlags().GetString("schema-path")
-		logger.Sugar().Infof("creating the schema: %v", schemaPath)
-		CreateSchema(configPath, schemaPath, logger)
+		CreateSchema(ConfigPath, metadataSchemaPath, logger)
 	},
 }
 
@@ -53,5 +52,5 @@ func init() {
 	serverInitConfigCmd.Flags().String("path", "./modelbox_server.toml", "path to write the server config")
 
 	serverCmd.AddCommand(createSchemaCmd)
-	createSchemaCmd.Flags().String("schema-path", "", "Path to the schema file")
+	createSchemaCmd.Flags().StringVar(&metadataSchemaPath, "schema-dir", "", "path to metadata schema dir")
 }

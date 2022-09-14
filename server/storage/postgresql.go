@@ -3,6 +3,8 @@ package storage
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -104,17 +106,25 @@ func (p *PostgresStorage) CreateSchema(path string) error {
 			return fmt.Errorf("unable to execute query: %v err: %v", query, err)
 		}
 	}
-	buf, err := os.ReadFile(path)
+	files, err := filepath.Glob(fmt.Sprintf("%s/schema_ver*", path))
 	if err != nil {
-		return fmt.Errorf("unable to read schema: %v", err)
+		return fmt.Errorf("unable to read schema files: %v", err)
 	}
-	queries = strings.Split(string(buf), ";")
-	for _, query := range queries {
-		if strings.TrimSpace(query) == "" {
-			continue
+	sort.Strings(files)
+	p.logger.Sugar().Info("applying the following schema files: ", strings.Join(files, ","))
+	for _, file := range files {
+		buf, err := os.ReadFile(file)
+		if err != nil {
+			return fmt.Errorf("unable to read schema: %v", err)
 		}
-		if _, err := p.db.Exec(query); err != nil {
-			return fmt.Errorf("unable to execute query: %v, err: %v", query, err)
+		queries = strings.Split(string(buf), ";")
+		for _, query := range queries {
+			if strings.TrimSpace(query) == "" {
+				continue
+			}
+			if _, err := p.db.Exec(query); err != nil {
+				return fmt.Errorf("unable to execute query: %v, err: %v", query, err)
+			}
 		}
 	}
 	return nil

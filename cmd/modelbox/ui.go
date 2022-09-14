@@ -23,16 +23,16 @@ func WriteServerConfigToFile(path string) error {
 	return os.WriteFile(path, data, 0o600)
 }
 
-func CreateSchema(configPath, schema string, logger *zap.Logger) error {
+func CreateSchema(configPath, schemaDir string, logger *zap.Logger) error {
 	config, err := svrConfig.NewServerConfig(configPath)
 	if err != nil {
-		return nil
+		return fmt.Errorf("unable to create server config: %v", err)
 	}
 	storage, err := storage.NewMetadataStorage(config, logger)
 	if err != nil {
 		return fmt.Errorf("unable to create storage: %v", err)
 	}
-	return storage.CreateSchema(schema)
+	return storage.CreateSchema(fmt.Sprintf("%s/%s", schemaDir, config.MetadataBackend))
 }
 
 func WriteClientConfigToFile(path string) error {

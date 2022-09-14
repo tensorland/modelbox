@@ -23,7 +23,7 @@ type PostgresTestSuite struct {
 }
 
 func (s *PostgresTestSuite) SetupSuite() {
-	if err := s.pqStorage.CreateSchema("schemas/postgres/schema_ver_0.sql"); err != nil {
+	if err := s.pqStorage.CreateSchema("schemas/postgres/"); err != nil {
 		s.T().Fatalf("unable to load postgres schema: %v", err)
 	}
 }

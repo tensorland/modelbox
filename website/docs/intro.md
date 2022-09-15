@@ -11,7 +11,7 @@ Metadata and events can be exported as a stream by other systems to facilitate b
 ## Features
 #### Experiment Metadata and Metrics Logging
 - Log hyperparameters, accuracy/loss, and other quality-related metrics during training.
-- Log trainer events such as data-loading and checkpoint operations, epoch start and end times which help debug performance issues.
+- Log trainer events such as data-loading and checkpoint operations, epoch start and end times to help debug performance issues.
 
 #### Model Management
 - Log metadata associated with a model, such as binaries, notebooks, model metrics, etc.
@@ -20,7 +20,7 @@ Metadata and events can be exported as a stream by other systems to facilitate b
 - Load models and deployment artifacts in inference services directly from ModelBox.
 
 #### Events
-- Log events about the system/trainer state during training and models from experiment jobs, workflow systems and, other AI/MLOps services.
+- Log events about the system/trainer state during training and models from experiment jobs, workflow systems, and other AI/MLOps services.
 - Any changes made to experiment and model metadata are logged as change events in the system. 
 - External systems can watch events in real-time and trigger custom workflows.
 
@@ -35,7 +35,7 @@ Metadata and events can be exported as a stream by other systems to facilitate b
 
 #### Extensibility
 - Hackable and Interface first design 
-- More datastores and services for metrics, metadata, and artifact storage can be added easily.
+- Additional data store backends can be supported easily.
 
 ## Supported storage backends
 

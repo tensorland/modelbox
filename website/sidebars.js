@@ -18,6 +18,7 @@ const sidebars = {
 
   docs:[
     'intro',
+    'getting_started',
     'install',
     'compare',
     {

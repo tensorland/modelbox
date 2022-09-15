@@ -76,7 +76,7 @@ dbname   = "modelbox_metrics"
 #### Start the Server 
 
 ```
-$ modelbox server start -config-path ./path/to/modelbox_server.toml
+$ modelbox server start --config-path ./path/to/modelbox_server.toml
 ```
 
 That's it! Once the server is started, the ModelBox SDK or CLI can be used to interact with the service.

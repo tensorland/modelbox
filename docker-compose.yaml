@@ -13,7 +13,7 @@ services:
     image: diptanu/modelbox:0.0.1-next-amd64
     profiles:
       - local
-    command: ["/app/modelbox", "server", "start", "--config-path=/app/config/modelbox_server_compose.toml" ]
+    command: ["/app/scripts/compose_start.sh"]
     volumes:
       - type: volume
         source: data
@@ -21,6 +21,15 @@ services:
       - type: bind
         source: ./cmd/modelbox/assets/
         target: "/app/config" # binds config file
+      - type: bind
+        source: ./deploy/scripts/
+        target: "/app/scripts/"
+      - type: bind
+        source: ./server/storage/schemas/
+        target: /app/schemas/
+    depends_on:
+      - "postgres"
+      - "timescaledb"
     networks:
         server:
             ipv4_address: 172.21.0.2

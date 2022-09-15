@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -34,7 +35,9 @@ reachable by the client.
 ./modebox server create-schema --config-path /path/to/config --schema-path /path/to/schema`,
 	Run: func(cmd *cobra.Command, args []string) {
 		logger, _ := zap.NewProduction()
-		CreateSchema(ConfigPath, metadataSchemaPath, logger)
+		if err := CreateSchema(ConfigPath, metadataSchemaPath, logger); err != nil {
+			os.Exit(1)
+		}
 	},
 }
 

@@ -1,6 +1,6 @@
 <p align="center"><img src="https://raw.githubusercontent.com/diptanu/modelbox/main/docs/images/ModelBox1.png" width="300" height="150"></p>
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/tensorland/modelbox/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/tensorland/modelbox/tree/main)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/tensorland/modelbox/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/tensorland/modelbox/tree/main)<a href="https://gitpod.io/#<your-repository-url>"> <img src="https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod" alt="Contribute with Gitpod"/></a>
 
 # AI Model Operations and Metadata Management Service
 

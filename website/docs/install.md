@@ -3,7 +3,7 @@ sidebar_position: 2
 ---
 
 # Install and Operation 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/https://github.com/tensorland/modelbox>)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/tensorland/modelbox>)
 
 ModelBox can be installed and run in several models depending on the use case. Here we review a few of those use cases and discuss possible ways to run and operate the service.
 

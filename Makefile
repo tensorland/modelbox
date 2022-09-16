@@ -14,3 +14,8 @@ build:
 test-server:
 			  @echo "==> Test Modelbox Server"
 			  go test ./server/storage/...
+
+.PHONY: install-sdk-py 
+install-sdk-py:
+				@echo "==> Installing Python SDK"
+				cd sdk-py && pip install .

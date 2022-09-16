@@ -1,5 +1,16 @@
 # Developing ModelBox
 
+
+## Install Python SDK
+
+The Python SDK can be installed in the local environment using `pip`. Run the following command from the root directory.
+
+```
+make install-sdk-py
+```
+
+We automatically install the python lib in the jupyter container.
+
 ## Run Tests
 
 The tests require the dependencies of the server to be started first. 

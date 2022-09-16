@@ -1,7 +1,16 @@
 SHELL := bash
 
-proto:
-	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative proto/service.proto
+.PHONY: install-deps
+install-deps:
+				@echo "==> Installing dependencies"
+				go install github.com/goreleaser/goreleaser@latest
 
-install:
-	go install
+.PHONY: build
+build:
+		@echo "==> Build Modelbox"
+		goreleaser release --snapshot --rm-dist
+
+.PHONY: test
+test-server:
+			  @echo "==> Test Modelbox Server"
+			  go test ./server/storage/...

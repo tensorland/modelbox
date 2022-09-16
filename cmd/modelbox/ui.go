@@ -12,6 +12,7 @@ import (
 	svrConfig "github.com/tensorland/modelbox/server/config"
 	"github.com/tensorland/modelbox/server/storage"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
+	"github.com/tensorland/modelbox/server/storage/logging"
 	"go.uber.org/zap"
 )
 
@@ -32,7 +33,25 @@ func CreateSchema(configPath, schemaDir string, logger *zap.Logger) error {
 	if err != nil {
 		return fmt.Errorf("unable to create storage: %v", err)
 	}
-	return storage.CreateSchema(fmt.Sprintf("%s/%s", schemaDir, config.MetadataBackend))
+	if err := storage.CreateSchema(fmt.Sprintf("%s/%s", schemaDir, config.MetadataBackend)); err != nil {
+		return err
+	}
+	if config.MetricsBackend == svrConfig.METRICS_STORAGE_TS {
+		tsdb, err := logging.NewTimescaleDbLogger(&logging.TimescaleDbConfig{
+			Host:     config.TimescaleDb.Host,
+			Port:     config.TimescaleDb.Port,
+			UserName: config.TimescaleDb.User,
+			Password: config.TimescaleDb.Password,
+			DbName:   config.TimescaleDb.DbName,
+		}, logger)
+		if err != nil {
+			return err
+		}
+		if err := tsdb.CreateSchema(fmt.Sprintf("%s/timescaledb", schemaDir)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func WriteClientConfigToFile(path string) error {

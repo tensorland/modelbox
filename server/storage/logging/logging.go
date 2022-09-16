@@ -25,7 +25,7 @@ func NewExperimentLogger(serverConfig *config.ServerConfig, logger *zap.Logger) 
 	if serverConfig.MetricsBackend == config.METRICS_STORAGE_TS {
 		return NewTimescaleDbLogger(&TimescaleDbConfig{
 			Host:     serverConfig.TimescaleDb.Host,
-			Port:     serverConfig.MySQLConfig.Port,
+			Port:     serverConfig.TimescaleDb.Port,
 			UserName: serverConfig.TimescaleDb.User,
 			Password: serverConfig.TimescaleDb.Password,
 			DbName:   serverConfig.TimescaleDb.DbName,

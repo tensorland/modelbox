@@ -360,7 +360,9 @@ func (s *GrpcServer) GetCheckpoint(ctx context.Context, req *pb.GetCheckpointReq
 func (s *GrpcServer) LogMetrics(ctx context.Context, req *pb.LogMetricsRequest) (*pb.LogMetricsResponse, error) {
 	switch v := req.Value.Value.(type) {
 	case *pb.MetricsValue_FVal:
-		s.experimentLogger.LogFloats(ctx, req.ParentId, req.Key, storage.ToFloatLogFromProto(req.GetValue()))
+		if err := s.experimentLogger.LogFloats(ctx, req.ParentId, req.Key, storage.ToFloatLogFromProto(req.GetValue())); err != nil {
+			return nil, fmt.Errorf("unable to log metric: %v", err)
+		}
 	case nil:
 	default:
 		return nil, fmt.Errorf("unable to write metric for %v", v)

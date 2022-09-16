@@ -10,7 +10,7 @@ networks:
         - subnet: 172.21.0.0/24
 services:
   modelbox:
-    image: diptanu/modelbox:0.0.1-next-amd64
+    image: modelboxdotio/modelbox:0.0.1-next-amd64
     profiles:
       - local
     command: ["/app/scripts/compose_start.sh"]

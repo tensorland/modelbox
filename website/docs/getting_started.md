@@ -1,8 +1,8 @@
 # Getting Started
 
-This guide aims to get an instance of ModelBox started and have you train a model, and then observe the metadata and metrics collected by ModelBox to analyze the experiment, models and other artifacts.
+This guide aims to get an instance of ModelBox started and have you train a model, and then look at the metadata and metrics collected by ModelBox to analyze the experiment, models and other artifacts.
 
-## Docker Compose Locally
+## Docker Compose
 
 This is the quickest way to get started if you have docker and docker-compose installed. 
 

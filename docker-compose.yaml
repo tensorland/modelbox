@@ -34,7 +34,6 @@ services:
         server:
             ipv4_address: 172.21.0.2
         dependencies:
-             
   postgres:
     image: postgres
     profiles:
@@ -68,5 +67,24 @@ services:
             ipv4_address: 172.20.0.7
     environment:
       - POSTGRES_PASSWORD=foo
+  jupyter:
+    image: jupyter/scipy-notebook:0fd03d9356de
+    command: ["start-notebook.sh", "--NotebookApp.token=''", "--NotebookApp.password=''"]
+    profiles:
+      - local
+    restart: always
+    ports:
+      - "8888:8888"
+    volumes:
+      - type: bind
+        source: ./sdk-py/
+        target: "/home/jovyan/work/sdk-py/" # binds config file
+      - type: bind
+        source: ./tutorials/
+        target: "/home/jovyan/work/tutorials/"
+    networks:
+        server:
+            ipv4_address: 172.21.0.5
+
 volumes:
   data:

@@ -285,6 +285,9 @@ class TestModelBoxApi(unittest.TestCase):
     def test_metadata(self):
         resp = self._client.update_metadata("parent1", "foo", "bar")
 
+    def test_list_metadata(self):
+        resp = self._client.list_metadata("experiment_1")
+
     def test_log_event(self):
         event = Event(
             name="checkpoint_start",

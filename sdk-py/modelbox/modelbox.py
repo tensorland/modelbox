@@ -404,7 +404,7 @@ class ModelBoxClient:
         req = service_pb2.ListMetadataRequest(parent_id=id)
         resp = self._client.ListMetadata(req)
         meta_resp = ListMetadataResponse(metadata={})
-        for k, v in resp.payload.items():
+        for k, v in resp.metadata.items():
             meta_resp.metadata[k] = v
         return meta_resp
 

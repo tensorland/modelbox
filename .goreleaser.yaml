@@ -30,7 +30,7 @@ changelog:
       - '^test:'
 dockers:
 - image_templates:
-  - "diptanu/modelbox:{{ .Version }}-amd64"
+  - "modelboxdotio/modelbox:{{ .Version }}-amd64"
   use: buildx
   dockerfile: Dockerfile
   build_flag_templates:
@@ -38,7 +38,7 @@ dockers:
   extra_files:
   - cmd/modelbox/assets/modelbox_server.toml
 - image_templates:
-  - "diptanu/modelbox:{{ .Version }}-arm64v8"
+  - "modelboxdotio/modelbox:{{ .Version }}-arm64v8"
   use: buildx
   goarch: arm64
   dockerfile: Dockerfile
@@ -47,9 +47,9 @@ dockers:
   extra_files:
   - cmd/modelbox/assets/modelbox_server.toml
 docker_manifests:
-- name_template: diptanu/modelbox:{{ .Version }}
+- name_template: modelboxdotio/modelbox:{{ .Version }}
   image_templates:
-  - diptanu/modelbox:{{ .Version }}-amd64
-  - diptanu/modelbox:{{ .Version }}-arm64v8
+  - modelboxdotio/modelbox:{{ .Version }}-amd64
+  - modelboxdotio/modelbox:{{ .Version }}-arm64v8
   skip_push: true
 

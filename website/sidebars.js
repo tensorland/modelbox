@@ -53,6 +53,7 @@ const sidebars = {
         'guides/python-sdk',
         'guides/cli',
         'guides/service-observability',
+        'guides/develop',
       ],
     },
   ],

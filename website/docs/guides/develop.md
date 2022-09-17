@@ -11,6 +11,25 @@ make install-sdk-py
 
 We automatically install the python lib in the jupyter container.
 
+## Build Python SDK and push to PyPi
+
+### Create a source distribution of modelbox
+```
+make build-sdk-py
+```
+
+### Upload to test pypi
+```
+make upload-sdk-py-test
+```
+
+
+### Upload to PyPi
+```
+make upload-sdk-py
+```
+
+
 ## Run Tests
 
 The tests require the dependencies of the server to be started first. 

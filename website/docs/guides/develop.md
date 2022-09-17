@@ -49,3 +49,8 @@ docker push modelboxdotio/modelbox:0.0.1-next-amd64
 ```
 docker manifest create modelboxdotio/modelbox:latest modelboxdotio/modelbox:0.0.1-next-arm64v8 modelboxdotio/modelbox:0.0.1-next-amd64
 ```
+
+4. Push the manifest
+```
+docker manifest push --purge modelboxdotio/modelbox:latest
+```

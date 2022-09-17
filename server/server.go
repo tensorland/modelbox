@@ -15,6 +15,8 @@ import (
 	"github.com/tensorland/modelbox/server/storage/logging"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -222,11 +224,11 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 	if err := s.metadataStorage.WriteFiles(stream.Context(), artifacts.FileSet{fileMetadata}); err != nil {
 		// TODO This is not great, we should create a new error type and throw and check on the error type
 		// or code.
-		if strings.HasPrefix(err.Error(), "unable to create blobs for model: Error 1062") {
+		if strings.HasPrefix(err.Error(), "duplicate file") {
 			stream.SendAndClose(&pb.UploadFileResponse{FileId: fileMetadata.Id})
 			return nil
 		}
-		return fmt.Errorf("unable to create blob metadata: %v", err)
+		return status.Errorf(codes.Internal, "unable to create blob metadata: %v", err)
 	}
 	fileMetadata.Path = path
 	var totalBytes uint64 = 0
@@ -236,12 +238,12 @@ func (s *GrpcServer) UploadFile(stream pb.ModelStore_UploadFileServer) error {
 			break
 		}
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to receive artifact chunks: %v", err)
 		}
 		bytes := req.GetChunks()
 		n, err := blobStorage.Write(bytes)
 		if err != nil {
-			return err
+			return fmt.Errorf("unable to write chunks to blob-store: %v", err)
 		}
 		totalBytes += uint64(n)
 	}

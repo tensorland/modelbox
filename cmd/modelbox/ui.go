@@ -138,8 +138,7 @@ func (u *ClientUi) UploadCheckpoint(path, experimentId string, epoch uint64, upl
 	}
 	uploadResp, err := u.client.UploadFile(path, resp.CheckpointId, artifacts.CheckpointFile)
 	if err != nil {
-		println("unable to upload checkpoint: ", err.Error())
-		return nil
+		return err
 	}
 
 	u.table.SetHeader([]string{"Checkpoint Id", "Checksum"})
@@ -191,7 +190,7 @@ func (u *ClientUi) DownloadCheckpoint(id, path string) error {
 func (u *ClientUi) UploadArtifact(path, parentId string) error {
 	resp, err := u.client.UploadFile(path, parentId, artifacts.ModelFile)
 	if err != nil {
-		return fmt.Errorf("unable to upload artifact: %v", err)
+		return err
 	}
 	u.table.SetHeader([]string{"ID", "Checksum"})
 	u.table.Append([]string{resp.Id, resp.Checksum})

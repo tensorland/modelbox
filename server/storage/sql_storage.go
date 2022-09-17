@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/fatih/structs"
 	"github.com/jmoiron/sqlx"
+	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -440,6 +440,9 @@ func (s *SQLStorage) writeFileSet(ctx context.Context, tx *sqlx.Tx, files artifa
 	sqlStr = sqlStr[0 : len(sqlStr)-1]
 	if len(files) > 0 {
 		if _, err := tx.ExecContext(ctx, s.db.Rebind(sqlStr), vals...); err != nil {
+			if s.driverUtils.isDuplicate(err) {
+				return fmt.Errorf("duplicate file")
+			}
 			return fmt.Errorf("unable to create blobs for model: %v", err)
 		}
 	}

@@ -157,11 +157,11 @@ func (m *ModelBoxClient) UploadFile(path, parentId string, t artifacts.FileMIMET
 	// checkpoint at the end of the strem to the server to validate the file
 	checksum, err := m.getChecksum(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to compute checksum: %v ", err)
 	}
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to open file: %v", err)
 	}
 	defer f.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
@@ -177,32 +177,37 @@ func (m *ModelBoxClient) UploadFile(path, parentId string, t artifacts.FileMIMET
 	}
 	stream, err := m.client.UploadFile(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to create client stream %v", err)
 	}
 	if err := stream.Send(req); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to send metadata: %v", err)
 	}
-
+	var recvMsg proto.UploadFileResponse
+	if err := stream.RecvMsg(&recvMsg); err != nil {
+		return nil, fmt.Errorf("unable to write metadata: %v", err)
+	}
+	if recvMsg.FileId != "" {
+		return &FileUploadResponse{recvMsg.FileId, checksum}, nil
+	}
 	bytes := make([]byte, 1024000)
 	for {
 		n, e := f.Read(bytes)
+		if e == io.EOF {
+			break
+		}
 		if e != nil && e != io.EOF {
-			return nil, err
+			return nil, fmt.Errorf("unable to read file: %v", err)
 		}
 		req := &proto.UploadFileRequest{
 			StreamFrame: &proto.UploadFileRequest_Chunks{Chunks: bytes[:n]},
 		}
-		err = stream.Send(req)
-		if err != nil {
-			return nil, err
-		}
-		if e == io.EOF {
-			break
+		if err := stream.Send(req); err != nil {
+			return nil, fmt.Errorf("unable to upload chunks: %v", err)
 		}
 	}
 	resp, err := stream.CloseAndRecv()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to close stream: %v", err)
 	}
 	return &FileUploadResponse{resp.FileId, checksum}, nil
 }

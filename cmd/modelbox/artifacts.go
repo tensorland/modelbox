@@ -36,7 +36,7 @@ var uploadCmd = &cobra.Command{
 			zap.L().Sugar().Panicf("unable to create client: %v", err)
 		}
 		if err := client.UploadArtifact(path, parentId); err != nil {
-			zap.L().Sugar().Panicf("unable to download artifact: %v", err)
+			zap.L().Sugar().Panicf("unable to upload artifact: %v", err)
 		}
 	},
 }

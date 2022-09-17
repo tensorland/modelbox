@@ -391,10 +391,10 @@ class ModelBoxClient:
         return ret
 
     def update_metadata(
-        self, parent_id: str, key: str, val: Any
+        self, parent_id: str, key: str, value: Any
     ) -> UpdateMetadataResponse:
         json_value = Value()
-        json_format.Parse(json.dumps(val), json_value)
+        json_format.Parse(json.dumps(value), json_value)
         meta = service_pb2.Metadata(metadata={key: json_value})
         req = service_pb2.UpdateMetadataRequest(parent_id=parent_id, metadata=meta)
         resp = self._client.UpdateMetadata(req)

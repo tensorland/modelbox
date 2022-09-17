@@ -3,6 +3,8 @@ target
 .vscode
 ve
 
+data
+
 MNIST
 lightning_logs
 modelbox_server.toml

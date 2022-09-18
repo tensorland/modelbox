@@ -17,7 +17,7 @@ This starts the ModelBox server with all the dependencies and a container with a
 
 The ModelBox server hosts the API at the address - `172.21.0.2:8085`
 
-The Jupyter notebook with the tutorials is available on the addresses - `https://172.21.0.5:8888` or `https://localhost:8888`
+The Jupyter notebook with the tutorials is available at the address - `https://localhost:8888`
 
 Train a Pytorch Model by following the [notebook](https://github.com/tensorland/modelbox/blob/main/tutorials/Pytorch_Lightning_Integration_Tutorial.ipynb)
 

@@ -6,6 +6,8 @@ from enum import Enum
 from dataclasses import dataclass
 from hashlib import md5
 import json
+from client import ModelBoxClient
+import os
 
 import grpc
 from . import service_pb2
@@ -15,6 +17,8 @@ from google.protobuf import json_format
 from google.protobuf.timestamp_pb2 import Timestamp
 
 DEFAULT_NAMESPACE = "default"
+
+DEFAULT_API_ADDR = "localhost:8085"
 
 # The chunk size at which files are being read.
 CHUNK_SZ = 1024
@@ -90,6 +94,10 @@ class LogEventResponse:
 class UpdateMetadataResponse:
     updated_at: Timestamp
 
+@dataclass
+class LogMetricsResponse:
+    updated_at: Timestamp
+
 
 @dataclass
 class ListMetadataResponse:
@@ -129,6 +137,27 @@ class Experiment:
     external_id: str
     created_at: int
     updated_at: int
+    framework: MLFramework
+
+    def __post_init__(self, client:ModelBoxClient=None):
+        self._client = client
+        if self._client is None:
+            addr = os.getenv('MODELBOX_API_ADDR', DEFAULT_API_ADDR)
+            self._client == ModelBoxClient(addr)
+
+    def save(self):
+        response = self._client.create_experiment(self.name, self.owner, self.namespace, self.external_id, self.framework.to_proto())
+        self.id = response.experiment_id
+        self.created_at = response.created_at
+        self.updated_at = response.updated_at
+
+    def update_metadata(self, key:str, value:str) -> UpdateMetadataResponse:
+        response = self._client.update_metadata(self.id, self.key, self.value)
+        return UpdateMetadataResponse(response.updated_at)
+
+    def log_metrics(self, key:str, value=Union[float, str, bytes], step:int=0, wallclock:int=0) -> LogMetricsResponse:
+        response = self._client.log_metrics(self.id, self.key, MetricValue(step, wallclock, value))
+        return LogMetricsResponse(response.updated_at)
 
 
 @dataclass

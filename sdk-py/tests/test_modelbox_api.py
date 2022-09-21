@@ -15,7 +15,7 @@ from google.protobuf.struct_pb2 import Value
 from google.protobuf import json_format, timestamp_pb2
 
 from modelbox.modelbox import (
-    ModelBoxClient,
+    ModelBox,
     MLFramework,
     Artifact,
     ArtifactMime,
@@ -163,21 +163,20 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
 # client is passing should be in server.
 class TestModelBoxApi(unittest.TestCase):
     def setUp(self) -> None:
-        self._client = ModelBoxClient(SERVER_ADDR)
+        self.mbox = ModelBox(SERVER_ADDR)
         return super().setUp()
 
     def tearDown(self) -> None:
-        self._client.close()
         return super().tearDown()
 
     def test_create_experiment(self):
-        result = self._client.create_experiment(
+        experiment = self.mbox.new_experiment(
             "yolo", TEST_OWNER, TEST_NAMESPACE, TEST_EXTERN_ID, MLFramework.PYTORCH
         )
-        self.assertNotEqual(result.experiment_id, "")
+        self.assertNotEqual(experiment.id, "")
 
     def test_create_checkpoint(self):
-        result = self._client.create_experiment(
+        experiment = self.mbox.new_experiment(
             TEST_MODEL_NAME,
             TEST_OWNER,
             TEST_NAMESPACE,
@@ -185,42 +184,38 @@ class TestModelBoxApi(unittest.TestCase):
             MLFramework.PYTORCH,
         )
         metrics = {"val_accu": 97.8, "train_accu": 98.8}
-        checkpoint_id = self._client.create_checkpoint(
-            result.experiment_id, randrange(10000), "/path/to/checkpoint", metrics
-        )
-        self.assertNotEqual(checkpoint_id, "")
+        artifacts = [
+            Artifact(
+                parent="", path="/path/to/checkpoint", mime_type=ArtifactMime.Checkpoint
+            )
+        ]
+        checkpoint = experiment.new_checkpoint(randrange(10000), metrics)
+        self.assertNotEqual(checkpoint.id, "")
 
     def test_create_model_version(self):
-        model = self._client.create_model(
-            TEST_MODEL_NAME,
-            TEST_OWNER,
-            TEST_NAMESPACE,
-            "object_detection",
-            "yolo_des",
-            {"meta": "foo"},
-        )
-        model_version = self._client.create_model_version(
-            model.id,
-            "yolo4_v1",
+        model = self._create_model()
+        model_version = model.new_model_version(
             "v1",
+            model.name,
             "mv_description",
             [],
             {},
-            service_pb2.PYTORCH,
             ["prod"],
+            MLFramework.PYTORCH,
         )
         self.assertNotEqual(model_version.id, "")
 
     def test_list_checkpoints(self):
-        resp = self._client.list_checkpoints("exp1")
-        self.assertEqual(2, len(resp.checkpoints))
+        experiment = self._create_experiment()
+        checkpoints = experiment.list_checkpoints()
+        self.assertEqual(2, len(checkpoints))
 
     def test_list_experiments(self):
-        resp = self._client.list_experiments("langtech")
+        resp = self.mbox.list_experiments("langtech")
         self.assertEqual(2, len(resp.experiments))
 
     def test_create_model(self):
-        resp = resp = self._client.create_model(
+        model = self.mbox.new_model(
             name="asr_en",
             owner="owner@owner.org",
             namespace="langtech",
@@ -228,34 +223,23 @@ class TestModelBoxApi(unittest.TestCase):
             description="ASR for english",
             metadata={"x": "y"},
         )
-        self.assertNotEqual("", resp.id)
-
-    def test_create_model_version(self):
-        tags = ["test"]
-        resp = self._client.create_model_version(
-            model_id="abc",
-            name="asr_en_july",
-            version="1",
-            description="ASR for english",
-            metadata={"x": "y"},
-            unique_tags=tags,
-            files=[],
-            framework=MLFramework.PYTORCH.to_proto(),
-        )
-        self.assertNotEqual("", resp.id)
+        self.assertNotEqual("", model.id)
 
     def test_upload_artifact(self):
+        model = self._create_model()
         file_path = str(
             pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
         )
-        resp = self._client.upload_artifact("abc", file_path, artifact_type=ArtifactMime.Text)
+        resp = model.upload_artifact(Artifact(model.id, file_path, ArtifactMime.Text))
         self.assertNotEqual("", resp.id)
 
     def test_download_artifact(self):
-        resp = self._client.download_artifact("random_id", "/tmp/lol")
+        model = self._create_model()
+        resp = model.download_artifact("random_id", "/tmp/lol")
         self.assertNotEqual("", resp.id)
 
     def test_track_artifacts(self):
+        model = self._create_model()
         file_path = str(
             pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
         )
@@ -265,28 +249,31 @@ class TestModelBoxApi(unittest.TestCase):
             path=file_path,
             mime_type=ArtifactMime.Text,
         )
-        resp = self._client.track_artifacts(artifacts=[file])
+        resp = model.track_artifacts(artifacts=[file])
         self.assertEqual(2, resp.num_artifacts_tracked)
 
     def test_list_models(self):
-        resp = self._client.list_models("langtech")
+        resp = self.mbox.list_models("langtech")
         self.assertEqual(1, len(resp.models))
 
     def test_log_metrics(self):
-        resp = self._client.log_metrics(
-            "parent_id1",
-            "val_accu",
-            MetricValue(step=1, wallclock_time=500, value=0.234),
+        experiment = self.mbox.new_experiment(
+            "yolo", TEST_OWNER, TEST_NAMESPACE, TEST_EXTERN_ID, MLFramework.PYTORCH
+        )
+        resp = experiment.log_metrics(
+            key="val_accu", step=1, wallclock=500, value=0.234
         )
 
     def test_get_metrics(self):
-        resp = self._client.get_metrics("foo")
+        resp = self._create_model().get_all_metrics()
 
     def test_metadata(self):
-        resp = self._client.update_metadata("parent1", "foo", "bar")
+        resp = self._create_model().update_metadata("foo", "bar")
+        self.assertNotEqual(resp.updated_at, 0)
 
     def test_list_metadata(self):
-        resp = self._client.list_metadata("experiment_1")
+        resp = self._create_model().metadata()
+        self.assertEqual(len(resp.metadata.keys()), 1)
 
     def test_log_event(self):
         event = Event(
@@ -295,8 +282,27 @@ class TestModelBoxApi(unittest.TestCase):
             wallclock_time=1234,
             metadata={"key1": "value1"},
         )
-        resp = self._client.log_event("parent-id1", event)
+        resp = self._create_model().log_event(event)
         self.assertEqual(resp.created_at, 12345)
+
+    def _create_model(self):
+        return self.mbox.new_model(
+            name="asr_en",
+            owner="owner@owner.org",
+            namespace="langtech",
+            task="asr",
+            description="ASR for english",
+            metadata={"x": "y"},
+        )
+
+    def _create_experiment(self):
+        return self.mbox.new_experiment(
+            TEST_MODEL_NAME,
+            TEST_OWNER,
+            TEST_NAMESPACE,
+            TEST_EXTERN_ID,
+            MLFramework.PYTORCH,
+        )
 
 
 if __name__ == "__main__":

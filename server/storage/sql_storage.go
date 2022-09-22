@@ -15,6 +15,8 @@ import (
 const (
 	EXPERIMENTS_LIST = "SELECT id, name, owner, namespace, external_id, ml_framework, created_at, updated_at from experiments where namespace = ?"
 
+	EXPERIMENTS_GET = "SELECT id, name, owner, namespace, external_id, ml_framework, created_at, updated_at from experiments where id = ?"
+
 	CHECKPOINTS_LIST = `select id, experiment, epoch, metrics, created_at, updated_at from checkpoints 
 	                      where experiment = ?`
 
@@ -111,6 +113,19 @@ func (s *SQLStorage) CreateExperiment(
 		return nil
 	})
 	return result, err
+}
+
+func (s *SQLStorage) GetExperiment(ctx context.Context, id string) (*Experiment, error) {
+	var experiment Experiment
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		row := ExperimentSchema{}
+		if err := tx.GetContext(ctx, &row, s.db.Rebind(EXPERIMENTS_GET), id); err != nil {
+			return err
+		}
+		experiment = *row.ToExperiment()
+		return nil
+	})
+	return &experiment, err
 }
 
 func (s *SQLStorage) CreateCheckpoint(

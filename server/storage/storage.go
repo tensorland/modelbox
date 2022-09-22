@@ -356,6 +356,8 @@ type CreateModelVersionResult struct {
 type MetadataStorage interface {
 	CreateExperiment(ctx context.Context, experiment *Experiment, metadata SerializableMetadata) (*CreateExperimentResult, error)
 
+	GetExperiment(ctx context.Context, id string) (*Experiment, error)
+
 	CreateCheckpoint(ctx context.Context, checkpoint *Checkpoint, metadata SerializableMetadata) (*CreateCheckpointResult, error)
 
 	ListExperiments(ctx context.Context, namespace string) ([]*Experiment, error)

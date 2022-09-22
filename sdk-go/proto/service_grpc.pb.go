@@ -35,6 +35,8 @@ type ModelStoreClient interface {
 	CreateExperiment(ctx context.Context, in *CreateExperimentRequest, opts ...grpc.CallOption) (*CreateExperimentResponse, error)
 	// List Experiments
 	ListExperiments(ctx context.Context, in *ListExperimentsRequest, opts ...grpc.CallOption) (*ListExperimentsResponse, error)
+	// Get Experiments
+	GetExperiment(ctx context.Context, in *GetExperimentRequest, opts ...grpc.CallOption) (*GetExperimentResponse, error)
 	// Uploads a new checkpoint for an experiment
 	CreateCheckpoint(ctx context.Context, in *CreateCheckpointRequest, opts ...grpc.CallOption) (*CreateCheckpointResponse, error)
 	// Lists all the checkpoints for an experiment
@@ -121,6 +123,15 @@ func (c *modelStoreClient) CreateExperiment(ctx context.Context, in *CreateExper
 func (c *modelStoreClient) ListExperiments(ctx context.Context, in *ListExperimentsRequest, opts ...grpc.CallOption) (*ListExperimentsResponse, error) {
 	out := new(ListExperimentsResponse)
 	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/ListExperiments", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *modelStoreClient) GetExperiment(ctx context.Context, in *GetExperimentRequest, opts ...grpc.CallOption) (*GetExperimentResponse, error) {
+	out := new(GetExperimentResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/GetExperiment", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -332,6 +343,8 @@ type ModelStoreServer interface {
 	CreateExperiment(context.Context, *CreateExperimentRequest) (*CreateExperimentResponse, error)
 	// List Experiments
 	ListExperiments(context.Context, *ListExperimentsRequest) (*ListExperimentsResponse, error)
+	// Get Experiments
+	GetExperiment(context.Context, *GetExperimentRequest) (*GetExperimentResponse, error)
 	// Uploads a new checkpoint for an experiment
 	CreateCheckpoint(context.Context, *CreateCheckpointRequest) (*CreateCheckpointResponse, error)
 	// Lists all the checkpoints for an experiment
@@ -384,6 +397,9 @@ func (UnimplementedModelStoreServer) CreateExperiment(context.Context, *CreateEx
 }
 func (UnimplementedModelStoreServer) ListExperiments(context.Context, *ListExperimentsRequest) (*ListExperimentsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListExperiments not implemented")
+}
+func (UnimplementedModelStoreServer) GetExperiment(context.Context, *GetExperimentRequest) (*GetExperimentResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetExperiment not implemented")
 }
 func (UnimplementedModelStoreServer) CreateCheckpoint(context.Context, *CreateCheckpointRequest) (*CreateCheckpointResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateCheckpoint not implemented")
@@ -541,6 +557,24 @@ func _ModelStore_ListExperiments_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ModelStoreServer).ListExperiments(ctx, req.(*ListExperimentsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ModelStore_GetExperiment_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetExperimentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).GetExperiment(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/GetExperiment",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).GetExperiment(ctx, req.(*GetExperimentRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -823,6 +857,10 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListExperiments",
 			Handler:    _ModelStore_ListExperiments_Handler,
+		},
+		{
+			MethodName: "GetExperiment",
+			Handler:    _ModelStore_GetExperiment_Handler,
 		},
 		{
 			MethodName: "CreateCheckpoint",

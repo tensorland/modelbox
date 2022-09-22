@@ -36,3 +36,9 @@ upload-sdk-py:
 	@echo "===> Uploading to pypi"
 	pip install twine
 	cd sdk-py && twine upload dist/*
+
+
+.PHONY: update-protos
+update-protos:
+	@echo "==> Updating protos"
+	./proto/gen_proto.sh

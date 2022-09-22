@@ -223,6 +223,9 @@ class ModelBoxClient:
         )
         return self._client.CreateCheckpoint(req)
 
+    def get_experiment(self, id: str) -> service_pb2.GetExperimentResponse:
+        return self._client.GetExperiment(service_pb2.GetExperimentRequest(id=id))
+
     def list_checkpoints(self, experiment_id: str) -> service_pb2.ListCheckpointsResponse:
         req = service_pb2.ListCheckpointsRequest(experiment_id=experiment_id)
         return self._client.ListCheckpoints(req)

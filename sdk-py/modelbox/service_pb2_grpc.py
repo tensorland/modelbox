@@ -46,6 +46,11 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.ListExperimentsRequest.SerializeToString,
                 response_deserializer=service__pb2.ListExperimentsResponse.FromString,
                 )
+        self.GetExperiment = channel.unary_unary(
+                '/modelbox.ModelStore/GetExperiment',
+                request_serializer=service__pb2.GetExperimentRequest.SerializeToString,
+                response_deserializer=service__pb2.GetExperimentResponse.FromString,
+                )
         self.CreateCheckpoint = channel.unary_unary(
                 '/modelbox.ModelStore/CreateCheckpoint',
                 request_serializer=service__pb2.CreateCheckpointRequest.SerializeToString,
@@ -157,6 +162,13 @@ class ModelStoreServicer(object):
 
     def ListExperiments(self, request, context):
         """List Experiments
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def GetExperiment(self, request, context):
+        """Get Experiments
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -287,6 +299,11 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     servicer.ListExperiments,
                     request_deserializer=service__pb2.ListExperimentsRequest.FromString,
                     response_serializer=service__pb2.ListExperimentsResponse.SerializeToString,
+            ),
+            'GetExperiment': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetExperiment,
+                    request_deserializer=service__pb2.GetExperimentRequest.FromString,
+                    response_serializer=service__pb2.GetExperimentResponse.SerializeToString,
             ),
             'CreateCheckpoint': grpc.unary_unary_rpc_method_handler(
                     servicer.CreateCheckpoint,
@@ -465,6 +482,23 @@ class ModelStore(object):
         return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/ListExperiments',
             service__pb2.ListExperimentsRequest.SerializeToString,
             service__pb2.ListExperimentsResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetExperiment(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/GetExperiment',
+            service__pb2.GetExperimentRequest.SerializeToString,
+            service__pb2.GetExperimentResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

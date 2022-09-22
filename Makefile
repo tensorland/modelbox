@@ -17,5 +17,22 @@ test-server:
 
 .PHONY: install-sdk-py 
 install-sdk-py:
-				@echo "==> Installing Python SDK"
-				cd sdk-py && pip install .
+	@echo "==> Installing Python SDK"
+	cd sdk-py && pip install .
+
+.PHONY: build-sdk-py
+build-sdk-py:
+                @echo "==> Building modelbox py distribution "
+				cd sdk-py && python -m build .
+
+.PHONY: upload-sdk-py-test
+upload-sdk-py-test:
+                @echo "===> Uploading to test.pypi"
+				pip install twine
+				cd sdk-py && twine upload --repository testpypi dist/*
+
+.PHONY: upload-sdk-py
+upload-sdk-py-test:
+                @echo "===> Uploading to pypi"
+				pip install twine
+				cd sdk-py && twine upload --repository dist/*

@@ -148,9 +148,21 @@ func (s *GrpcServer) ListExperiments(
 	return &pb.ListExperimentsResponse{Experiments: experimentResponses}, nil
 }
 
-func (s *GrpcServer) GetExperiment(ctx context.Context, req *pb.GetCheckpointRequest) (*pb.GetExperimentRequest, error) {
-	s.metadataStorage.GetExperiment(req.ExperimentId)
-	return &pb.GetExperimentResponse{}, nil
+func (s *GrpcServer) GetExperiment(ctx context.Context, req *pb.GetExperimentRequest) (*pb.GetExperimentResponse, error) {
+	experiment, err := s.metadataStorage.GetExperiment(ctx, req.Id)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.GetExperimentResponse{Experiment: &pb.Experiment{
+		Id:         experiment.Id,
+		Name:       experiment.Name,
+		Namespace:  experiment.Namespace,
+		Owner:      experiment.Owner,
+		Framework:  pb.MLFramework(experiment.Framework),
+		ExternalId: experiment.ExternalId,
+		CreatedAt:  timestamppb.New(time.Unix(experiment.CreatedAt, 0)),
+		UpdatedAt:  timestamppb.New(time.Unix(experiment.UpdatedAt, 0)),
+	}}, nil
 }
 
 func (s *GrpcServer) CreateCheckpoint(

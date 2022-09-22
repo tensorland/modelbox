@@ -51,6 +51,12 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
         )
         return experiment_resp
 
+    def GetExperiment(self, request, context):
+        experiment_resp = service_pb2.Experiment(
+            id=self._fake.uuid4(), name="yolo-test", owner=TEST_OWNER
+        )
+        return service_pb2.GetExperimentResponse(experiment=experiment_resp)
+
     def CreateCheckpoint(self, request, context):
         checkpoint = service_pb2.CreateCheckpointResponse(
             checkpoint_id=self._fake.uuid4()
@@ -173,6 +179,10 @@ class TestModelBoxApi(unittest.TestCase):
         experiment = self.mbox.new_experiment(
             "yolo", TEST_OWNER, TEST_NAMESPACE, TEST_EXTERN_ID, MLFramework.PYTORCH
         )
+        self.assertNotEqual(experiment.id, "")
+
+    def test_get_experiment(self):
+        experiment = self.mbox.get_experiment("foo")
         self.assertNotEqual(experiment.id, "")
 
     def test_create_checkpoint(self):

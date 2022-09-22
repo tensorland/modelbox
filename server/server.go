@@ -148,6 +148,11 @@ func (s *GrpcServer) ListExperiments(
 	return &pb.ListExperimentsResponse{Experiments: experimentResponses}, nil
 }
 
+func (s *GrpcServer) GetExperiment(ctx context.Context, req *pb.GetCheckpointRequest) (*pb.GetExperimentRequest, error) {
+	s.metadataStorage.GetExperiment(req.ExperimentId)
+	return &pb.GetExperimentResponse{}, nil
+}
+
 func (s *GrpcServer) CreateCheckpoint(
 	ctx context.Context,
 	req *pb.CreateCheckpointRequest,

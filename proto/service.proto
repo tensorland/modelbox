@@ -33,6 +33,9 @@ service ModelStore {
   // List Experiments
   rpc ListExperiments(ListExperimentsRequest) returns (ListExperimentsResponse);
 
+  // Get Experiments
+  rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse);
+
   // Uploads a new checkpoint for an experiment
   rpc CreateCheckpoint(CreateCheckpointRequest)
       returns (CreateCheckpointResponse);
@@ -422,4 +425,12 @@ message ListEventsRequest {
 
 message ListEventsResponse {
   repeated Event events = 1;
+}
+
+message GetExperimentRequest {
+  string id = 1;
+}
+
+message GetExperimentResponse {
+  Experiment experiment = 1;
 }

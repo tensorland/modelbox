@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/stretchr/testify/assert"
+	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -241,4 +241,19 @@ func (s *StorageInterfaceTestSuite) TestCreateEvent() {
 	events, err := s.storageIf.ListEvents(context.Background(), parentId)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, 1, len(events))
+}
+
+func (s *StorageInterfaceTestSuite) GetExperiment() {
+	ctx := context.Background()
+	e := NewExperiment(MODEL_NAME, OWNER, NAMESPACE, "xyz", Pytorch)
+	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
+	metaData := map[string]*structpb.Value{"foo": metaVal}
+	_, err := s.storageIf.CreateExperiment(context.Background(), e, metaData)
+	assert.Nil(s.t, err)
+	experiment, err := s.storageIf.GetExperiment(ctx, e.Id)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, MODEL_NAME, experiment.Name)
+	assert.Equal(s.t, OWNER, experiment.Owner)
+	assert.Equal(s.t, NAMESPACE, experiment.Namespace)
+	assert.Equal(s.t, "xyz", experiment.ExternalId)
 }

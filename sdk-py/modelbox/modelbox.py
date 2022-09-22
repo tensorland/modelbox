@@ -302,6 +302,7 @@ class ModelVersion(
         EventLoggerMixin.__init__(self, self.id, _client)
         self._client = _client
 
+
 @dataclass
 class Model(
     MetricsLoggerMixin, MetadataLoggerMixin, ArtifactLoggerMixin, EventLoggerMixin
@@ -455,7 +456,18 @@ class ModelBox:
         )
 
     def get_experiment(self, id: str) -> Experiment:
-        pass
+        resp = self._client.get_experiment(id)
+        return Experiment(
+            id=id,
+            name=resp.experiment.name,
+            owner=resp.experiment.owner,
+            namespace=resp.experiment.namespace,
+            external_id=resp.experiment.external_id,
+            created_at=resp.experiment.created_at.ToSeconds(),
+            updated_at=resp.experiment.updated_at.ToSeconds(),
+            framework=MLFramework.from_proto(resp.experiment.framework),
+            _client=self._client,
+        )
 
     def new_model(
         self,

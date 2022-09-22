@@ -302,29 +302,6 @@ class ModelVersion(
         EventLoggerMixin.__init__(self, self.id, _client)
         self._client = _client
 
-    def update_metadata(self, key: str, value: str) -> UpdateMetadataResponse:
-        response = self._client.update_metadata(self.id, key, value)
-        return UpdateMetadataResponse(response.updated_at)
-
-    def log_metrics(
-        self,
-        key: str,
-        value=Union[float, str, bytes],
-        step: int = 0,
-        wallclock: int = 0,
-    ) -> LogMetricsResponse:
-        response = self._client.log_metrics(
-            self.id, key, MetricValue(step, wallclock, value)
-        )
-        return LogMetricsResponse(response.updated_at)
-
-    def track_artficts(self) -> TrackArtifactsResponse:
-        pass
-
-    def upload_artifacts(self) -> UploadArtifactResponse:
-        pass
-
-
 @dataclass
 class Model(
     MetricsLoggerMixin, MetadataLoggerMixin, ArtifactLoggerMixin, EventLoggerMixin

@@ -211,6 +211,9 @@ class ModelBoxClient:
         )
         return self._client.CreateModelVersion(req)
 
+    def list_model_versions(self, model_id: str) -> service_pb2.ListModelVersionsResponse:
+        return self._client.ListModelVersions(service_pb2.ListModelVersionsRequest(model=model_id))
+
     def create_checkpoint(
         self,
         experiment_id: str,

@@ -95,11 +95,11 @@ class Artifact:
 
     def update_mime(self):
         _, ext = os.path.splitext(self.path)
-        if ext in ['jpg', 'png', 'jpeg', 'gif', 'bmp']:
+        if ext in ["jpg", "png", "jpeg", "gif", "bmp"]:
             self.mime_type = ArtifactMime.Image
-        if ext in ['mp4', 'ogg', 'ogv', 'mov', 'm4v', 'mkv', 'webm']:
+        if ext in ["mp4", "ogg", "ogv", "mov", "m4v", "mkv", "webm"]:
             self.mime_type = ArtifactMime.Audio
-        if ext in ['pt', 'pth']:
+        if ext in ["pt", "pth"]:
             self.mime_type = ArtifactMime.ModelVersion
 
     def update_checksum(self):
@@ -256,7 +256,11 @@ class ArtifactLoggerMixin:
         tracked_files = []
         for f_path in files:
             if os.path.isdir(f_path):
-                files_in_dir = [os.path.join(dp, f) for dp, dn, filenames in os.walk(f_path) for f in filenames]
+                files_in_dir = [
+                    os.path.join(dp, f)
+                    for dp, dn, filenames in os.walk(f_path)
+                    for f in filenames
+                ]
                 tracked_files.append(files_in_dir)
             else:
                 tracked_files.append(f_path)
@@ -385,6 +389,22 @@ class Model(
             _client=self._client,
         )
 
+    def model_versions(self) -> List[ModelVersion]:
+        resp = self._client.list_model_versions(self._id)
+        result = []
+        for mv in resp.models:
+            result.append(
+                ModelVersion(
+                    id=mv.id,
+                    model_id=self._id,
+                    name=mv.name,
+                    version=mv.version,
+                    description=mv.description,
+                    _client=self._client,
+                )
+            )
+        return result
+
 
 @dataclass
 class ListModelsResult:
@@ -481,7 +501,7 @@ class ModelBox:
             _client=self._client,
         )
 
-    def get_experiment(self, id: str) -> Experiment:
+    def experiment(self, id: str) -> Experiment:
         resp = self._client.get_experiment(id)
         return Experiment(
             id=id,
@@ -521,10 +541,10 @@ class ModelBox:
             self._client,
         )
 
-    def get_model(self, id: str) -> Model:
+    def model(self, id: str) -> Model:
         pass
 
-    def list_experiments(self, namespace: str):
+    def experiments(self, namespace: str):
         response = self._client.list_experiments(namespace)
         experiments = []
         for exp in response.experiments:
@@ -542,7 +562,7 @@ class ModelBox:
             experiments.append(e)
         return ListExperimentsResponse(experiments=experiments)
 
-    def list_models(self, namespace: str) -> ListModelsResult:
+    def models(self, namespace: str) -> ListModelsResult:
         resp = self._client.list_models(namespace)
         result = []
         for m in resp.models:

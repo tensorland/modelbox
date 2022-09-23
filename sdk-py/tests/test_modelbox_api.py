@@ -194,7 +194,7 @@ class TestModelBoxApi(unittest.TestCase):
         self.assertNotEqual(experiment.id, "")
 
     def test_get_experiment(self):
-        experiment = self.mbox.get_experiment("foo")
+        experiment = self.mbox.experiment("foo")
         self.assertNotEqual(experiment.id, "")
 
     def test_create_checkpoint(self):
@@ -228,7 +228,7 @@ class TestModelBoxApi(unittest.TestCase):
         self.assertEqual(2, len(checkpoints))
 
     def test_list_experiments(self):
-        resp = self.mbox.list_experiments("langtech")
+        resp = self.mbox.experiments("langtech")
         self.assertEqual(2, len(resp.experiments))
 
     def test_create_model(self):
@@ -269,7 +269,7 @@ class TestModelBoxApi(unittest.TestCase):
         self.assertEqual(2, len(artifact_list))
 
     def test_list_models(self):
-        resp = self.mbox.list_models("langtech")
+        resp = self.mbox.models("langtech")
         self.assertEqual(1, len(resp.models))
 
     def test_log_metrics(self):

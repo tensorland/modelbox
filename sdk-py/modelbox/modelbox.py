@@ -90,7 +90,6 @@ class Artifact:
         if self.checksum == "":
             self.checksum = file_checksum(self.path)
 
-
 @dataclass
 class EventSource:
     name: str

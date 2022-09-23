@@ -1,10 +1,5 @@
-from argparse import Namespace
-from importlib.metadata import metadata
-from time import time
 import unittest
 import grpc
-import sys
-import os
 import pathlib
 
 from random import randrange
@@ -19,7 +14,6 @@ from modelbox.modelbox import (
     MLFramework,
     Artifact,
     ArtifactMime,
-    MetricValue,
     Event,
     EventSource,
 )
@@ -28,7 +22,6 @@ from modelbox import service_pb2
 
 SERVER_ADDR = "localhost:8085"
 
-TEST_PROJECT_NAME = "langtech"
 TEST_OWNER = "owner@gmail.com"
 TEST_EXTERN_ID = "xyz"
 TEST_NAMESPACE = "ai/langtech/translation"

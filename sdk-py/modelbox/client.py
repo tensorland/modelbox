@@ -165,6 +165,9 @@ class ModelBoxClient:
         resp = self._client.TrackArtifacts(req)
         return ClientTrackArtifactsResult(num_artifacts_tracked=resp.num_files_tracked)
 
+    def list_artifacts(self, id:str) -> service_pb2.ListArtifactsResponse:
+        return self._client.ListArtifacts(service_pb2.ListArtifactsRequest(parent_id=id))
+
     def log_event(
         self, parent_id: str, event: service_pb2.Event
     ) -> service_pb2.LogEventResponse:

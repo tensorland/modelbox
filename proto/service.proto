@@ -61,6 +61,9 @@ service ModelStore {
   // Tracks a set of artifacts with a experiment/checkpoint/model
   rpc TrackArtifacts(TrackArtifactsRequest) returns (TrackArtifactsResponse);
 
+  // List artifacts for an expriment/model/model version
+  rpc ListArtifacts(ListArtifactsRequest) returns (ListArtifactsResponse);
+
   // Log Metrics for an experiment, model or checkpoint
   rpc LogMetrics(LogMetricsRequest) returns (LogMetricsResponse);
 
@@ -150,6 +153,14 @@ message TrackArtifactsResponse {
   int32 num_files_tracked = 1;
 
   google.protobuf.Timestamp created_at = 10;
+}
+
+message ListArtifactsRequest {
+  string parent_id = 1;
+}
+
+message ListArtifactsResponse {
+  repeated FileMetadata  files = 1;
 }
 
 /*

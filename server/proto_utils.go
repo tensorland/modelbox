@@ -25,9 +25,9 @@ func NewFileSetFromProto(pb []*proto.FileMetadata) artifacts.FileSet {
 	return files
 }
 
-func FileSetToProto(f *artifacts.FileSet) []*proto.FileMetadata {
-	files := make([]*proto.FileMetadata, len(*f))
-	for i, f := range *f {
+func FileSetToProto(f artifacts.FileSet) []*proto.FileMetadata {
+	files := make([]*proto.FileMetadata, len(f))
+	for i, f := range f {
 		files[i] = &proto.FileMetadata{
 			Id:        f.Id,
 			ParentId:  f.ParentId,

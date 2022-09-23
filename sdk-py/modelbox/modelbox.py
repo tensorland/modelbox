@@ -90,6 +90,16 @@ class Artifact:
         if self.checksum == "":
             self.checksum = file_checksum(self.path)
 
+    def from_proto(file: service_pb2.FileMetadata) -> Artifact:
+        return Artifact(
+            parent=file.parent_id,
+            path=file.path,
+            mime_type=ArtifactMime(file.file_type),
+            checksum=file.checksum,
+            id=file.id,
+        )
+
+
 @dataclass
 class EventSource:
     name: str
@@ -241,8 +251,13 @@ class ArtifactLoggerMixin:
         resp = self._client.track_artifacts(proto_artifacts)
         return TrackArtifactsResponse(num_artifacts_tracked=resp.num_artifacts_tracked)
 
-    def list_artifacts(self) -> List[Artifact]:
-        pass
+    @property
+    def artifacts(self) -> List[Artifact]:
+        resp = self._client.list_artifacts(self._id)
+        artifact_list = []
+        for file in resp.files:
+            artifact_list.append(Artifact.from_proto(file))
+        return artifact_list
 
     def upload_artifact(self, artifact: Artifact) -> UploadArtifactResponse:
         resp = self._client.upload_artifact(
@@ -262,7 +277,6 @@ class Checkpoint(
     id: str
     experiment_id: str
     epoch: str
-    artifacts: List[Artifact]
     metrics: Dict[str, List[MetricValue]]
     _client: InitVar[ModelBoxClient] = None
 
@@ -390,7 +404,6 @@ class Experiment(
             id=resp.checkpoint_id,
             experiment_id=self.id,
             epoch=epoch,
-            artifacts=[],
             metrics=metrics,
             _client=self._client,
         )
@@ -404,7 +417,6 @@ class Experiment(
                     id=cp_proto.id,
                     experiment_id=self.id,
                     epoch=cp_proto.epoch,
-                    artifacts=[],
                     metrics={},
                     _client=self._client,
                 )

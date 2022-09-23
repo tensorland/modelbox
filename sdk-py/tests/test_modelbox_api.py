@@ -156,6 +156,25 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
             created_at=timestamp_pb2.Timestamp(seconds=12345)
         )
 
+    def ListArtifacts(self, request, context):
+        files = [
+            service_pb2.FileMetadata(
+                id=self._fake.uuid4(),
+                parent_id=self._fake.uuid4(),
+                file_type=service_pb2.CHECKPOINT,
+                checksum=self._fake.uuid4(),
+                path="foo/bar",
+            ),
+            service_pb2.FileMetadata(
+                id=self._fake.uuid4(),
+                parent_id=self._fake.uuid4(),
+                file_type=service_pb2.CHECKPOINT,
+                checksum=self._fake.uuid4(),
+                path="foo/lol",
+            ),
+        ]
+        return service_pb2.ListArtifactsResponse(files=files)
+
 
 # We are really testing whether the client actually works against the current version
 # of the grpc server definition. Tests related to logic in server based on what the
@@ -254,6 +273,11 @@ class TestModelBoxApi(unittest.TestCase):
         )
         resp = model.track_artifacts(artifacts=[file])
         self.assertEqual(2, resp.num_artifacts_tracked)
+
+    def test_list_artifacts(self):
+        model = self._create_model()
+        artifact_list = model.artifacts
+        self.assertEqual(2, len(artifact_list))
 
     def test_list_models(self):
         resp = self.mbox.list_models("langtech")

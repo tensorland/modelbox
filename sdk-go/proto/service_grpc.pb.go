@@ -53,6 +53,8 @@ type ModelStoreClient interface {
 	ListMetadata(ctx context.Context, in *ListMetadataRequest, opts ...grpc.CallOption) (*ListMetadataResponse, error)
 	// Tracks a set of artifacts with a experiment/checkpoint/model
 	TrackArtifacts(ctx context.Context, in *TrackArtifactsRequest, opts ...grpc.CallOption) (*TrackArtifactsResponse, error)
+	// List artifacts for an expriment/model/model version
+	ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error)
 	// Log Metrics for an experiment, model or checkpoint
 	LogMetrics(ctx context.Context, in *LogMetricsRequest, opts ...grpc.CallOption) (*LogMetricsResponse, error)
 	// Get metrics logged for an experiment, model or checkpoint.
@@ -258,6 +260,15 @@ func (c *modelStoreClient) TrackArtifacts(ctx context.Context, in *TrackArtifact
 	return out, nil
 }
 
+func (c *modelStoreClient) ListArtifacts(ctx context.Context, in *ListArtifactsRequest, opts ...grpc.CallOption) (*ListArtifactsResponse, error) {
+	out := new(ListArtifactsResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/ListArtifacts", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *modelStoreClient) LogMetrics(ctx context.Context, in *LogMetricsRequest, opts ...grpc.CallOption) (*LogMetricsResponse, error) {
 	out := new(LogMetricsResponse)
 	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/LogMetrics", in, out, opts...)
@@ -361,6 +372,8 @@ type ModelStoreServer interface {
 	ListMetadata(context.Context, *ListMetadataRequest) (*ListMetadataResponse, error)
 	// Tracks a set of artifacts with a experiment/checkpoint/model
 	TrackArtifacts(context.Context, *TrackArtifactsRequest) (*TrackArtifactsResponse, error)
+	// List artifacts for an expriment/model/model version
+	ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error)
 	// Log Metrics for an experiment, model or checkpoint
 	LogMetrics(context.Context, *LogMetricsRequest) (*LogMetricsResponse, error)
 	// Get metrics logged for an experiment, model or checkpoint.
@@ -424,6 +437,9 @@ func (UnimplementedModelStoreServer) ListMetadata(context.Context, *ListMetadata
 }
 func (UnimplementedModelStoreServer) TrackArtifacts(context.Context, *TrackArtifactsRequest) (*TrackArtifactsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method TrackArtifacts not implemented")
+}
+func (UnimplementedModelStoreServer) ListArtifacts(context.Context, *ListArtifactsRequest) (*ListArtifactsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListArtifacts not implemented")
 }
 func (UnimplementedModelStoreServer) LogMetrics(context.Context, *LogMetricsRequest) (*LogMetricsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LogMetrics not implemented")
@@ -734,6 +750,24 @@ func _ModelStore_TrackArtifacts_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModelStore_ListArtifacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListArtifactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).ListArtifacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/ListArtifacts",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).ListArtifacts(ctx, req.(*ListArtifactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ModelStore_LogMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LogMetricsRequest)
 	if err := dec(in); err != nil {
@@ -885,6 +919,10 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "TrackArtifacts",
 			Handler:    _ModelStore_TrackArtifacts_Handler,
+		},
+		{
+			MethodName: "ListArtifacts",
+			Handler:    _ModelStore_ListArtifacts_Handler,
 		},
 		{
 			MethodName: "LogMetrics",

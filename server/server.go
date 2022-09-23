@@ -95,7 +95,7 @@ func (s *GrpcServer) ListModels(ctx context.Context,
 			Namespace:   m.Namespace,
 			Task:        m.Task,
 			Description: m.Description,
-			Files:       FileSetToProto(&m.Files),
+			Files:       FileSetToProto(m.Files),
 		}
 	}
 	return &pb.ListModelsResponse{Models: apiModels}, nil
@@ -336,6 +336,16 @@ respond:
 	return &pb.TrackArtifactsResponse{
 		NumFilesTracked: int32(len(files)),
 		CreatedAt:       timestamppb.New(time.Now()),
+	}, nil
+}
+
+func (s *GrpcServer) ListArtifacts(ctx context.Context, req *pb.ListArtifactsRequest) (*pb.ListArtifactsResponse, error) {
+	files, err := s.metadataStorage.GetFiles(ctx, req.ParentId)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.ListArtifactsResponse{
+		Files: FileSetToProto(files),
 	}, nil
 }
 

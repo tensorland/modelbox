@@ -206,11 +206,6 @@ class TestModelBoxApi(unittest.TestCase):
             MLFramework.PYTORCH,
         )
         metrics = {"val_accu": 97.8, "train_accu": 98.8}
-        artifacts = [
-            Artifact(
-                parent="", path="/path/to/checkpoint", mime_type=ArtifactMime.Checkpoint
-            )
-        ]
         checkpoint = experiment.new_checkpoint(randrange(10000), metrics)
         self.assertNotEqual(checkpoint.id, "")
 
@@ -265,13 +260,7 @@ class TestModelBoxApi(unittest.TestCase):
         file_path = str(
             pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
         )
-        file = Artifact(
-            parent="parent-id",
-            checksum="abc",
-            path=file_path,
-            mime_type=ArtifactMime.Text,
-        )
-        resp = model.track_artifacts(artifacts=[file])
+        resp = model.track_artifacts(files=[file_path])
         self.assertEqual(2, resp.num_artifacts_tracked)
 
     def test_list_artifacts(self):

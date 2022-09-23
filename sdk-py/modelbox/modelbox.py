@@ -1,4 +1,5 @@
 from __future__ import annotations
+from genericpath import isdir
 from typing import Dict, List, Any, Union
 from enum import Enum
 from dataclasses import InitVar, dataclass, field
@@ -73,18 +74,33 @@ class ArtifactMime(Enum):
 class Artifact:
     parent: str
     path: str
-    mime_type: ArtifactMime
+    mime_type: ArtifactMime = ArtifactMime.Unknown
     checksum: str = ""
     id: str = ""
 
-    def to_proto(self, parent: str) -> service_pb2.FileMetadata:
+    def __post_init__(self):
+        if self.checksum == "":
+            self.update_checksum()
+        if self.mime_type == ArtifactMime.Unknown:
+            self.update_mime()
+
+    def to_proto(self) -> service_pb2.FileMetadata:
         return service_pb2.FileMetadata(
-            parent_id=parent,
+            parent_id=self.parent,
             path=self.path,
             checksum=self.checksum,
             file_type=self.mime_type.to_proto(),
             id=self.id,
         )
+
+    def update_mime(self):
+        _, ext = os.path.splitext(self.path)
+        if ext in ['jpg', 'png', 'jpeg', 'gif', 'bmp']:
+            self.mime_type = ArtifactMime.Image
+        if ext in ['mp4', 'ogg', 'ogv', 'mov', 'm4v', 'mkv', 'webm']:
+            self.mime_type = ArtifactMime.Audio
+        if ext in ['pt', 'pth']:
+            self.mime_type = ArtifactMime.ModelVersion
 
     def update_checksum(self):
         if self.checksum == "":
@@ -235,19 +251,18 @@ class ArtifactLoggerMixin:
         self._id = parent_id
         self._client = client
 
-    def track_artifacts(self, artifacts: List[Artifact]) -> TrackArtifactsResponse:
+    def track_artifacts(self, files: List[str]) -> TrackArtifactsResponse:
         proto_artifacts = []
-        for artifact in artifacts:
-            artifact.update_checksum()
-            proto_artifacts.append(artifact.to_proto(self._id))
-            proto_artifacts.append(
-                service_pb2.FileMetadata(
-                    parent_id=artifact.parent,
-                    file_type=artifact.mime_type.to_proto(),
-                    checksum=artifact.checksum,
-                    path=artifact.path,
-                )
-            )
+        tracked_files = []
+        for f_path in files:
+            if os.path.isdir(f_path):
+                files_in_dir = [os.path.join(dp, f) for dp, dn, filenames in os.walk(f_path) for f in filenames]
+                tracked_files.append(files_in_dir)
+            else:
+                tracked_files.append(f_path)
+        for f in tracked_files:
+            artifact = Artifact(parent=self._id, path=f)
+            proto_artifacts.append(artifact.to_proto())
         resp = self._client.track_artifacts(proto_artifacts)
         return TrackArtifactsResponse(num_artifacts_tracked=resp.num_artifacts_tracked)
 

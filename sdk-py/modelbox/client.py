@@ -179,7 +179,7 @@ class ModelBoxClient:
         resp = self._client.ListMetadata(req)
         meta = {}
         for k, v in resp.metadata.items():
-            meta[k] = v
+            meta[k] = json_format.MessageToDict(v)
         return meta
 
     def list_models(self, namespace: str) -> service_pb2.ListModelsResponse:

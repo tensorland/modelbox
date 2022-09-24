@@ -124,7 +124,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} ModelBox. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} ModelBox.`,
       },
       prism: {
         theme: lightCodeTheme,

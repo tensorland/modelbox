@@ -69,7 +69,7 @@ services:
       - POSTGRES_PASSWORD=foo
   jupyter:
     image: jupyter/scipy-notebook:0fd03d9356de
-    command: ["start-notebook.sh", "--NotebookApp.token=''", "--NotebookApp.password=''"]
+    command: ["/home/jovyan/work/scripts/jupyter_server_start.sh"]
     profiles:
       - local
     restart: always
@@ -82,6 +82,10 @@ services:
       - type: bind
         source: ./tutorials/
         target: "/home/jovyan/work/tutorials/"
+      - type: bind
+        source: ./deploy/scripts
+        target: "/home/jovyan/work/scripts/"
+
     networks:
         server:
             ipv4_address: 172.21.0.5

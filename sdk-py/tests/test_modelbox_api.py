@@ -156,6 +156,21 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
             created_at=timestamp_pb2.Timestamp(seconds=12345)
         )
 
+    def ListEvents(self, request, context):
+        events = service_pb2.ListEventsResponse(
+            events=[
+                service_pb2.Event(
+                    name="checkpoint_write_start",
+                    source=service_pb2.EventSource(name="host1"),
+                ),
+                service_pb2.Event(
+                    name="checkpoint_write_end",
+                    source=service_pb2.EventSource(name="host1"),
+                ),
+            ]
+        )
+        return events
+
     def ListArtifacts(self, request, context):
         files = [
             service_pb2.FileMetadata(
@@ -300,6 +315,11 @@ class TestModelBoxApi(unittest.TestCase):
         )
         resp = self._create_model().log_event(event)
         self.assertEqual(resp.created_at, 12345)
+
+    def test_list_events(self):
+        experiment = self._create_experiment()
+        events = experiment.events()
+        self.assertEqual(2, len(events))
 
     def _create_model(self):
         return self.mbox.new_model(

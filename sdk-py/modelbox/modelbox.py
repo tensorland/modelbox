@@ -15,6 +15,7 @@ from . import service_pb2_grpc
 from google.protobuf.struct_pb2 import Value
 from google.protobuf import json_format
 from google.protobuf.timestamp_pb2 import Timestamp
+from google.protobuf import json_format
 
 DEFAULT_NAMESPACE = "default"
 
@@ -128,6 +129,18 @@ class Event:
     wallclock_time: int
     metadata: Dict
 
+    def from_proto(ev: service_pb2.Event) -> Event:
+        metadata = {}
+        for k, v in ev.metadata.metadata.items():
+            metadata[k] = json_format.MessageToDict(v)
+
+        return Event(
+            name=ev.name,
+            source=EventSource(name=ev.source.name),
+            wallclock_time=ev.wallclock_time,
+            metadata=metadata,
+        )
+
 
 @dataclass
 class LogEventResponse:
@@ -209,6 +222,13 @@ class EventLoggerMixin:
         )
         ret = self._client.log_event(self._id, event)
         return LogEventResponse(created_at=ret.created_at.ToSeconds())
+
+    def events(self) -> List[Event]:
+        resp = self._client.list_events(self._id)
+        ret = []
+        for event in resp.events:
+            ret.append(Event.from_proto(event))
+        return ret
 
 
 class MetricsLoggerMixin:

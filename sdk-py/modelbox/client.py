@@ -1,3 +1,4 @@
+from os import times
 from typing import Any, Union, Dict, List
 import json
 from dataclasses import dataclass
@@ -8,7 +9,7 @@ from . import service_pb2
 from . import service_pb2_grpc
 from google.protobuf.struct_pb2 import Value
 from google.protobuf import json_format
-from google.protobuf.timestamp_pb2 import Timestamp
+from google.protobuf import timestamp_pb2
 
 # The chunk size at which files are being read.
 CHUNK_SZ = 1024
@@ -173,6 +174,9 @@ class ModelBoxClient:
     ) -> service_pb2.LogEventResponse:
         req = service_pb2.LogEventRequest(parent_id=parent_id, event=event)
         return self._client.LogEvent(req)
+
+    def list_events(self, parent_id: str) -> service_pb2.ListEventsRequest:
+        return self._client.ListEvents(service_pb2.ListEventsRequest(parent_id=parent_id, since = timestamp_pb2.Timestamp(seconds=0)))
 
     def list_metadata(self, id: str) -> Dict:
         req = service_pb2.ListMetadataRequest(parent_id=id)

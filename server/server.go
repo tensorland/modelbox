@@ -121,6 +121,8 @@ func (s *GrpcServer) CreateExperiment(
 	return &pb.CreateExperimentResponse{
 		ExperimentId:     result.ExperimentId,
 		ExperimentExists: result.Exists,
+		CreatedAt:        timestamppb.New(time.Unix(experiment.CreatedAt, 0)),
+		UpdatedAt:        timestamppb.New(time.Unix(experiment.UpdatedAt, 0)),
 	}, nil
 }
 

@@ -238,14 +238,14 @@ class MetricsLoggerMixin:
 
     def log_metrics(
         self,
-        key: str,
-        value=Union[float, str, bytes],
+        metrics: Dict[str, Union[float, str, bytes]],
         step: int = 0,
         wallclock: int = int(time.time()),
     ) -> LogMetricsResponse:
-        response = self._client.log_metrics(
-            self._id, key, MetricValue(step, wallclock, value)
-        )
+        for k, v in metrics.items():
+            response = self._client.log_metrics(
+                self._id, k, MetricValue(step, wallclock, v)
+            )
         return LogMetricsResponse(updated_at=int(time.time()))
 
     def get_all_metrics(self) -> Dict[str, List[MetricValue]]:

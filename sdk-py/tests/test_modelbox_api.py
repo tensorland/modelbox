@@ -292,7 +292,7 @@ class TestModelBoxApi(unittest.TestCase):
             "yolo", TEST_OWNER, TEST_NAMESPACE, TEST_EXTERN_ID, MLFramework.PYTORCH
         )
         resp = experiment.log_metrics(
-            key="val_accu", step=1, wallclock=500, value=0.234
+            metrics={"val_accu": 0.234}, step=1, wallclock=500
         )
 
     def test_get_metrics(self):

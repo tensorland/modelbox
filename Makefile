@@ -10,6 +10,15 @@ build:
 	@echo "==> Build Modelbox"
 	goreleaser release --snapshot --rm-dist
 
+
+.PHONY: sync-docker-hub
+sync-docker-hub:
+	@echo "==> Sync with docker hub"
+	docker push modelboxdotio/modelbox:0.0.1-next-arm64v8
+	docker push modelboxdotio/modelbox:0.0.1-next-amd64
+	docker manifest create modelboxdotio/modelbox:latest modelboxdotio/modelbox:0.0.1-next-arm64v8 modelboxdotio/modelbox:0.0.1-next-amd64
+	docker manifest push --purge modelboxdotio/modelbox:latest
+
 .PHONY: test
 test-server:
 	@echo "==> Test Modelbox Server"

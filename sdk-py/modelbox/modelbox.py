@@ -463,7 +463,7 @@ class Experiment(
             _client=self._client,
         )
 
-    def list_checkpoints(self) -> List[Checkpoint]:
+    def checkpoints(self) -> List[Checkpoint]:
         result = []
         resp = self._client.list_checkpoints(self.id)
         for cp_proto in resp.checkpoints:

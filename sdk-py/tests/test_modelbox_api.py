@@ -239,7 +239,7 @@ class TestModelBoxApi(unittest.TestCase):
 
     def test_list_checkpoints(self):
         experiment = self._create_experiment()
-        checkpoints = experiment.list_checkpoints()
+        checkpoints = experiment.checkpoints()
         self.assertEqual(2, len(checkpoints))
 
     def test_list_experiments(self):

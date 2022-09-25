@@ -296,7 +296,7 @@ class TestModelBoxApi(unittest.TestCase):
         )
 
     def test_get_metrics(self):
-        resp = self._create_model().get_all_metrics()
+        resp = self._create_model().all_metrics()
 
     def test_metadata(self):
         resp = self._create_model().update_metadata("foo", "bar")

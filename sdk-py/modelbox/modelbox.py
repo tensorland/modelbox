@@ -248,7 +248,7 @@ class MetricsLoggerMixin:
             )
         return LogMetricsResponse(updated_at=int(time.time()))
 
-    def get_all_metrics(self) -> Dict[str, List[MetricValue]]:
+    def all_metrics(self) -> Dict[str, List[MetricValue]]:
         return self._client.get_all_metrics(self._id)
 
 

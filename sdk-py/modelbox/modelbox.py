@@ -215,9 +215,12 @@ class EventLoggerMixin:
             json_value = Value()
             json_format.Parse(json.dumps(v), json_value)
             meta_dict[k] = json_value
+        wallclock_time = Timestamp()
+        wallclock_time.GetCurrentTime()
         event = service_pb2.Event(
             name=event.name,
             source=service_pb2.EventSource(name=event.source.name),
+            wallclock_time=wallclock_time,
             metadata=service_pb2.Metadata(metadata=meta_dict),
         )
         ret = self._client.log_event(self._id, event)

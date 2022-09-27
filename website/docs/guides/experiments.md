@@ -17,17 +17,16 @@ Several tutorials go over logging metadata -
 
 #### Create an Experiment
 ```
-result = client.create_experiment(
+experiment = mbox.new_experiment(
             name="yolo-v4", owner="foo@bar.com", namespace="cv", external_id="ext1", framework=MLFramework.PYTORCH
         )
-experiment_id = result.experiment_id
 ```
 
 #### Log additional metadata
 We can log arbitrary metadata related to the experiment as python dictionaries.
 
 ```
-result = client.update_metadata(parent_id=experiment_id, key="hyperparams", value={"fc_layers": 3, "lr": 0.0002})
+experiment.update_metadata(key="hyperparams", value={"fc_layers": 3, "lr": 0.0002})
 // result has the updated_at timestamp
 ```
 
@@ -35,8 +34,7 @@ result = client.update_metadata(parent_id=experiment_id, key="hyperparams", valu
 Arbitrary metrics can be logged at any point of the experiment lifecycle. The step represents the step in the experiment such as epoch or update step, etc. The wallclock time is the human interpretable time at which the metrics is created, and the value is the metric value. The following types of values are supported - float, strings and bytes. Tensors can be serialized to bytes or strings.
 
 ```
-metric_value = MetricValue(step=1, wallclock_time=12325, value=97.6)
-result = client.log_metrics(parent_id=experiment_id, key="val_accu", value=metric_value)
+experiment.log_metrics(metrics={'loss': 2.4, 'accu': 97.6}, step=10, wallclock=12345)
 ```
 
 #### Log Events
@@ -44,9 +42,9 @@ Events can be logged while training models to make debugging and improve the obs
 
 The following code logs an event about checkpoint store event from a trainer and records the wallclock time and checkpoint size. The events could be read to troubleshoot performance issues of checkpoint write operations.
 ```
-response = client.log_event(parent_id=experiment_id, event=Event(name="checkpoint_started", source=EventSource(name="trainer0"), wallclock_time=12345, metadata={"chk_size": 2345}))
+experiment.log_event(Event(name="checkpoint_started", source=EventSource(name="trainer"), wallclock_time = 12000 , metadata={"chk_size": 2345}))
 torch.save()
-response = client.log_event(parent_id=experiment_id, event=Event(name="checkpoint_finished", source=EventSource(name="trainer0"), wallclock_time=12500, metadata={"write_speed": "2Gbps"}))
+experiment.log_event(Event(name="checkpoint_finish", source=EventSource(name="trainer"), wallclock_time = 12500 , metadata={"write_speed": 2000}))
 ```
 
 ## gRPC API

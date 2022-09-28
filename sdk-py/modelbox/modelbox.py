@@ -3,15 +3,12 @@ from genericpath import isdir
 from typing import Dict, List, Any, Union
 from enum import Enum
 from dataclasses import InitVar, dataclass, field
-from hashlib import md5
 import json
 from modelbox.client import ModelBoxClient, file_checksum
 import os
 import time
 
-import grpc
 from . import service_pb2
-from . import service_pb2_grpc
 from google.protobuf.struct_pb2 import Value
 from google.protobuf import json_format
 from google.protobuf.timestamp_pb2 import Timestamp
@@ -176,7 +173,7 @@ class CreateCheckpointResponse:
 
 @dataclass
 class UploadArtifactResponse:
-    id: str
+    artifact_ids: Dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
@@ -275,6 +272,33 @@ class ArtifactLoggerMixin:
         self._client = client
 
     def track_artifacts(self, files: List[str]) -> TrackArtifactsResponse:
+        proto_artifacts = self._build_artifacts(files)
+        resp = self._client.track_artifacts(proto_artifacts)
+        return TrackArtifactsResponse(num_artifacts_tracked=resp.num_artifacts_tracked)
+
+    @property
+    def artifacts(self) -> List[Artifact]:
+        resp = self._client.list_artifacts(self._id)
+        artifact_list = []
+        for file in resp.files:
+            artifact_list.append(Artifact.from_proto(file))
+        return artifact_list
+
+    def upload_artifact(self, files: List[str]) -> UploadArtifactResponse:
+        proto_artifacts = self._build_artifacts(files)
+        result = UploadArtifactResponse()
+        for artifact in proto_artifacts:
+            resp = self._client.upload_artifact(
+                self._id, artifact.path, artifact.checksum, artifact.file_type
+            )
+            result.artifact_ids[artifact.path] = resp.id
+        return result
+
+    def download_artifact(self, id: str, path: str) -> DownloadArtifactResponse:
+        resp = self._client.download_artifact(id, path)
+        return DownloadArtifactResponse(id, path, resp.checksum)
+
+    def _build_artifacts(self, files: List[str]) -> List[Artifact]:
         proto_artifacts = []
         tracked_files = []
         for f_path in files:
@@ -287,29 +311,10 @@ class ArtifactLoggerMixin:
                 tracked_files.append(files_in_dir)
             else:
                 tracked_files.append(f_path)
-        for f in tracked_files:
-            artifact = Artifact(parent=self._id, path=f)
-            proto_artifacts.append(artifact.to_proto())
-        resp = self._client.track_artifacts(proto_artifacts)
-        return TrackArtifactsResponse(num_artifacts_tracked=resp.num_artifacts_tracked)
-
-    @property
-    def artifacts(self) -> List[Artifact]:
-        resp = self._client.list_artifacts(self._id)
-        artifact_list = []
-        for file in resp.files:
-            artifact_list.append(Artifact.from_proto(file))
-        return artifact_list
-
-    def upload_artifact(self, artifact: Artifact) -> UploadArtifactResponse:
-        resp = self._client.upload_artifact(
-            self._id, artifact.path, artifact.mime_type.to_proto()
-        )
-        return UploadArtifactResponse(resp.id)
-
-    def download_artifact(self, id: str, path: str) -> DownloadArtifactResponse:
-        resp = self._client.download_artifact(id, path)
-        return DownloadArtifactResponse(id, path, resp.checksum)
+            for f in tracked_files:
+                artifact = Artifact(parent=self._id, path=f)
+                proto_artifacts.append(artifact.to_proto())
+            return proto_artifacts
 
 
 @dataclass

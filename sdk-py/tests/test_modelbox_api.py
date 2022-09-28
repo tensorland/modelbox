@@ -262,8 +262,8 @@ class TestModelBoxApi(unittest.TestCase):
         file_path = str(
             pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
         )
-        resp = model.upload_artifact(Artifact(model.id, file_path, ArtifactMime.Text))
-        self.assertNotEqual("", resp.id)
+        resp = model.upload_artifact(files=[file_path])
+        self.assertEqual(1, len(resp.artifact_ids))
 
     def test_download_artifact(self):
         model = self._create_model()

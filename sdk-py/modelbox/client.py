@@ -124,8 +124,11 @@ class ModelBoxClient:
         )
         return self._client.CreateModel(req)
 
-    def _file_chunk_iterator(self, parent: str, path: str, file_type_proto: int):
-        checksum = file_checksum(path)
+    def _file_chunk_iterator(
+        self, parent: str, path: str, checksum: str, file_type_proto: int
+    ):
+        if checksum == "":
+            checksum = file_checksum(path)
         file_meta = service_pb2.FileMetadata(
             parent_id=parent,
             checksum=checksum,
@@ -141,9 +144,9 @@ class ModelBoxClient:
                 yield service_pb2.UploadFileRequest(chunks=data)
 
     def upload_artifact(
-        self, parent: str, path: str, file_type_proto: int
+        self, parent: str, path: str, checksum: str, file_type_proto: int
     ) -> ClientFileUploadResult:
-        itr = self._file_chunk_iterator(parent, path, file_type_proto)
+        itr = self._file_chunk_iterator(parent, path, checksum, file_type_proto)
         resp = self._client.UploadFile(itr)
         return ClientFileUploadResult(id=resp.file_id)
 
@@ -166,8 +169,10 @@ class ModelBoxClient:
         resp = self._client.TrackArtifacts(req)
         return ClientTrackArtifactsResult(num_artifacts_tracked=resp.num_files_tracked)
 
-    def list_artifacts(self, id:str) -> service_pb2.ListArtifactsResponse:
-        return self._client.ListArtifacts(service_pb2.ListArtifactsRequest(parent_id=id))
+    def list_artifacts(self, id: str) -> service_pb2.ListArtifactsResponse:
+        return self._client.ListArtifacts(
+            service_pb2.ListArtifactsRequest(parent_id=id)
+        )
 
     def log_event(
         self, parent_id: str, event: service_pb2.Event
@@ -176,7 +181,11 @@ class ModelBoxClient:
         return self._client.LogEvent(req)
 
     def list_events(self, parent_id: str) -> service_pb2.ListEventsRequest:
-        return self._client.ListEvents(service_pb2.ListEventsRequest(parent_id=parent_id, since = timestamp_pb2.Timestamp(seconds=0)))
+        return self._client.ListEvents(
+            service_pb2.ListEventsRequest(
+                parent_id=parent_id, since=timestamp_pb2.Timestamp(seconds=0)
+            )
+        )
 
     def list_metadata(self, id: str) -> Dict:
         req = service_pb2.ListMetadataRequest(parent_id=id)
@@ -215,8 +224,12 @@ class ModelBoxClient:
         )
         return self._client.CreateModelVersion(req)
 
-    def list_model_versions(self, model_id: str) -> service_pb2.ListModelVersionsResponse:
-        return self._client.ListModelVersions(service_pb2.ListModelVersionsRequest(model=model_id))
+    def list_model_versions(
+        self, model_id: str
+    ) -> service_pb2.ListModelVersionsResponse:
+        return self._client.ListModelVersions(
+            service_pb2.ListModelVersionsRequest(model=model_id)
+        )
 
     def create_checkpoint(
         self,
@@ -236,7 +249,9 @@ class ModelBoxClient:
     def get_experiment(self, id: str) -> service_pb2.GetExperimentResponse:
         return self._client.GetExperiment(service_pb2.GetExperimentRequest(id=id))
 
-    def list_checkpoints(self, experiment_id: str) -> service_pb2.ListCheckpointsResponse:
+    def list_checkpoints(
+        self, experiment_id: str
+    ) -> service_pb2.ListCheckpointsResponse:
         req = service_pb2.ListCheckpointsRequest(experiment_id=experiment_id)
         return self._client.ListCheckpoints(req)
 

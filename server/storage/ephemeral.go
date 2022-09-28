@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/fatih/structs"
+	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/vmihailenco/msgpack/v5"
 	bolt "go.etcd.io/bbolt"
 	"go.uber.org/zap"
@@ -245,7 +245,16 @@ func (e *EphemeralStorage) GetCheckpoint(_ context.Context, id string) (*Checkpo
 }
 
 func (e *EphemeralStorage) CreateModel(ctx context.Context, model *Model, metadata SerializableMetadata) (*CreateModelResult, error) {
-	result, err := &CreateModelResult{ModelId: model.Id}, e.writeBytes(model, model.Id, MODELS, nil)
+	event := &ChangeEvent{
+		ObjectId:   model.Id,
+		ObjectType: "model",
+		Action:     "create",
+		Time:       time.Now(),
+		Payload:    structs.Map(model),
+		Namespace:  model.Namespace,
+	}
+
+	result, err := &CreateModelResult{ModelId: model.Id}, e.writeBytes(model, model.Id, MODELS, event)
 	if err != nil {
 		return nil, err
 	}

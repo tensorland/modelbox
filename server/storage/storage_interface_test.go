@@ -88,6 +88,7 @@ func (s *StorageInterfaceTestSuite) TestObjectCreateIdempotency() {
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateModel() {
+	since := time.Now()
 	description := "a large translation model based on gpt3"
 	m := NewModel("blender", OWNER, NAMESPACE, TASK, description)
 	blob1 := artifacts.NewFileMetadata(m.Id, "/foo/bar", "checksum123", artifacts.TextFile, 0, 0)
@@ -103,6 +104,18 @@ func (s *StorageInterfaceTestSuite) TestCreateModel() {
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, description, m1.Description)
 	assert.Equal(s.t, NAMESPACE, m1.Namespace)
+
+	// Check for mutation events
+	changes, err := s.storageIf.ListChanges(ctx, NAMESPACE, since)
+	assert.Nil(s.t, err)
+	// TODO Make this better by being able to filter events only for a specific object
+	hasEvent := false
+	for _, change := range changes {
+		if change.ObjectId == m.Id {
+			hasEvent = true
+		}
+	}
+	assert.True(s.t, hasEvent)
 }
 
 func (s *StorageInterfaceTestSuite) TestListModels() {

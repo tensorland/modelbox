@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/fatih/structs"
+	"github.com/jmoiron/sqlx/types"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/tensorland/modelbox/server/utils"
-	"github.com/jmoiron/sqlx/types"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -40,6 +42,17 @@ func (m *ModelSchema) ToModel(files artifacts.FileSet) *Model {
 		model.Files = files
 	}
 	return model
+}
+
+func (m *ModelSchema) mutationSchema() *MutationEventSchema {
+	return &MutationEventSchema{
+		MutationTime: uint64(time.Now().Unix()),
+		Action:       "create",
+		ObjectType:   "model",
+		ObjectId:     m.Id,
+		Namespace:    m.Namespace,
+		Payload:      structs.Map(m),
+	}
 }
 
 func ModelToSchema(m *Model) *ModelSchema {
@@ -95,6 +108,17 @@ func ModelVersionToSchema(mv *ModelVersion) *ModelVersionSchema {
 		UniqueTags: mv.UniqueTags,
 		CreatedAt:  mv.CreatedAt,
 		UpdatedAt:  mv.UpdatedAt,
+	}
+}
+
+func (m *ModelVersionSchema) mutationSchema() *MutationEventSchema {
+	return &MutationEventSchema{
+		MutationTime: uint64(time.Now().Unix()),
+		Action:       "create",
+		ObjectType:   "modelversion",
+		ObjectId:     m.Id,
+		Namespace:    "",
+		Payload:      structs.Map(m),
 	}
 }
 
@@ -162,6 +186,17 @@ func (e *ExperimentSchema) ToExperiment() *Experiment {
 		Exists:     false,
 		CreatedAt:  e.CreatedAt,
 		UpdatedAt:  e.UpdatedAt,
+	}
+}
+
+func (e *ExperimentSchema) mutationSchema() *MutationEventSchema {
+	return &MutationEventSchema{
+		MutationTime: uint64(time.Now().Unix()),
+		Action:       "create",
+		ObjectType:   "experiment",
+		ObjectId:     e.Id,
+		Namespace:    e.Namespace,
+		Payload:      structs.Map(e),
 	}
 }
 

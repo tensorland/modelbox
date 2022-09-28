@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fatih/structs"
 	"github.com/jmoiron/sqlx"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"go.uber.org/zap"
@@ -99,15 +98,7 @@ func (s *SQLStorage) CreateExperiment(
 		if err := s.writeMetadata(ctx, tx, result.ExperimentId, metadata); err != nil {
 			return fmt.Errorf("can't write metadata: %v", err)
 		}
-		event := &MutationEventSchema{
-			MutationTime: uint64(time.Now().Unix()),
-			Action:       "create",
-			ObjectType:   "experiment",
-			ObjectId:     experiment.Id,
-			Namespace:    experiment.Namespace,
-			Payload:      structs.Map(experiment),
-		}
-		if err := s.createMutationEvent(ctx, tx, event); err != nil {
+		if err := s.createMutationEvent(ctx, tx, schema.mutationSchema()); err != nil {
 			return fmt.Errorf("unable to create mutation for experiment: %v", err)
 		}
 		return nil
@@ -226,6 +217,9 @@ func (s *SQLStorage) CreateModel(ctx context.Context, model *Model, metadata Ser
 		}
 		if err := s.writeMetadata(ctx, tx, model.Id, metadata); err != nil {
 			return fmt.Errorf("can't write metadata: %v", err)
+		}
+		if err := s.createMutationEvent(ctx, tx, schema.mutationSchema()); err != nil {
+			return fmt.Errorf("unable to create mutation for model: %v", err)
 		}
 		return s.writeFileSet(ctx, tx, model.Files)
 	})

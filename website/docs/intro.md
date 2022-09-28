@@ -8,6 +8,8 @@ ModelBox is an AI model and experiment metadata management service. It provides 
 
 Metadata and events can be exported as a stream by other systems to facilitate bespoke workflows such as compliance, access control, auditing, and deployment of models.
 
+![Intro_Img](guides/img/modelbox_high_level_picture.png)
+
 ## Features
 #### Experiment Metadata and Metrics Logging
 - Log hyperparameters, accuracy/loss, and other quality-related metrics during training.
@@ -21,7 +23,7 @@ Metadata and events can be exported as a stream by other systems to facilitate b
 
 #### Events
 - Log events about the system/trainer state during training and models from experiment jobs, workflow systems, and other AI/MLOps services.
-- Any changes made to experiment and model metadata are logged as change events in the system. 
+- Any changes made to experiments and model metadata are logged as change events in the system. 
 - External systems can watch events in real-time and trigger custom workflows.
 
 #### SDK

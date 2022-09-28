@@ -9,8 +9,8 @@ Log experiment metadata like hyperparameters, discrete operational events from t
 
 ## Tutorials
 Several tutorials go over logging metadata -
-1. Python SDK Tutorial
-2. PyTorch Lightning Tutorial
+1. [Python SDK Guide](https://github.com/tensorland/modelbox/blob/main/tutorials/Tutorial_Python_SDK.ipynb)
+2. [Pytorch Integration](https://github.com/tensorland/modelbox/blob/main/tutorials/Tutorial_Pytorch.ipynb)
 
 
 ## Python SDK 
@@ -47,8 +47,38 @@ torch.save()
 experiment.log_event(Event(name="checkpoint_finish", source=EventSource(name="trainer"), wallclock_time = 12500 , metadata={"write_speed": 2000}))
 ```
 
+#### Upload Artifacts 
+Use this API to upload any artifact that's useful to reproduce an experiment or troubleshoot any model quality issues.
+```
+upload_artifact(files)
+```
+* files - A list of file paths to be uploaded.
+
+#### Track Artifacts stored elsewhere
+Use this API to track any artifact which is stored elsewhere and is relevant to the experiment.
+```
+track_artifacts(files)
+```
+* files - A list of file paths to be tracked.
+
+#### Listing Artifacts
+Once artifacts are tracked, the list of artifacts can be fetched. This will download the Artifact metadata
+```
+artifacts() -> List[Artifact]
+```
+
+Artifact has the following attributes  -
+```
+class Artifact:
+    parent: str
+    path: str
+    mime_type: ArtifactMime = ArtifactMime.Unknown
+    checksum: str = ""
+    id: str = ""
+```
+
 ## gRPC API
-The grpc APIs that are used by the SDKs for logging experiment metadata - 
+The gRPC APIs that are used by the SDKs for logging experiment metadata - 
 
 ```
   // Creates a new experiment

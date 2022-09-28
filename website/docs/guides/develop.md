@@ -1,5 +1,17 @@
 # Developing ModelBox
 
+We cover how to contribute to ModelBox using GitPod and some miscellaneous topics related to the development of the service and SDK.
+
+## Gitpod
+
+Gitpod provides an ephemeral development environment which is ideal for -
+1. Getting started with ModelBox and evaluate the service if you don't have Docker available locally.
+2. Contributing code to ModelBox without setting up the development environment locally.
+
+Click the following button to have a GitPod workspace. When the workspace starts, it will automatically bring up a docker environment in a terminal and the PyTorch notebook can be run inside the workspace.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/tensorland/modelbox)
+
 
 ## Install Python SDK
 

@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	pb "github.com/tensorland/modelbox/sdk-go/proto"
 	"github.com/tensorland/modelbox/server/storage"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
@@ -23,12 +27,14 @@ import (
 
 type GrpcServer struct {
 	grpcServer         *grpc.Server
+	httpServer         *http.Server
 	metadataStorage    storage.MetadataStorage
 	experimentLogger   logging.ExperimentLogger
 	blobStorageBuilder artifacts.BlobStorageBuilder
 
-	lis    net.Listener
-	logger *zap.Logger
+	grpcLis net.Listener
+	httpLis net.Listener
+	logger  *zap.Logger
 	pb.UnimplementedModelStoreServer
 }
 
@@ -491,7 +497,8 @@ func NewGrpcServer(
 	metadatStorage storage.MetadataStorage,
 	blobStorageBuilder artifacts.BlobStorageBuilder,
 	experimentLogger logging.ExperimentLogger,
-	lis net.Listener,
+	grpcLis net.Listener,
+	httpLis net.Listener,
 	logger *zap.Logger,
 ) *GrpcServer {
 	grpcServer := grpc.NewServer(
@@ -503,20 +510,53 @@ func NewGrpcServer(
 		experimentLogger:   experimentLogger,
 		grpcServer:         grpcServer,
 		blobStorageBuilder: blobStorageBuilder,
-		lis:                lis,
+		grpcLis:            grpcLis,
+		httpLis:            httpLis,
 		logger:             logger,
 	}
 	pb.RegisterModelStoreServer(grpcServer, modelBoxServer)
+
+	// setup grpc-web
+	wrappedGrpc := grpcweb.WrapServer(grpcServer, grpcweb.WithOriginFunc(func(origin string) bool {
+		// TODO Harden this and only allow certain origins in production.
+		return true
+	}))
+	router := chi.NewRouter()
+	router.Use(
+		chiMiddleware.Logger,
+		chiMiddleware.Recoverer,
+		NewGrpcWebMiddleware(wrappedGrpc).Handler,
+	)
+	httpServer := &http.Server{Handler: router}
+	modelBoxServer.httpServer = httpServer
+
 	return modelBoxServer
 }
 
 func (s *GrpcServer) Start() {
-	s.logger.Sugar().Infof("server listening on addr: %v", s.lis.Addr().String())
-	if err := s.grpcServer.Serve(s.lis); err != nil {
-		s.logger.Fatal(fmt.Sprintf("can't start grpc server: %v", err))
+	go s.startGrpcWeb()
+	s.logger.Sugar().Infof("server listening on addr: %v", s.grpcLis.Addr().String())
+	if err := s.grpcServer.Serve(s.grpcLis); err != nil {
+		s.logger.Sugar().Fatalf("can't start grpc server: %v", err)
+	}
+}
+
+func (s *GrpcServer) startGrpcWeb() {
+	s.logger.Sugar().Infof("grpc-web listening on addr: %v", s.httpLis.Addr().String())
+	if err := s.grpcServer.Serve(s.httpLis); err != nil {
+		s.logger.Sugar().Fatalf("unable to start grpc-web: %v", err)
 	}
 }
 
 func (s *GrpcServer) Stop() {
+	s.httpServer.Close()
 	s.grpcServer.Stop()
+}
+
+func (s *GrpcServer) getWebWrapper() *grpcweb.WrappedGrpcServer {
+	wrappedGrpc := grpcweb.WrapServer(s.grpcServer, grpcweb.WithOriginFunc(func(origin string) bool {
+		// TODO Harden this and only allow certain origins in production.
+		return true
+	}))
+	return wrappedGrpc
 }

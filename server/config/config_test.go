@@ -9,7 +9,8 @@ import (
 func TestServerConfig(t *testing.T) {
 	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
 	assert.Nil(t, err)
-	assert.Equal(t, ":8085", config.ListenAddr)
+	assert.Equal(t, ":8086", config.GrpcListenAddr)
+	assert.Equal(t, ":8081", config.HttpListenAddr)
 	assert.Equal(t, "filesystem", config.ArtifactStorageBackend)
 	assert.Equal(t, "ephemeral", config.MetadataBackend)
 	assert.Equal(t, "inmemory", config.MetricsBackend)

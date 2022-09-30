@@ -13,7 +13,8 @@ metadata_storage = "ephemeral"
 metrics_storage = "inmemory"
 
 # Interface on which the metadata service is listening for network connections
-listen_addr = ":8085"
+grpc_listen_addr = ":8086"
+http_listen_addr = ":8081"
 
 # Additional configuration for filesystem based blob_storage
 [artifact_storage_filesystem]

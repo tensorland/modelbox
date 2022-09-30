@@ -48,7 +48,8 @@ type ServerConfig struct {
 	ArtifactStorageBackend string                   `toml:"artifact_storage"`
 	MetadataBackend        string                   `toml:"metadata_storage"`
 	MetricsBackend         string                   `toml:"metrics_storage"`
-	ListenAddr             string                   `toml:"listen_addr"`
+	GrpcListenAddr         string                   `toml:"grpc_listen_addr"`
+	HttpListenAddr         string                   `toml:"http_listen_addr"`
 	FileStorage            *FileStorageConfig       `toml:"artifact_storage_filesystem"`
 	S3Storage              *S3StorageConfig         `toml:"artifact_storage_s3"`
 	IntegratedStorage      *IntegratedStorageConfig `toml:"metadata_storage_integrated"`
@@ -72,8 +73,11 @@ func (c *ServerConfig) Merge(anotherConfig *ServerConfig) {
 		c.MetricsBackend = anotherConfig.MetricsBackend
 	}
 
-	if c.ListenAddr == "" {
-		c.ListenAddr = anotherConfig.ListenAddr
+	if c.GrpcListenAddr == "" {
+		c.GrpcListenAddr = anotherConfig.GrpcListenAddr
+	}
+	if c.HttpListenAddr == "" {
+		c.HttpListenAddr = anotherConfig.HttpListenAddr
 	}
 	if c.PromAddr == "" {
 		c.PromAddr = anotherConfig.PromAddr
@@ -101,7 +105,8 @@ func defaultServerConfig() *ServerConfig {
 	return &ServerConfig{
 		ArtifactStorageBackend: "filesystem",
 		MetadataBackend:        "ephemeral",
-		ListenAddr:             ":8080",
+		GrpcListenAddr:         ":8080",
+		HttpListenAddr:         ":8085",
 		MetricsBackend:         "inmemory",
 		PromAddr:               ":2112",
 	}

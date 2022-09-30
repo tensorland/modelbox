@@ -24,9 +24,13 @@ type Agent struct {
 }
 
 func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
-	lis, err := net.Listen("tcp", config.ListenAddr)
+	grpcLis, err := net.Listen("tcp", config.GrpcListenAddr)
 	if err != nil {
-		return nil, fmt.Errorf("unable to listen on interface: %v", err)
+		return nil, fmt.Errorf("unable to listen grpc on interface: %v", err)
+	}
+	httpLis, err := net.Listen("tcp", config.HttpListenAddr)
+	if err != nil {
+		return nil, fmt.Errorf("unable to listen grpc-web on interface: %v", err)
 	}
 	pSrvr, err := NewPromServer(config, logger)
 	if err != nil {
@@ -47,7 +51,7 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	}
 	logger.Sugar().Infof("using metrics backend: %v", experimentLogger.Backend())
 
-	server := NewGrpcServer(metadataStorage, fileStorageBuilder, experimentLogger, lis, logger)
+	server := NewGrpcServer(metadataStorage, fileStorageBuilder, experimentLogger, grpcLis, httpLis, logger)
 	return &Agent{
 		grpcServer: server,
 		storage:    metadataStorage,

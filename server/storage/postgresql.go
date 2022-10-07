@@ -10,6 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"github.com/lib/pq"
+	storageconfig "github.com/tensorland/modelbox/server/storage/config"
 	"go.uber.org/zap"
 )
 
@@ -51,12 +52,12 @@ func (*postgresDriverUtils) listEventsForObject() string {
 type PostgresStorage struct {
 	*SQLStorage
 	db     *sqlx.DB
-	config *PostgresConfig
+	config *storageconfig.PostgresConfig
 
 	logger *zap.Logger
 }
 
-func NewPostgresStorage(config *PostgresConfig, logger *zap.Logger) (*PostgresStorage, error) {
+func NewPostgresStorage(config *storageconfig.PostgresConfig, logger *zap.Logger) (*PostgresStorage, error) {
 	db, err := sqlx.Open(POSTGRES_DRIVER, config.DataSource())
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to postgres %v", err)
@@ -78,7 +79,7 @@ func (p *PostgresStorage) Backend() *BackendInfo {
 }
 
 func (p *PostgresStorage) DropDb() error {
-	db, err := sqlx.Open(POSTGRES_DRIVER, p.config.dsnAdmin())
+	db, err := sqlx.Open(POSTGRES_DRIVER, p.config.DsnAdmin())
 	if err != nil {
 		return fmt.Errorf("unable to connec to db: %v", err)
 	}
@@ -91,7 +92,7 @@ func (p *PostgresStorage) DropDb() error {
 }
 
 func (p *PostgresStorage) CreateSchema(path string) error {
-	db, dbCloser, err := p.connect(p.config.dsnAdmin())
+	db, dbCloser, err := p.connect(p.config.DsnAdmin())
 	if err != nil {
 		return err
 	}

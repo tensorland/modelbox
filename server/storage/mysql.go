@@ -10,6 +10,7 @@ import (
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	storageconfig "github.com/tensorland/modelbox/server/storage/config"
 
 	"go.uber.org/zap"
 )
@@ -52,12 +53,12 @@ func (*mySQLDriverUtils) listEventsForObject() string {
 type MySqlStorage struct {
 	*SQLStorage
 	db     *sqlx.DB
-	config *MySqlStorageConfig
+	config *storageconfig.MySqlStorageConfig
 
 	logger *zap.Logger
 }
 
-func NewMySqlStorage(config *MySqlStorageConfig, logger *zap.Logger) (*MySqlStorage, error) {
+func NewMySqlStorage(config *storageconfig.MySqlStorageConfig, logger *zap.Logger) (*MySqlStorage, error) {
 	db, err := sqlx.Open(MYSQL_DRIVER, config.DataSource())
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to mysql %v", err)
@@ -79,7 +80,7 @@ func (e *MySqlStorage) Backend() *BackendInfo {
 }
 
 func (e *MySqlStorage) DropDb() error {
-	db, err := sqlx.Open(MYSQL_DRIVER, e.config.dsnAdmin())
+	db, err := sqlx.Open(MYSQL_DRIVER, e.config.DsnAdmin())
 	if err != nil {
 		return fmt.Errorf("unable to connec to db: %v", err)
 	}
@@ -89,7 +90,7 @@ func (e *MySqlStorage) DropDb() error {
 }
 
 func (m *MySqlStorage) CreateSchema(path string) error {
-	db, err := sqlx.Open(MYSQL_DRIVER, m.config.dsnAdmin())
+	db, err := sqlx.Open(MYSQL_DRIVER, m.config.DsnAdmin())
 	if err != nil {
 		return fmt.Errorf("unable to connec to db: %v", err)
 	}

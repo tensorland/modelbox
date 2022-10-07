@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	storageconfig "github.com/tensorland/modelbox/server/storage/config"
 	"go.uber.org/zap"
 )
 
@@ -54,7 +55,7 @@ func (s *MySQLTestSuite) TearDownSuite() {
 
 func TestMySqlTestSuite(t *testing.T) {
 	logger, _ := zap.NewProduction()
-	config := MySqlStorageConfig{
+	config := storageconfig.MySqlStorageConfig{
 		Host:     host,
 		Port:     int(port),
 		UserName: user,

@@ -108,7 +108,7 @@ func (m *MySqlStorage) CreateSchema(path string) error {
 		return fmt.Errorf("unable to read schema files: %v", err)
 	}
 	sort.Strings(files)
-	m.logger.Sugar().Info("applying the following schema files: %v", strings.Join(files, ","))
+	m.logger.Sugar().Infof("applying the following schema files: %v", strings.Join(files, ","))
 	for _, file := range files {
 		buf, err := os.ReadFile(file)
 		if err != nil {

@@ -256,7 +256,7 @@ func (s *StorageInterfaceTestSuite) TestCreateEvent() {
 	assert.Equal(s.t, 1, len(events))
 }
 
-func (s *StorageInterfaceTestSuite) GetExperiment() {
+func (s *StorageInterfaceTestSuite) TestGetExperiment() {
 	ctx := context.Background()
 	e := NewExperiment(MODEL_NAME, OWNER, NAMESPACE, "xyz", Pytorch)
 	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
@@ -269,4 +269,27 @@ func (s *StorageInterfaceTestSuite) GetExperiment() {
 	assert.Equal(s.t, OWNER, experiment.Owner)
 	assert.Equal(s.t, NAMESPACE, experiment.Namespace)
 	assert.Equal(s.t, "xyz", experiment.ExternalId)
+}
+
+func (s *StorageInterfaceTestSuite) TestCreateActions() {
+	ctx := context.Background()
+	a1 := NewAction("quantize", "x86", "parent1", s.createMetadata())
+	err := s.storageIf.CreateAction(ctx, a1)
+	assert.Nil(s.t, err)
+
+	// Ensure that the action is available
+	actions, err := s.storageIf.ListActions(ctx, "parent1")
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, 1, len(actions))
+
+	// Get Action
+	actionState, err := s.storageIf.GetAction(ctx, a1.Id)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, actionState.Action.Id, a1.Id)
+	assert.Equal(s.t, actionState.Action.Arch, a1.Arch)
+}
+
+func (s *StorageInterfaceTestSuite) createMetadata() map[string]*structpb.Value {
+	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
+	return map[string]*structpb.Value{"foo": metaVal}
 }

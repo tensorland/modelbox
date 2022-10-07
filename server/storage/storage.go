@@ -12,6 +12,7 @@ import (
 	"github.com/tensorland/modelbox/sdk-go/proto"
 	"github.com/tensorland/modelbox/server/config"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
+	storageconfig "github.com/tensorland/modelbox/server/storage/config"
 	"github.com/tensorland/modelbox/server/storage/logging"
 	"github.com/tensorland/modelbox/server/utils"
 	"github.com/vmihailenco/msgpack/v5"
@@ -485,7 +486,7 @@ func NewMetadataStorage(
 		if mysqlConfig == nil {
 			return nil, fmt.Errorf("mysql config is not set up")
 		}
-		return NewMySqlStorage(&MySqlStorageConfig{
+		return NewMySqlStorage(&storageconfig.MySqlStorageConfig{
 			Host:     mysqlConfig.Host,
 			Port:     mysqlConfig.Port,
 			Password: mysqlConfig.Password,
@@ -498,7 +499,7 @@ func NewMetadataStorage(
 			return nil, fmt.Errorf("postgres config is not set up")
 		}
 		return NewPostgresStorage(
-			&PostgresConfig{
+			&storageconfig.PostgresConfig{
 				Host:     postgresConfig.Host,
 				Port:     postgresConfig.Port,
 				Password: postgresConfig.Password,

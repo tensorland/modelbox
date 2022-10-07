@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	storageconfig "github.com/tensorland/modelbox/server/storage/config"
 	"go.uber.org/zap"
 )
 
@@ -37,7 +38,7 @@ func (s *PostgresTestSuite) TearDownSuite() {
 func TestPostgresTestSuite(t *testing.T) {
 	logger, _ := zap.NewProduction()
 	port, _ = strconv.ParseUint(env("POSTGRES_TEST_PORT", "5432"), 10, 64)
-	config := PostgresConfig{
+	config := storageconfig.PostgresConfig{
 		Host:     env("POSTGRES_TEST_HOST", "172.20.0.5"),
 		Port:     int(port),
 		UserName: env("POSTGRES_TEST_USER", "postgres"),

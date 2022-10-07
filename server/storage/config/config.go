@@ -1,4 +1,4 @@
-package storage
+package config
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ func (c *MySqlStorageConfig) DataSource() string {
 	return dsn
 }
 
-func (c *MySqlStorageConfig) dsnAdmin() string {
+func (c *MySqlStorageConfig) DsnAdmin() string {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/",
 		c.UserName, c.Password, c.Host, strconv.Itoa(c.Port))
 	return dsn
@@ -39,7 +39,7 @@ func (p *PostgresConfig) DataSource() string {
 	return dsn
 }
 
-func (p *PostgresConfig) dsnAdmin() string {
+func (p *PostgresConfig) DsnAdmin() string {
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		p.Host, p.Port, p.UserName, p.Password, "postgres")
 	return dsn

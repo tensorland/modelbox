@@ -312,3 +312,40 @@ type EventSchema struct {
 	Wallclock uint64
 	Metadata  SerializableMetadata `db:"metadata"`
 }
+
+type ActionSchema struct {
+	Id         string
+	ParentId   string `db:"parent_id"`
+	Name       string
+	Arch       string
+	Params     SerializableMetadata `db:"params"`
+	CreatedAt  uint64               `db:"created_at"`
+	UpdatedAt  uint64               `db:"updated_at"`
+	FinishedAt uint64               `db:"finished_at"`
+}
+
+func (a *ActionSchema) toAction() *Action {
+	return &Action{
+		Id:         a.Id,
+		ParentId:   a.ParentId,
+		Name:       a.Name,
+		Params:     a.Params,
+		Arch:       a.Arch,
+		CreatedAt:  int64(a.CreatedAt),
+		UpdatedAt:  int64(a.UpdatedAt),
+		FinishedAt: int64(a.FinishedAt),
+	}
+}
+
+func newActionSchema(action *Action) *ActionSchema {
+	return &ActionSchema{
+		Id:         action.Id,
+		ParentId:   action.ParentId,
+		Name:       action.Name,
+		Arch:       action.Arch,
+		Params:     action.Params,
+		CreatedAt:  uint64(action.CreatedAt),
+		UpdatedAt:  uint64(action.UpdatedAt),
+		FinishedAt: uint64(action.FinishedAt),
+	}
+}

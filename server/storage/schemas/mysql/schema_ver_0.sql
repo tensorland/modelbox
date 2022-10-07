@@ -79,3 +79,25 @@ CREATE TABLE IF NOT EXISTS events (
    wallclock BIGINT,
    metadata JSON
 );
+
+CREATE TABLE IF NOT EXISTS actions (
+   id VARCHAR(40) PRIMARY KEY,
+   parent_id VARCHAR(40) NOT NULL,
+   name VARCHAR(100) NOT NULL,
+   arch VARCHAR(20) NOT NULL,
+   params JSON,
+   created_at BIGINT NOT NULL,
+   updated_at BIGINT NOT NULL,
+   finished_at BIGINT
+);
+
+CREATE TABLE IF NOT EXISTS action_state (
+   ID VARCHAR(45) PRIMARY KEY,
+   attempt BIGINT NOT NULL,
+   status VARCHAR(10) NOT NULL,
+   outcome VARCHAR(20) NOT NULL,
+   outcome_reason VARCHAR(20) NOT NULL,
+   created_at BIGINT,
+   updated_at BIGINT,
+   finishd_at BIGINT
+);

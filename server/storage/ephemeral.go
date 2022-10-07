@@ -25,6 +25,9 @@ var (
 	METADATA       = []byte("metadata")
 	MUTATIONS      = []byte("mutations")
 	EVENTS         = []byte("events")
+	ACTIONS        = []byte("actions")
+
+	ACTION_PARENT_IDX = []byte("action_parent_idx")
 )
 
 // itob returns an 8-byte big endian representation of v.
@@ -475,4 +478,67 @@ func (e *EphemeralStorage) ListEvents(ctx context.Context, parentId string) ([]*
 		return nil
 	})
 	return events, err
+}
+
+func (e *EphemeralStorage) ListActions(ctx context.Context, parentId string) ([]*Action, error) {
+	actions := []*Action{}
+	err := e.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket(ACTION_PARENT_IDX).Cursor()
+		actionBucket := tx.Bucket(ACTIONS)
+		parentBytes := []byte(parentId)
+		for k, v := c.First(); k != nil && bytes.HasPrefix(k, parentBytes); k, v = c.Next() {
+			var actionId string
+			if err := json.Unmarshal(v, &actionId); err != nil {
+				return fmt.Errorf("unable to decode action id from json : %v", err)
+			}
+
+			actionBytes := actionBucket.Get([]byte(actionId))
+			if actionBytes == nil {
+				continue
+			}
+			var action Action
+			if err := json.Unmarshal(actionBytes, &action); err != nil {
+				return fmt.Errorf("unable to decode action from bytes: %v", err)
+			}
+			actions = append(actions, &action)
+		}
+		return nil
+	})
+	return actions, err
+}
+
+func (e *EphemeralStorage) GetAction(ctx context.Context, id string) (*ActionState, error) {
+	var state ActionState
+
+	err := e.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(ACTIONS)
+		actionBytes := b.Get([]byte(id))
+		if actionBytes == nil {
+			return fmt.Errorf("unknown action")
+		}
+
+		var action Action
+
+		if err := json.Unmarshal(actionBytes, &action); err != nil {
+			return err
+		}
+		state.Action = &action
+
+		// TODO Get action instances
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &state, nil
+}
+
+func (e *EphemeralStorage) CreateAction(ctx context.Context, action *Action) error {
+	// TODO Create a changeEvent
+	// TODO Put the two writes under one tx
+	if err := e.writeJsonBytes(action.Id, fmt.Sprintf("%s-%s", action.ParentId, action.Id), ACTION_PARENT_IDX, nil); err != nil {
+		return err
+	}
+	return e.writeJsonBytes(action, action.Id, ACTIONS, nil)
 }

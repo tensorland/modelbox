@@ -34,6 +34,70 @@ func (s *SerializableMetadata) Scan(value interface{}) error {
 	return json.Unmarshal(b, &s)
 }
 
+// Status of an action associated with a model or experiment
+type ActionStatus uint8
+
+const (
+	StatusPending ActionStatus = iota
+	StatusRunning
+	StatusFinished
+)
+
+// Outcome of the action
+type ActionOutcome uint8
+
+const (
+	OutcomeUnknown ActionOutcome = iota
+	OutcomeSuccess
+	OutcomeFailure
+)
+
+// Action represents work associated with a model or an experiment
+type Action struct {
+	Id         string
+	ParentId   string
+	Name       string
+	Params     map[string]*structpb.Value
+	Arch       string
+	CreatedAt  int64
+	UpdatedAt  int64
+	FinishedAt int64
+}
+
+func NewAction(name, arch, parent string, params map[string]*structpb.Value) *Action {
+	h := sha1.New()
+	utils.HashString(h, name)
+	utils.HashString(h, parent)
+	utils.HashString(h, arch)
+	utils.HashMeta(h, params)
+	id := fmt.Sprintf("%x", h.Sum(nil))
+	currentTime := time.Now().Unix()
+	return &Action{
+		Id:        id,
+		ParentId:  parent,
+		Name:      name,
+		Arch:      arch,
+		Params:    params,
+		CreatedAt: currentTime,
+		UpdatedAt: currentTime,
+	}
+}
+
+type ActionInstance struct {
+	Id            string
+	Attempt       uint
+	Status        ActionStatus
+	Outcome       ActionOutcome
+	OutcomeReason string
+	CreatedTime   int64
+	FinishedTime  int64
+}
+
+type ActionState struct {
+	Action    *Action
+	Instances []*ActionInstance
+}
+
 type Event struct {
 	Id              string
 	ParentId        string
@@ -399,6 +463,12 @@ type MetadataStorage interface {
 	LogEvent(ctx context.Context, parentId string, event *Event) error
 
 	ListEvents(ctx context.Context, parentId string) ([]*Event, error)
+
+	CreateAction(ctx context.Context, action *Action) error
+
+	ListActions(ctx context.Context, parentId string) ([]*Action, error)
+
+	GetAction(ctx context.Context, id string) (*ActionState, error)
 
 	Close() error
 }

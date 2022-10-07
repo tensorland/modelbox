@@ -45,7 +45,11 @@ const (
 
 	EVENT_CREATE = "insert into events (id, parent_id, name, source_name, wallclock, metadata) VALUES(:id, :parent_id, :name, :source_name, :wallclock, :metadata)"
 
-	EVENTS_LIST = "insert into events (id, parent_id, name, source_name, wallclock, metadata) VALUES(:id, :parent_id, :name, :source_name, :wallclock, :metadata)"
+	ACTIONS_LIST = "select id, parent_id, name, arch, params, created_at, updated_at, finished_at from actions where parent_id=?"
+
+	ACTION_GET = "select id, parent_id, name, arch, params, created_at, updated_at, finished_at from actions where id=?"
+
+	ACTION_CREATE = "insert into actions (id, parent_id, name, arch, params, created_at, updated_at, finished_at) VALUES (:id, :parent_id, :name, :arch, :params, :created_at, :updated_at, :finished_at)"
 )
 
 type driverUtils interface {
@@ -478,7 +482,7 @@ func (s *SQLStorage) ListEvents(ctx context.Context, parentId string) ([]*Event,
 	events := []*Event{}
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		rows := []EventSchema{}
-		if err := s.db.SelectContext(ctx, &rows, s.listEventsForObject(), parentId); err != nil {
+		if err := tx.SelectContext(ctx, &rows, s.listEventsForObject(), parentId); err != nil {
 			return err
 		}
 		for _, row := range rows {
@@ -494,6 +498,47 @@ func (s *SQLStorage) ListEvents(ctx context.Context, parentId string) ([]*Event,
 		return nil
 	})
 	return events, err
+}
+
+func (s *SQLStorage) ListActions(ctx context.Context, parentId string) ([]*Action, error) {
+	actions := []*Action{}
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		rows := []ActionSchema{}
+		if err := tx.SelectContext(ctx, &rows, tx.Rebind(ACTIONS_LIST), parentId); err != nil {
+			return err
+		}
+		for _, row := range rows {
+			actions = append(actions, row.toAction())
+		}
+		return nil
+	})
+	return actions, err
+}
+
+func (s *SQLStorage) GetAction(ctx context.Context, id string) (*ActionState, error) {
+	var actionState ActionState
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		var actionSchema ActionSchema
+		if err := tx.GetContext(ctx, &actionSchema, s.db.Rebind(ACTION_GET), id); err != nil {
+			return err
+		}
+		action := actionSchema.toAction()
+		actionState.Action = action
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &actionState, nil
+}
+
+func (s *SQLStorage) CreateAction(ctx context.Context, action *Action) error {
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		schema := newActionSchema(action)
+		_, err := tx.NamedExecContext(ctx, ACTION_CREATE, schema)
+		return err
+	})
+	return err
 }
 
 func (s *SQLStorage) transact(ctx context.Context, fn func(*sqlx.Tx) error) error {

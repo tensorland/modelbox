@@ -42,7 +42,9 @@ type PostgresConfig struct {
 // Configuration to use SQL datastores for cluster membership
 type SQLClusterMembership struct {
 	// Pings the database to renew lease
-	LeaseInterval time.Time `toml:"lease_interval"`
+	LeaseInterval time.Duration `toml:"lease_interval"`
+
+	StaleHeartbeatDuraion time.Duration `toml:"stale_heartbeat_duration"`
 }
 
 // Represents hosts participating in a static cluster

@@ -7,7 +7,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/shirou/gopsutil/v3/host"
 	"github.com/tensorland/modelbox/server/config"
+	storageconfig "github.com/tensorland/modelbox/server/storage/config"
 	"github.com/tensorland/modelbox/server/utils"
 	"go.uber.org/zap"
 )
@@ -37,7 +39,7 @@ func (c ClusterMember) Value() (driver.Value, error) {
 	return json.Marshal(c)
 }
 
-func (c ClusterMember) Scan(value interface{}) error {
+func (c *ClusterMember) Scan(value interface{}) error {
 	b, ok := value.([]byte)
 	if !ok {
 		return errors.New("type assertion to []byte failed")
@@ -73,6 +75,23 @@ func NewClusterMembership(svrConfig *config.ServerConfig, logger *zap.Logger) (C
 	}
 
 	if svrConfig.ClusterMembershipBackend == "mysql" {
+		sqlConfig := &SQLConfig{
+			HBFrequency:               svrConfig.SQLClusterMembership.LeaseInterval,
+			MaxStaleHeartBeatDuration: svrConfig.SQLClusterMembership.StaleHeartbeatDuraion,
+		}
+		hostInfo, err := host.Info()
+		if err != nil {
+			return nil, err
+		}
+		member := NewClusterMember(hostInfo.Hostname, svrConfig.GrpcListenAddr, svrConfig.HttpListenAddr)
+		mysqlConfig := &storageconfig.MySqlStorageConfig{
+			Host:     svrConfig.MySQLConfig.Host,
+			Port:     svrConfig.MySQLConfig.Port,
+			UserName: svrConfig.MySQLConfig.User,
+			Password: svrConfig.MySQLConfig.Password,
+			DbName:   svrConfig.MySQLConfig.DbName,
+		}
+		NewMysqlClusterMembership(sqlConfig, member, mysqlConfig, logger)
 	}
 	return nil, fmt.Errorf("unable to create cluster membership driver for backend: %v", svrConfig.ClusterMembershipBackend)
 }

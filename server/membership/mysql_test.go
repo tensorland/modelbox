@@ -36,25 +36,25 @@ func init() {
 	dbname = env("MYSQL_TEST_DBNAME", "gotest")
 }
 
-type MySQLTestSuite struct {
+type MySQLMembershipTestSuite struct {
 	suite.Suite
 	*ClusterMembershipTestSuite
 	mysql *MysqlClusterMembership
 }
 
-func (s *MySQLTestSuite) SetupSuite() {
-	if err := s.mysql.CreateSchema("schemas/mysql/"); err != nil {
+func (s *MySQLMembershipTestSuite) SetupSuite() {
+	if err := s.mysql.CreateSchema("../storage/schemas/mysql/"); err != nil {
 		s.T().Fatalf("unable to load mysql schema: %v", err)
 	}
 }
 
-func (s *MySQLTestSuite) TearDownSuite() {
+func (s *MySQLMembershipTestSuite) TearDownSuite() {
 	if err := s.mysql.DropDb(); err != nil {
 		s.T().Fatalf("unable to drop db: %v", err)
 	}
 }
 
-func TestMySqlClusterMembershipSuite(t *testing.T) {
+func TestMySqlClusterMembershipTestSuite(t *testing.T) {
 	logger, _ := zap.NewProduction()
 	config := storageconfig.MySqlStorageConfig{
 		Host:     host,
@@ -72,7 +72,7 @@ func TestMySqlClusterMembershipSuite(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to create mysql: %v", err)
 	}
-	suite.Run(t, &MySQLTestSuite{
+	suite.Run(t, &MySQLMembershipTestSuite{
 		ClusterMembershipTestSuite: &ClusterMembershipTestSuite{
 			t:          t,
 			membership: mysql,

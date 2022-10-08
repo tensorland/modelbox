@@ -11,15 +11,15 @@ import (
 	"go.uber.org/zap"
 )
 
-type clusterMembersSchema struct {
+type ClusterMembersSchema struct {
 	Id            string
-	Info          *ClusterMember
+	Info          ClusterMember
 	HeartBeatTime int64 `db:"heartbeat_time"`
 }
 
 type queryRegistry interface {
 	renewHeartbeat() string
-	getMembers(staleDuration time.Duration) string
+	getMembers(currentTime int64, staleDuration time.Duration) string
 }
 
 type mysqlQueryRegistry struct{}
@@ -28,8 +28,9 @@ func (*mysqlQueryRegistry) renewHeartbeat() string {
 	return "INSERT INTO cluster_members(id, info, heartbeat_time) VALUES(:id, :info, :heartbeat_time) ON DUPLICATE KEY UPDATE heartbeat_time=:heartbeat_time"
 }
 
-func (*mysqlQueryRegistry) getMembers(staleDuration time.Duration) string {
-	return ""
+func (*mysqlQueryRegistry) getMembers(currentTime int64, staleDuration time.Duration) string {
+	cutOffTime := currentTime - int64(staleDuration.Seconds())
+	return fmt.Sprintf("SELECT id, info, heartbeat_time FROM cluster_members where heartbeat_time > %v", cutOffTime)
 }
 
 type SQLConfig struct {
@@ -55,8 +56,8 @@ func (s *SQLMembership) GetMembers() ([]*ClusterMember, error) {
 	members := []*ClusterMember{}
 	ctx := context.Background()
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
-		rows := []clusterMembersSchema{}
-		if err := tx.SelectContext(ctx, &rows, s.queryRegistry.getMembers(s.config.MaxStaleHeartBeatDuration)); err != nil {
+		rows := []ClusterMembersSchema{}
+		if err := tx.SelectContext(ctx, &rows, s.queryRegistry.getMembers(time.Now().Unix(), s.config.MaxStaleHeartBeatDuration)); err != nil {
 			return err
 		}
 		for _, row := range rows {
@@ -94,7 +95,7 @@ func (s *SQLMembership) transact(ctx context.Context, fn func(*sqlx.Tx) error) e
 // Join the pool of servers
 func (s *SQLMembership) Join() error {
 	s.logger.Sugar().Infof("starting cluster membership. heartbeat frequency: %v", s.config.HBFrequency)
-	s.heartBeat()
+	go s.heartBeat()
 	return nil
 }
 
@@ -119,9 +120,9 @@ func (s *SQLMembership) heartBeat() {
 
 func (s *SQLMembership) renewOnce(t int64) error {
 	ctx := context.Background()
-	schema := &clusterMembersSchema{
+	schema := &ClusterMembersSchema{
 		Id:            s.member.Id,
-		Info:          s.member,
+		Info:          *s.member,
 		HeartBeatTime: t,
 	}
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {

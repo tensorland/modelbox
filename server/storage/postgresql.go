@@ -2,10 +2,6 @@ package storage
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"sort"
-	"strings"
 
 	"github.com/jmoiron/sqlx"
 
@@ -18,9 +14,9 @@ const (
 	POSTGRES_DRIVER = "postgres"
 )
 
-type postgresDriverUtils struct{}
+type postgresQueryEngine struct{}
 
-func (*postgresDriverUtils) isDuplicate(err error) bool {
+func (*postgresQueryEngine) isDuplicate(err error) bool {
 	if driverErr, ok := err.(*pq.Error); ok {
 		if driverErr.Code == "23505" {
 			return true
@@ -29,28 +25,29 @@ func (*postgresDriverUtils) isDuplicate(err error) bool {
 	return false
 }
 
-func (*postgresDriverUtils) updateMetadata() string {
+func (*postgresQueryEngine) updateMetadata() string {
 	return "INSERT INTO metadata (id, parent_id, metadata) VALUES(:id, :parent_id, :metadata) ON CONFLICT (id) DO UPDATE SET updated_at  = EXCLUDED.updated_at, metadata = EXCLUDED.metadata "
 }
 
-func (*postgresDriverUtils) createExperiment() string {
+func (*postgresQueryEngine) createExperiment() string {
 	return "insert into experiments(id, name, owner, namespace, external_id, ml_framework, created_at, updated_at) values(:id, :name, :owner, :namespace, :external_id, :ml_framework, :created_at, :updated_at) ON CONFLICT (id) DO UPDATE SET updated_at = EXCLUDED.updated_at"
 }
 
-func (*postgresDriverUtils) createCheckpoint() string {
+func (*postgresQueryEngine) createCheckpoint() string {
 	return "insert into checkpoints(id, experiment, epoch, metrics, created_at, updated_at) values(:id, :experiment, :epoch, :metrics, :created_at, :updated_at) ON CONFLICT (id) DO UPDATE SET updated_at = EXCLUDED.updated_at"
 }
 
-func (*postgresDriverUtils) createModel() string {
+func (*postgresQueryEngine) createModel() string {
 	return "insert into models(id, name, owner, namespace, task, description, created_at, updated_at) values(:id, :name, :owner, :namespace, :task, :description, :created_at, :updated_at) ON CONFLICT (id) DO UPDATE SET updated_at = EXCLUDED.updated_at"
 }
 
-func (*postgresDriverUtils) listEventsForObject() string {
+func (*postgresQueryEngine) listEventsForObject() string {
 	return "select id, parent_id, name, source_name, wallclock, metadata from events where parent_id=$1"
 }
 
 type PostgresStorage struct {
 	*SQLStorage
+	*PostgresDriverUtils
 	db     *sqlx.DB
 	config *storageconfig.PostgresConfig
 
@@ -62,8 +59,9 @@ func NewPostgresStorage(config *storageconfig.PostgresConfig, logger *zap.Logger
 	if err != nil {
 		return nil, fmt.Errorf("unable to connect to postgres %v", err)
 	}
-	sqlStorage := NewSQLStorage(db, &postgresDriverUtils{}, logger)
-	return &PostgresStorage{SQLStorage: sqlStorage, db: db, config: config, logger: logger}, nil
+	sqlStorage := NewSQLStorage(db, &postgresQueryEngine{}, logger)
+	util := &PostgresDriverUtils{db: db, config: config, logger: logger}
+	return &PostgresStorage{SQLStorage: sqlStorage, PostgresDriverUtils: util, db: db, config: config, logger: logger}, nil
 }
 
 func (p *PostgresStorage) Ping() error {
@@ -76,80 +74,4 @@ func (p *PostgresStorage) Close() error {
 
 func (p *PostgresStorage) Backend() *BackendInfo {
 	return &BackendInfo{Name: POSTGRES_DRIVER}
-}
-
-func (p *PostgresStorage) DropDb() error {
-	db, err := sqlx.Open(POSTGRES_DRIVER, p.config.DsnAdmin())
-	if err != nil {
-		return fmt.Errorf("unable to connec to db: %v", err)
-	}
-	defer db.Close()
-
-	p.dropConnections(p.db, p.config.DbName)
-	p.db.Close()
-	_, err = db.Exec(fmt.Sprintf("DROP DATABASE %s", p.config.DbName))
-	return err
-}
-
-func (p *PostgresStorage) CreateSchema(path string) error {
-	db, dbCloser, err := p.connect(p.config.DsnAdmin())
-	if err != nil {
-		return err
-	}
-	defer dbCloser()
-	p.dropConnections(db, p.config.DbName)
-	queries := []string{
-		fmt.Sprintf("DROP DATABASE IF EXISTS %v", p.config.DbName),
-		fmt.Sprintf("CREATE DATABASE %v", p.config.DbName),
-	}
-	for _, query := range queries {
-		if _, err := db.Exec(query); err != nil {
-			return fmt.Errorf("unable to execute query: %v err: %v", query, err)
-		}
-	}
-	files, err := filepath.Glob(fmt.Sprintf("%s/schema_ver*", path))
-	if err != nil {
-		return fmt.Errorf("unable to read schema files: %v", err)
-	}
-	sort.Strings(files)
-	p.logger.Sugar().Info("applying the following schema files: ", strings.Join(files, ","))
-	for _, file := range files {
-		buf, err := os.ReadFile(file)
-		if err != nil {
-			return fmt.Errorf("unable to read schema: %v", err)
-		}
-		queries = strings.Split(string(buf), ";")
-		for _, query := range queries {
-			if strings.TrimSpace(query) == "" {
-				continue
-			}
-			if _, err := p.db.Exec(query); err != nil {
-				return fmt.Errorf("unable to execute query: %v, err: %v", query, err)
-			}
-		}
-	}
-	return nil
-}
-
-func (p *PostgresStorage) connect(source string) (*sqlx.DB, func(), error) {
-	db, err := sqlx.Open("postgres", source)
-	if err != nil {
-		return nil, nil, fmt.Errorf("unable to open db: %v", err)
-	}
-	return db, func() {
-		if err := db.Close(); err != nil {
-			panic(err)
-		}
-	}, nil
-}
-
-func (p *PostgresStorage) dropConnections(db *sqlx.DB, name string) {
-	query := `
-		select pg_terminate_backend(pg_stat_activity.pid)
-		from pg_stat_activity
-		where pg_stat_activity.datname = $1 and pid <> pg_backend_pid()`
-	_, err := db.Exec(query, name)
-	if err != nil {
-		p.logger.Sugar().Errorf("error dropping connections: %v", err)
-	}
 }

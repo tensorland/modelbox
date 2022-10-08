@@ -52,7 +52,7 @@ const (
 	ACTION_CREATE = "insert into actions (id, parent_id, name, arch, params, created_at, updated_at, finished_at) VALUES (:id, :parent_id, :name, :arch, :params, :created_at, :updated_at, :finished_at)"
 )
 
-type driverUtils interface {
+type queryEngine interface {
 	isDuplicate(err error) bool
 
 	updateMetadata() string
@@ -67,14 +67,14 @@ type driverUtils interface {
 }
 
 type SQLStorage struct {
-	driverUtils
+	queryEngine
 	db *sqlx.DB
 
 	logger *zap.Logger
 }
 
-func NewSQLStorage(db *sqlx.DB, driverUtils driverUtils, logger *zap.Logger) *SQLStorage {
-	return &SQLStorage{db: db, driverUtils: driverUtils, logger: logger}
+func NewSQLStorage(db *sqlx.DB, queryEngine queryEngine, logger *zap.Logger) *SQLStorage {
+	return &SQLStorage{db: db, queryEngine: queryEngine, logger: logger}
 }
 
 func (s *SQLStorage) CreateExperiment(
@@ -91,7 +91,7 @@ func (s *SQLStorage) CreateExperiment(
 			schema,
 		)
 		if err != nil {
-			if s.driverUtils.isDuplicate(err) {
+			if s.queryEngine.isDuplicate(err) {
 				result.Exists = true
 				result.ExperimentId = experiment.Id
 				return nil
@@ -132,7 +132,7 @@ func (s *SQLStorage) CreateCheckpoint(
 		cs := ToCheckpointSchema(c)
 		_, err := tx.NamedExec(s.createCheckpoint(), cs)
 		if err != nil {
-			if s.driverUtils.isDuplicate(err) {
+			if s.queryEngine.isDuplicate(err) {
 				return nil
 			}
 			return fmt.Errorf("unable to write checkpoint: %v", err)
@@ -214,7 +214,7 @@ func (s *SQLStorage) CreateModel(ctx context.Context, model *Model, metadata Ser
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := ModelToSchema(model)
 		if _, err := tx.NamedExec(s.createModel(), schema); err != nil {
-			if s.driverUtils.isDuplicate(err) {
+			if s.queryEngine.isDuplicate(err) {
 				return nil
 			}
 			return fmt.Errorf("unable to create model: %v", err)
@@ -277,7 +277,7 @@ func (s *SQLStorage) CreateModelVersion(
 			MODEL_VERSION_CREATE,
 			schema,
 		); err != nil {
-			if s.driverUtils.isDuplicate(err) {
+			if s.queryEngine.isDuplicate(err) {
 				return nil
 			}
 			return fmt.Errorf("unable to create model version: %v", err)
@@ -453,7 +453,7 @@ func (s *SQLStorage) writeFileSet(ctx context.Context, tx *sqlx.Tx, files artifa
 	sqlStr = sqlStr[0 : len(sqlStr)-1]
 	if len(files) > 0 {
 		if _, err := tx.ExecContext(ctx, s.db.Rebind(sqlStr), vals...); err != nil {
-			if s.driverUtils.isDuplicate(err) {
+			if s.queryEngine.isDuplicate(err) {
 				return fmt.Errorf("duplicate file")
 			}
 			return fmt.Errorf("unable to create blobs for model: %v", err)

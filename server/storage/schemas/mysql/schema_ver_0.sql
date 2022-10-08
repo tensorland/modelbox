@@ -101,3 +101,9 @@ CREATE TABLE IF NOT EXISTS action_state (
    updated_at BIGINT,
    finishd_at BIGINT
 );
+
+CREATE TABLE IF NOT EXISTS cluster_members (
+   id VARCHAR(40) PRIMARY KEY,
+   info JSON,
+   heartbeat_time BIGINT
+);

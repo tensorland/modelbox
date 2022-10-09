@@ -49,12 +49,14 @@ type SQLClusterMembership struct {
 
 // Represents hosts participating in a static cluster
 type ClusterMember struct {
-	Id      string
-	RPCAddr string
+	Id       string `toml:"id"`
+	HostName string `toml:"host_name"`
+	RPCAddr  string `toml:"rpc_addr"`
+	HttpAddr string `toml:"http_addr"`
 }
 
 type StaticClusterMembership struct {
-	Members []*ClusterMember
+	Members []*ClusterMember `toml:"members"`
 }
 
 // Configuration for Timescaledb. Since it's postgres under the hood

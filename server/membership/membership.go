@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/shirou/gopsutil/v3/host"
+	gopsutilhost "github.com/shirou/gopsutil/v3/host"
 	"github.com/tensorland/modelbox/server/config"
 	storageconfig "github.com/tensorland/modelbox/server/storage/config"
 	"github.com/tensorland/modelbox/server/utils"
@@ -79,7 +79,7 @@ func NewClusterMembership(svrConfig *config.ServerConfig, logger *zap.Logger) (C
 			HBFrequency:               svrConfig.SQLClusterMembership.LeaseInterval,
 			MaxStaleHeartBeatDuration: svrConfig.SQLClusterMembership.StaleHeartbeatDuraion,
 		}
-		hostInfo, err := host.Info()
+		hostInfo, err := gopsutilhost.Info()
 		if err != nil {
 			return nil, err
 		}

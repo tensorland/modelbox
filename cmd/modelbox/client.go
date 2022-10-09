@@ -50,7 +50,7 @@ is created in the current directory. Help:
 func init() {
 	rootCmd.AddCommand(clientCmd)
 	clientCmd.AddCommand(clientInitConfigCmd)
-	clientInitConfigCmd.Flags().String("path", "./modelbox_client.toml", "path to write the client config")
+	clientInitConfigCmd.Flags().String("path", "./modelbox_client.yaml", "path to write the client config")
 
 	clientCmd.AddCommand(watchCmd)
 	watchCmd.Flags().StringVar(&namespace, "namespace", "", "namespace to watch")

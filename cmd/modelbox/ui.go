@@ -17,7 +17,7 @@ import (
 )
 
 func WriteServerConfigToFile(path string) error {
-	data, err := Asset("assets/modelbox_server.toml")
+	data, err := Asset("assets/modelbox_server.yaml")
 	if err != nil {
 		return err
 	}
@@ -55,7 +55,7 @@ func CreateSchema(configPath, schemaDir string, logger *zap.Logger) error {
 }
 
 func WriteClientConfigToFile(path string) error {
-	data, err := Asset("assets/modelbox_client.toml")
+	data, err := Asset("assets/modelbox_client.yaml")
 	if err != nil {
 		return err
 	}

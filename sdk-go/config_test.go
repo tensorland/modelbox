@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewClientConfig(t *testing.T) {
-	config, err := NewClientConfig("assets/modelbox_client.toml")
+	config, err := NewClientConfig("../cmd/modelbox/assets/modelbox_client.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, ":8085", config.ServerAddr)
 }

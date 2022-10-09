@@ -4,11 +4,11 @@ import (
 	"net"
 	"os"
 
-	"github.com/BurntSushi/toml"
+	"gopkg.in/yaml.v3"
 )
 
 type ClientConfig struct {
-	ServerAddr string `toml:"server_addr"`
+	ServerAddr string `yaml:"server_addr"`
 }
 
 func NewClientConfig(configPath string) (*ClientConfig, error) {
@@ -17,7 +17,7 @@ func NewClientConfig(configPath string) (*ClientConfig, error) {
 		return nil, err
 	}
 	var config ClientConfig
-	if _, err := toml.Decode(string(bytes), &config); err != nil {
+	if err := yaml.Unmarshal(bytes, &config); err != nil {
 		return nil, err
 	}
 	if err := config.validate(); err != nil {

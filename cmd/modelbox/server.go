@@ -52,7 +52,7 @@ modelbox server --config-path ./path/to/config`,
 func init() {
 	rootCmd.AddCommand(serverCmd)
 	serverCmd.AddCommand(serverInitConfigCmd)
-	serverInitConfigCmd.Flags().String("path", "./modelbox_server.toml", "path to write the server config")
+	serverInitConfigCmd.Flags().String("path", "./modelbox_server.yaml", "path to write the server config")
 
 	serverCmd.AddCommand(createSchemaCmd)
 	createSchemaCmd.Flags().StringVar(&metadataSchemaPath, "schema-dir", "", "path to metadata schema dir")

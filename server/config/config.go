@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/BurntSushi/toml"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -21,66 +21,66 @@ const (
 )
 
 type MySQLConfig struct {
-	Host     string `toml:"host"`
-	Port     int    `toml:"port"`
-	User     string `toml:"username"`
-	Password string `toml:"password"`
-	DbName   string `toml:"dbname"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	User     string `yaml:"username"`
+	Password string `yaml:"password"`
+	DbName   string `yaml:"dbname"`
 }
 
 // This is being duplicated from mysql to accomodate specfic configs
 // which are not common like ssl and such and offers flexibility for
 // the future
 type PostgresConfig struct {
-	Host     string `toml:"host"`
-	Port     int    `toml:"port"`
-	User     string `toml:"username"`
-	Password string `toml:"password"`
-	DbName   string `toml:"dbname"`
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	User     string `yaml:"username"`
+	Password string `yaml:"password"`
+	DbName   string `yaml:"dbname"`
 }
 
 // Configuration to use SQL datastores for cluster membership
 type SQLClusterMembership struct {
 	// Pings the database to renew lease
-	LeaseInterval time.Duration `toml:"lease_interval"`
+	LeaseInterval time.Duration `yaml:"lease_interval"`
 
-	StaleHeartbeatDuraion time.Duration `toml:"stale_heartbeat_duration"`
+	StaleHeartbeatDuraion time.Duration `yaml:"stale_heartbeat_duration"`
 }
 
 // Represents hosts participating in a static cluster
 type ClusterMember struct {
-	Id       string `toml:"id"`
-	HostName string `toml:"host_name"`
-	RPCAddr  string `toml:"rpc_addr"`
-	HttpAddr string `toml:"http_addr"`
+	Id       string `yaml:"id"`
+	HostName string `yaml:"host_name"`
+	RPCAddr  string `yaml:"rpc_addr"`
+	HttpAddr string `yaml:"http_addr"`
 }
 
 type StaticClusterMembership struct {
-	Members []*ClusterMember `toml:"members"`
+	Members []*ClusterMember `yaml:"members"`
 }
 
 // Configuration for Timescaledb. Since it's postgres under the hood
 // we are adding all the base postgres config options
 type TimescaleDbConfig struct {
-	PostgresConfig
+	PostgresConfig `yaml:",inline"`
 }
 
 type ServerConfig struct {
-	ArtifactStorageBackend   string                   `toml:"artifact_storage"`
-	MetadataBackend          string                   `toml:"metadata_storage"`
-	MetricsBackend           string                   `toml:"metrics_storage"`
-	GrpcListenAddr           string                   `toml:"grpc_listen_addr"`
-	HttpListenAddr           string                   `toml:"http_listen_addr"`
-	FileStorage              *FileStorageConfig       `toml:"artifact_storage_filesystem"`
-	S3Storage                *S3StorageConfig         `toml:"artifact_storage_s3"`
-	IntegratedStorage        *IntegratedStorageConfig `toml:"metadata_storage_integrated"`
-	MySQLConfig              *MySQLConfig             `toml:"metadata_storage_mysql"`
-	PostgresConfig           *PostgresConfig          `toml:"metadata_storage_postgres"`
-	TimescaleDb              *TimescaleDbConfig       `toml:"metrics_storage_timescaledb"`
-	PromAddr                 string                   `toml:"prometheus_addr"`
-	ClusterMembershipBackend string                   `toml:"cluster_membership"`
-	SQLClusterMembership     *SQLClusterMembership    `toml:"sql_cluster_membership"`
-	StaticClusterMembership  *StaticClusterMembership `toml:"static_cluster_membership"`
+	ArtifactStorageBackend   string                   `yaml:"artifact_storage"`
+	MetadataBackend          string                   `yaml:"metadata_storage"`
+	MetricsBackend           string                   `yaml:"metrics_storage"`
+	GrpcListenAddr           string                   `yaml:"grpc_listen_addr"`
+	HttpListenAddr           string                   `yaml:"http_listen_addr"`
+	FileStorage              *FileStorageConfig       `yaml:"artifact_storage_filesystem"`
+	S3Storage                *S3StorageConfig         `yaml:"artifact_storage_s3"`
+	IntegratedStorage        *IntegratedStorageConfig `yaml:"metadata_storage_integrated"`
+	MySQLConfig              *MySQLConfig             `yaml:"metadata_storage_mysql"`
+	PostgresConfig           *PostgresConfig          `yaml:"metadata_storage_postgres"`
+	TimescaleDb              *TimescaleDbConfig       `yaml:"metrics_storage_timescaledb"`
+	PromAddr                 string                   `yaml:"prometheus_addr"`
+	ClusterMembershipBackend string                   `yaml:"cluster_membership"`
+	SQLClusterMembership     *SQLClusterMembership    `yaml:"sql_cluster_membership"`
+	StaticClusterMembership  *StaticClusterMembership `yaml:"static_cluster_membership"`
 }
 
 // Merges empty values of itself with non-empty values of anotherConfig
@@ -113,16 +113,16 @@ func (c *ServerConfig) Validate() error {
 }
 
 type FileStorageConfig struct {
-	BaseDir string `toml:"base_dir"`
+	BaseDir string `yaml:"base_dir"`
 }
 
 type S3StorageConfig struct {
-	Region string `toml:"region"`
-	Bucket string `toml:"bucket"`
+	Region string `yaml:"region"`
+	Bucket string `yaml:"bucket"`
 }
 
 type IntegratedStorageConfig struct {
-	Path string `toml:"path"`
+	Path string `yaml:"path"`
 }
 
 func defaultServerConfig() *ServerConfig {
@@ -160,7 +160,7 @@ func NewServerConfig(path string) (*ServerConfig, error) {
 		return nil, fmt.Errorf("couldn't read server config: %v", err)
 	}
 	var serverConfig ServerConfig
-	if _, err := toml.Decode(string(data), &serverConfig); err != nil {
+	if err := yaml.Unmarshal(data, &serverConfig); err != nil {
 		return nil, err
 	}
 	serverConfig.Merge(defaultServerConfig())

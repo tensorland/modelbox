@@ -2,12 +2,13 @@ package config
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestServerConfig(t *testing.T) {
-	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
+	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, ":8086", config.GrpcListenAddr)
 	assert.Equal(t, ":8081", config.HttpListenAddr)
@@ -21,7 +22,7 @@ func TestServerConfig(t *testing.T) {
 }
 
 func TestS3Config(t *testing.T) {
-	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
+	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.yaml")
 	assert.Nil(t, err)
 	assert.NotNil(t, config.S3Storage)
 	assert.Equal(t, "us-east-1", config.S3Storage.Region)
@@ -29,7 +30,7 @@ func TestS3Config(t *testing.T) {
 }
 
 func TestMySQLConfig(t *testing.T) {
-	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
+	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, "172.17.0.2", config.MySQLConfig.Host)
 	assert.Equal(t, 3306, config.MySQLConfig.Port)
@@ -39,7 +40,7 @@ func TestMySQLConfig(t *testing.T) {
 }
 
 func TestPostgresConfigTest(t *testing.T) {
-	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
+	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, "172.17.0.3", config.PostgresConfig.Host)
 	assert.Equal(t, 5432, config.PostgresConfig.Port)
@@ -49,7 +50,7 @@ func TestPostgresConfigTest(t *testing.T) {
 }
 
 func TestTimescaledbConfigTest(t *testing.T) {
-	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
+	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, "172.17.0.4", config.TimescaleDb.Host)
 	assert.Equal(t, 5432, config.TimescaleDb.Port)
@@ -59,7 +60,7 @@ func TestTimescaledbConfigTest(t *testing.T) {
 }
 
 func TestStaticClusterMembershipTest(t *testing.T) {
-	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
+	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.yaml")
 	assert.Nil(t, err)
 	assert.Equal(t, "static", config.ClusterMembershipBackend)
 
@@ -69,4 +70,12 @@ func TestStaticClusterMembershipTest(t *testing.T) {
 	assert.Equal(t, "host1", member.HostName)
 	assert.Equal(t, "localhost:8086", member.RPCAddr)
 	assert.Equal(t, "localhost:8081", member.HttpAddr)
+}
+
+func TestSQLClusterMembership(t *testing.T) {
+	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.yaml")
+	assert.Nil(t, err)
+
+	assert.Equal(t, 5*time.Second, config.SQLClusterMembership.LeaseInterval)
+	assert.Equal(t, 30*time.Second, config.SQLClusterMembership.StaleHeartbeatDuraion)
 }

@@ -63,6 +63,8 @@ type ClusterMembership interface {
 
 	// Heartbeats once for testing
 	renewOnce(t int64) error
+
+	Backend() string
 }
 
 func NewClusterMembership(svrConfig *config.ServerConfig, logger *zap.Logger) (ClusterMembership, error) {

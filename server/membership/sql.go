@@ -135,6 +135,10 @@ func (s *SQLMembership) renewOnce(t int64) error {
 	return err
 }
 
+func (*SQLMembership) Backend() string {
+	return "sql"
+}
+
 type MysqlClusterMembership struct {
 	*SQLMembership
 	*storage.MYSQLDriverUtils

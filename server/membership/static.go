@@ -37,3 +37,7 @@ func (*Static) Leave() error {
 func (*Static) renewOnce(t int64) error {
 	return nil
 }
+
+func (*Static) Backend() string {
+	return "static"
+}

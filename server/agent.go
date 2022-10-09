@@ -59,6 +59,7 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to create cluster membership: %v", err)
 	}
+	logger.Sugar().Infof("cluster membership backend: %v", clusterMembership.Backend())
 	return &Agent{
 		grpcServer:        server,
 		storage:           metadataStorage,

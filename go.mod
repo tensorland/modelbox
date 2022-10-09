@@ -3,7 +3,6 @@ module github.com/tensorland/modelbox
 go 1.19
 
 require (
-	github.com/BurntSushi/toml v1.1.0
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/aws/aws-sdk-go v1.44.82
 	github.com/fatih/structs v1.1.0
@@ -23,6 +22,7 @@ require (
 	go.uber.org/zap v1.21.0
 	google.golang.org/grpc v1.46.0
 	google.golang.org/protobuf v1.28.1
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -56,6 +56,5 @@ require (
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20210126160654-44e461bb6506 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 )

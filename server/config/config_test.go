@@ -57,3 +57,16 @@ func TestTimescaledbConfigTest(t *testing.T) {
 	assert.Equal(t, "foo", config.TimescaleDb.Password)
 	assert.Equal(t, "modelbox_metrics", config.TimescaleDb.DbName)
 }
+
+func TestStaticClusterMembershipTest(t *testing.T) {
+	config, err := NewServerConfig("./../../cmd/modelbox/assets/modelbox_server.toml")
+	assert.Nil(t, err)
+	assert.Equal(t, "static", config.ClusterMembershipBackend)
+
+	assert.Equal(t, 1, len(config.StaticClusterMembership.Members))
+	member := config.StaticClusterMembership.Members[0]
+	assert.Equal(t, "host1", member.Id)
+	assert.Equal(t, "host1", member.HostName)
+	assert.Equal(t, "localhost:8086", member.RPCAddr)
+	assert.Equal(t, "localhost:8081", member.HttpAddr)
+}

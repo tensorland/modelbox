@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/tensorland/modelbox/server/config"
+	"github.com/tensorland/modelbox/server/membership"
 	"github.com/tensorland/modelbox/server/storage"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/tensorland/modelbox/server/storage/logging"
@@ -15,10 +16,11 @@ import (
 )
 
 type Agent struct {
-	grpcServer *GrpcServer
-	promServer *PromServer
-	storage    storage.MetadataStorage
-	ShutdownCh <-chan struct{}
+	grpcServer        *GrpcServer
+	promServer        *PromServer
+	storage           storage.MetadataStorage
+	clusterMembership membership.ClusterMembership
+	ShutdownCh        <-chan struct{}
 
 	logger *zap.Logger
 }
@@ -52,15 +54,23 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	logger.Sugar().Infof("using metrics backend: %v", experimentLogger.Backend())
 
 	server := NewGrpcServer(metadataStorage, fileStorageBuilder, experimentLogger, grpcLis, httpLis, logger)
+
+	clusterMembership, err := membership.NewClusterMembership(config, logger)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create cluster membership: %v", err)
+	}
+	logger.Sugar().Infof("cluster membership backend: %v", clusterMembership.Backend())
 	return &Agent{
-		grpcServer: server,
-		storage:    metadataStorage,
-		logger:     logger,
-		promServer: pSrvr,
+		grpcServer:        server,
+		storage:           metadataStorage,
+		clusterMembership: clusterMembership,
+		logger:            logger,
+		promServer:        pSrvr,
 	}, nil
 }
 
 func (a *Agent) StartAndBlock() (int, error) {
+	a.clusterMembership.Join()
 	go a.promServer.Start()
 	go a.grpcServer.Start()
 	return a.handleSignals(), nil
@@ -89,6 +99,9 @@ WAIT:
 		// TODO Handle reloading config
 		goto WAIT
 	}
+
+	// leave the cluster
+	a.clusterMembership.Leave()
 
 	a.promServer.Stop()
 

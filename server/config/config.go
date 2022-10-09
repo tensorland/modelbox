@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/BurntSushi/toml"
 )
@@ -38,6 +39,26 @@ type PostgresConfig struct {
 	DbName   string `toml:"dbname"`
 }
 
+// Configuration to use SQL datastores for cluster membership
+type SQLClusterMembership struct {
+	// Pings the database to renew lease
+	LeaseInterval time.Duration `toml:"lease_interval"`
+
+	StaleHeartbeatDuraion time.Duration `toml:"stale_heartbeat_duration"`
+}
+
+// Represents hosts participating in a static cluster
+type ClusterMember struct {
+	Id       string `toml:"id"`
+	HostName string `toml:"host_name"`
+	RPCAddr  string `toml:"rpc_addr"`
+	HttpAddr string `toml:"http_addr"`
+}
+
+type StaticClusterMembership struct {
+	Members []*ClusterMember `toml:"members"`
+}
+
 // Configuration for Timescaledb. Since it's postgres under the hood
 // we are adding all the base postgres config options
 type TimescaleDbConfig struct {
@@ -45,18 +66,21 @@ type TimescaleDbConfig struct {
 }
 
 type ServerConfig struct {
-	ArtifactStorageBackend string                   `toml:"artifact_storage"`
-	MetadataBackend        string                   `toml:"metadata_storage"`
-	MetricsBackend         string                   `toml:"metrics_storage"`
-	GrpcListenAddr         string                   `toml:"grpc_listen_addr"`
-	HttpListenAddr         string                   `toml:"http_listen_addr"`
-	FileStorage            *FileStorageConfig       `toml:"artifact_storage_filesystem"`
-	S3Storage              *S3StorageConfig         `toml:"artifact_storage_s3"`
-	IntegratedStorage      *IntegratedStorageConfig `toml:"metadata_storage_integrated"`
-	MySQLConfig            *MySQLConfig             `toml:"metadata_storage_mysql"`
-	PostgresConfig         *PostgresConfig          `toml:"metadata_storage_postgres"`
-	TimescaleDb            *TimescaleDbConfig       `toml:"metrics_storage_timescaledb"`
-	PromAddr               string                   `toml:"prometheus_addr"`
+	ArtifactStorageBackend   string                   `toml:"artifact_storage"`
+	MetadataBackend          string                   `toml:"metadata_storage"`
+	MetricsBackend           string                   `toml:"metrics_storage"`
+	GrpcListenAddr           string                   `toml:"grpc_listen_addr"`
+	HttpListenAddr           string                   `toml:"http_listen_addr"`
+	FileStorage              *FileStorageConfig       `toml:"artifact_storage_filesystem"`
+	S3Storage                *S3StorageConfig         `toml:"artifact_storage_s3"`
+	IntegratedStorage        *IntegratedStorageConfig `toml:"metadata_storage_integrated"`
+	MySQLConfig              *MySQLConfig             `toml:"metadata_storage_mysql"`
+	PostgresConfig           *PostgresConfig          `toml:"metadata_storage_postgres"`
+	TimescaleDb              *TimescaleDbConfig       `toml:"metrics_storage_timescaledb"`
+	PromAddr                 string                   `toml:"prometheus_addr"`
+	ClusterMembershipBackend string                   `toml:"cluster_membership"`
+	SQLClusterMembership     *SQLClusterMembership    `toml:"sql_cluster_membership"`
+	StaticClusterMembership  *StaticClusterMembership `toml:"static_cluster_membership"`
 }
 
 // Merges empty values of itself with non-empty values of anotherConfig
@@ -103,12 +127,21 @@ type IntegratedStorageConfig struct {
 
 func defaultServerConfig() *ServerConfig {
 	return &ServerConfig{
-		ArtifactStorageBackend: "filesystem",
-		MetadataBackend:        "ephemeral",
-		GrpcListenAddr:         ":8080",
-		HttpListenAddr:         ":8085",
-		MetricsBackend:         "inmemory",
-		PromAddr:               ":2112",
+		ArtifactStorageBackend:   "filesystem",
+		MetadataBackend:          "ephemeral",
+		GrpcListenAddr:           ":8080",
+		HttpListenAddr:           ":8085",
+		MetricsBackend:           "inmemory",
+		PromAddr:                 ":2112",
+		ClusterMembershipBackend: "static",
+		StaticClusterMembership: &StaticClusterMembership{
+			Members: []*ClusterMember{
+				{
+					Id:      "localhost",
+					RPCAddr: ":8080",
+				},
+			},
+		},
 	}
 }
 

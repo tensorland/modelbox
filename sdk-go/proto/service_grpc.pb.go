@@ -67,6 +67,7 @@ type ModelStoreClient interface {
 	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error)
+	GetClusterMembers(ctx context.Context, in *GetClusterMembersRequest, opts ...grpc.CallOption) (*GetClusterMembersResponse, error)
 }
 
 type modelStoreClient struct {
@@ -337,6 +338,15 @@ func (x *modelStoreWatchNamespaceClient) Recv() (*WatchNamespaceResponse, error)
 	return m, nil
 }
 
+func (c *modelStoreClient) GetClusterMembers(ctx context.Context, in *GetClusterMembersRequest, opts ...grpc.CallOption) (*GetClusterMembersResponse, error) {
+	out := new(GetClusterMembersResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/GetClusterMembers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ModelStoreServer is the server API for ModelStore service.
 // All implementations must embed UnimplementedModelStoreServer
 // for forward compatibility
@@ -386,6 +396,7 @@ type ModelStoreServer interface {
 	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error
+	GetClusterMembers(context.Context, *GetClusterMembersRequest) (*GetClusterMembersResponse, error)
 	mustEmbedUnimplementedModelStoreServer()
 }
 
@@ -455,6 +466,9 @@ func (UnimplementedModelStoreServer) ListEvents(context.Context, *ListEventsRequ
 }
 func (UnimplementedModelStoreServer) WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error {
 	return status.Errorf(codes.Unimplemented, "method WatchNamespace not implemented")
+}
+func (UnimplementedModelStoreServer) GetClusterMembers(context.Context, *GetClusterMembersRequest) (*GetClusterMembersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClusterMembers not implemented")
 }
 func (UnimplementedModelStoreServer) mustEmbedUnimplementedModelStoreServer() {}
 
@@ -861,6 +875,24 @@ func (x *modelStoreWatchNamespaceServer) Send(m *WatchNamespaceResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _ModelStore_GetClusterMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClusterMembersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).GetClusterMembers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/GetClusterMembers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).GetClusterMembers(ctx, req.(*GetClusterMembersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ModelStore_ServiceDesc is the grpc.ServiceDesc for ModelStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -939,6 +971,10 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListEvents",
 			Handler:    _ModelStore_ListEvents_Handler,
+		},
+		{
+			MethodName: "GetClusterMembers",
+			Handler:    _ModelStore_GetClusterMembers_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

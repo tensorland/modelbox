@@ -14,6 +14,7 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	pb "github.com/tensorland/modelbox/sdk-go/proto"
+	"github.com/tensorland/modelbox/server/membership"
 	"github.com/tensorland/modelbox/server/storage"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/tensorland/modelbox/server/storage/logging"
@@ -31,6 +32,7 @@ type GrpcServer struct {
 	metadataStorage    storage.MetadataStorage
 	experimentLogger   logging.ExperimentLogger
 	blobStorageBuilder artifacts.BlobStorageBuilder
+	clusterMebership   membership.ClusterMembership
 
 	grpcLis net.Listener
 	httpLis net.Listener
@@ -460,6 +462,25 @@ func (s *GrpcServer) ListEvents(ctx context.Context, req *pb.ListEventsRequest) 
 	return &pb.ListEventsResponse{Events: apiEvents}, nil
 }
 
+func (s *GrpcServer) GetClusterMembers(ctx context.Context, req *pb.GetClusterMembersRequest) (*pb.GetClusterMembersResponse, error) {
+	members, err := s.clusterMebership.GetMembers()
+	if err != nil {
+		return nil, err
+	}
+	clusterMembers := []*pb.ClusterMember{}
+	for _, member := range members {
+		clusterMembers = append(clusterMembers, &pb.ClusterMember{
+			Id:       member.Id,
+			HostName: member.HostName,
+			HttpAddr: member.HTTPAddr,
+			RpcAddr:  member.RPCAddr,
+		})
+	}
+	return &pb.GetClusterMembersResponse{
+		Members: clusterMembers,
+	}, nil
+}
+
 func (s *GrpcServer) WatchNamespace(
 	req *pb.WatchNamespaceRequest,
 	stream pb.ModelStore_WatchNamespaceServer,
@@ -499,6 +520,7 @@ func NewGrpcServer(
 	experimentLogger logging.ExperimentLogger,
 	grpcLis net.Listener,
 	httpLis net.Listener,
+	clusterMebership membership.ClusterMembership,
 	logger *zap.Logger,
 ) *GrpcServer {
 	grpcServer := grpc.NewServer(
@@ -512,6 +534,7 @@ func NewGrpcServer(
 		blobStorageBuilder: blobStorageBuilder,
 		grpcLis:            grpcLis,
 		httpLis:            httpLis,
+		clusterMebership:   clusterMebership,
 		logger:             logger,
 	}
 	pb.RegisterModelStoreServer(grpcServer, modelBoxServer)

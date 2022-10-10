@@ -47,6 +47,22 @@ is created in the current directory. Help:
 	},
 }
 
+var listClusterMembers = &cobra.Command{
+	Use:   "cluster-members",
+	Short: "List the cluster members",
+	Long: `Lists the servers which are in the modelbox cluster
+./modelbox client cluster-members`,
+	Run: func(cmd *cobra.Command, args []string) {
+		client, err := NewClientUi(ConfigPath)
+		if err != nil {
+			zap.L().Sugar().Panicf("unable to create client from config: %v ", err)
+		}
+		if err := client.ListClusterMembers(); err != nil {
+			zap.L().Sugar().Errorf("unable to list cluster members: %v", err)
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(clientCmd)
 	clientCmd.AddCommand(clientInitConfigCmd)
@@ -54,6 +70,8 @@ func init() {
 
 	clientCmd.AddCommand(watchCmd)
 	watchCmd.Flags().StringVar(&namespace, "namespace", "", "namespace to watch")
+
+	clientCmd.AddCommand(listClusterMembers)
 
 	// Initialize logger for the client
 	logger, _ := zap.NewProduction()

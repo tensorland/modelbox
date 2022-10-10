@@ -53,13 +53,12 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	}
 	logger.Sugar().Infof("using metrics backend: %v", experimentLogger.Backend())
 
-	server := NewGrpcServer(metadataStorage, fileStorageBuilder, experimentLogger, grpcLis, httpLis, logger)
-
 	clusterMembership, err := membership.NewClusterMembership(config, logger)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create cluster membership: %v", err)
 	}
 	logger.Sugar().Infof("cluster membership backend: %v", clusterMembership.Backend())
+	server := NewGrpcServer(metadataStorage, fileStorageBuilder, experimentLogger, grpcLis, httpLis, clusterMembership, logger)
 	return &Agent{
 		grpcServer:        server,
 		storage:           metadataStorage,

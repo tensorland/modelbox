@@ -121,6 +121,11 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.WatchNamespaceRequest.SerializeToString,
                 response_deserializer=service__pb2.WatchNamespaceResponse.FromString,
                 )
+        self.GetClusterMembers = channel.unary_unary(
+                '/modelbox.ModelStore/GetClusterMembers',
+                request_serializer=service__pb2.GetClusterMembersRequest.SerializeToString,
+                response_deserializer=service__pb2.GetClusterMembersResponse.FromString,
+                )
 
 
 class ModelStoreServicer(object):
@@ -279,6 +284,12 @@ class ModelStoreServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetClusterMembers(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ModelStoreServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -386,6 +397,11 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     servicer.WatchNamespace,
                     request_deserializer=service__pb2.WatchNamespaceRequest.FromString,
                     response_serializer=service__pb2.WatchNamespaceResponse.SerializeToString,
+            ),
+            'GetClusterMembers': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetClusterMembers,
+                    request_deserializer=service__pb2.GetClusterMembersRequest.FromString,
+                    response_serializer=service__pb2.GetClusterMembersResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -754,5 +770,22 @@ class ModelStore(object):
         return grpc.experimental.unary_stream(request, target, '/modelbox.ModelStore/WatchNamespace',
             service__pb2.WatchNamespaceRequest.SerializeToString,
             service__pb2.WatchNamespaceResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetClusterMembers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/GetClusterMembers',
+            service__pb2.GetClusterMembersRequest.SerializeToString,
+            service__pb2.GetClusterMembersResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

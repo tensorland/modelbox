@@ -96,6 +96,14 @@ func (m *ModelBoxClient) ListCheckpoints(experimentId string) (*proto.ListCheckp
 	return m.client.ListCheckpoints(ctx, req)
 }
 
+func (m *ModelBoxClient) ClusterMembers() (*proto.GetClusterMembersResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
+	defer cancel()
+
+	req := &proto.GetClusterMembersRequest{}
+	return m.client.GetClusterMembers(ctx, req)
+}
+
 func (m *ModelBoxClient) CreateModel(name, owner, namespace, task, description string, metadata map[string]string, files []*proto.FileMetadata) (*CreateModelApiResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
 	defer cancel()

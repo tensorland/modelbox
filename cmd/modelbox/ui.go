@@ -103,6 +103,20 @@ func (u *ClientUi) ListExperiments(namespace string) error {
 	return nil
 }
 
+func (u *ClientUi) ListClusterMembers() error {
+	resp, err := u.client.ClusterMembers()
+	if err != nil {
+		return err
+	}
+
+	u.table.SetHeader([]string{"ID", "Host Name", "RPC Addr", "HTTP Addr"})
+	for _, member := range resp.Members {
+		u.table.Append([]string{member.Id, member.HostName, member.RpcAddr, member.HttpAddr})
+	}
+	u.table.Render()
+	return nil
+}
+
 func (u *ClientUi) CreateModel(name, owner, namespace, task, description string) error {
 	resp, err := u.client.CreateModel(name, owner, namespace, task, description, nil, nil)
 	if err != nil {

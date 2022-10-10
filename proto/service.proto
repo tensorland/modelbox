@@ -80,6 +80,8 @@ service ModelStore {
   // Streams change events in any of objects such as experiments, models, etc, for a given namespace
   // Response is a json representation of the new state of the obejct
   rpc WatchNamespace(WatchNamespaceRequest) returns (stream WatchNamespaceResponse);
+
+  rpc GetClusterMembers(GetClusterMembersRequest) returns (GetClusterMembersResponse);
 }
 
 // Request to watch events in a namespace, such as experiments/models/mocel versions
@@ -444,4 +446,17 @@ message GetExperimentRequest {
 
 message GetExperimentResponse {
   Experiment experiment = 1;
+}
+
+message GetClusterMembersRequest {}
+
+message ClusterMember {
+  string id = 1;
+  string host_name = 2;
+  string rpc_addr = 3;
+  string http_addr = 4;
+}
+
+message GetClusterMembersResponse {
+  repeated ClusterMember members = 1;
 }

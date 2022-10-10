@@ -13,7 +13,10 @@ metadata_storage: "postgres"
 metrics_storage: "timescaledb"
 
 # Interface on which the metadata service is listening for network connections
-listen_addr: "172.21.0.2:8085"
+grpc_listen_addr: ":8085"
+http_listen_addr: ":8081"
+
+cluster_membership: "mysql"
 
 # Additional configuration for filesystem based blob_storage
 artifact_storage_filesystem:
@@ -37,7 +40,7 @@ metadata_storage_postgres:
 
 # Additional configuration for metadata storage in MySQL
 metadata_storage_mysql:
-  host:      "172.17.0.2"
+  host:      "172.20.0.6"
   port:      3306
   username:  "root"
   password:  "foo"
@@ -50,3 +53,7 @@ metrics_storage_timescaledb:
   username: "postgres"
   password: "foo"
   dbname:   "modelbox_metrics"
+
+sql_cluster_membership:
+  lease_interval: 5s
+  stale_heartbeat_duration: 30s

@@ -93,7 +93,7 @@ func NewClusterMembership(svrConfig *config.ServerConfig, logger *zap.Logger) (C
 			Password: svrConfig.MySQLConfig.Password,
 			DbName:   svrConfig.MySQLConfig.DbName,
 		}
-		NewMysqlClusterMembership(sqlConfig, member, mysqlConfig, logger)
+		return NewMysqlClusterMembership(sqlConfig, member, mysqlConfig, logger)
 	}
-	return nil, fmt.Errorf("unable to create cluster membership driver for backend: %v", svrConfig.ClusterMembershipBackend)
+	return nil, fmt.Errorf("unknown cluster membership backend: %v", svrConfig.ClusterMembershipBackend)
 }

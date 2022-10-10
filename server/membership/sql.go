@@ -114,6 +114,7 @@ func (s *SQLMembership) heartBeat() {
 			return
 		case <-next:
 			s.renewOnce(time.Now().Unix())
+			next = time.After(s.config.HBFrequency)
 		}
 	}
 }

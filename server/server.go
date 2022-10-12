@@ -462,6 +462,28 @@ func (s *GrpcServer) ListEvents(ctx context.Context, req *pb.ListEventsRequest) 
 	return &pb.ListEventsResponse{Events: apiEvents}, nil
 }
 
+func (s *GrpcServer) CreateActions(ctx context.Context, req *pb.CreateActionRequest) (*pb.CreateActionResponse, error) {
+	if err := s.metadataStorage.CreateAction(ctx, storage.NewAction(req.Name, req.Arch, req.ObjectId, req.Params)); err != nil {
+		return nil, err
+	}
+	return &pb.CreateActionResponse{CreatedAt: timestamppb.New(time.Now())}, nil
+}
+
+func (s *GrpcServer) ListActions(ctx context.Context, req *pb.ListActionsRequest) (*pb.ListActionsResponse, error) {
+	actions, err := s.metadataStorage.ListActions(ctx, req.ObjectId)
+	if err != nil {
+		return nil, err
+	}
+	actionResp := make([]*pb.Action, len(actions))
+	for i, action := range actions {
+		actionResp[i] = &pb.Action{
+			Id:   action.Id,
+			Name: action.Name,
+		}
+	}
+	return &pb.ListActionsResponse{Actions: actionResp}, nil
+}
+
 func (s *GrpcServer) GetClusterMembers(ctx context.Context, req *pb.GetClusterMembersRequest) (*pb.GetClusterMembersResponse, error) {
 	members, err := s.clusterMebership.GetMembers()
 	if err != nil {

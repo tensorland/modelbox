@@ -68,6 +68,8 @@ type ModelStoreClient interface {
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error)
 	GetClusterMembers(ctx context.Context, in *GetClusterMembersRequest, opts ...grpc.CallOption) (*GetClusterMembersResponse, error)
+	CreateActions(ctx context.Context, in *CreateActionRequest, opts ...grpc.CallOption) (*CreateActionResponse, error)
+	ListActions(ctx context.Context, in *ListActionsRequest, opts ...grpc.CallOption) (*ListActionsResponse, error)
 }
 
 type modelStoreClient struct {
@@ -347,6 +349,24 @@ func (c *modelStoreClient) GetClusterMembers(ctx context.Context, in *GetCluster
 	return out, nil
 }
 
+func (c *modelStoreClient) CreateActions(ctx context.Context, in *CreateActionRequest, opts ...grpc.CallOption) (*CreateActionResponse, error) {
+	out := new(CreateActionResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/CreateActions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *modelStoreClient) ListActions(ctx context.Context, in *ListActionsRequest, opts ...grpc.CallOption) (*ListActionsResponse, error) {
+	out := new(ListActionsResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/ListActions", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ModelStoreServer is the server API for ModelStore service.
 // All implementations must embed UnimplementedModelStoreServer
 // for forward compatibility
@@ -397,6 +417,8 @@ type ModelStoreServer interface {
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error
 	GetClusterMembers(context.Context, *GetClusterMembersRequest) (*GetClusterMembersResponse, error)
+	CreateActions(context.Context, *CreateActionRequest) (*CreateActionResponse, error)
+	ListActions(context.Context, *ListActionsRequest) (*ListActionsResponse, error)
 	mustEmbedUnimplementedModelStoreServer()
 }
 
@@ -469,6 +491,12 @@ func (UnimplementedModelStoreServer) WatchNamespace(*WatchNamespaceRequest, Mode
 }
 func (UnimplementedModelStoreServer) GetClusterMembers(context.Context, *GetClusterMembersRequest) (*GetClusterMembersResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetClusterMembers not implemented")
+}
+func (UnimplementedModelStoreServer) CreateActions(context.Context, *CreateActionRequest) (*CreateActionResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateActions not implemented")
+}
+func (UnimplementedModelStoreServer) ListActions(context.Context, *ListActionsRequest) (*ListActionsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListActions not implemented")
 }
 func (UnimplementedModelStoreServer) mustEmbedUnimplementedModelStoreServer() {}
 
@@ -893,6 +921,42 @@ func _ModelStore_GetClusterMembers_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModelStore_CreateActions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateActionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).CreateActions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/CreateActions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).CreateActions(ctx, req.(*CreateActionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ModelStore_ListActions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListActionsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelStoreServer).ListActions(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelStore/ListActions",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelStoreServer).ListActions(ctx, req.(*ListActionsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ModelStore_ServiceDesc is the grpc.ServiceDesc for ModelStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -975,6 +1039,14 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetClusterMembers",
 			Handler:    _ModelStore_GetClusterMembers_Handler,
+		},
+		{
+			MethodName: "CreateActions",
+			Handler:    _ModelStore_CreateActions_Handler,
+		},
+		{
+			MethodName: "ListActions",
+			Handler:    _ModelStore_ListActions_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

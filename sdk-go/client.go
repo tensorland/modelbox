@@ -104,6 +104,27 @@ func (m *ModelBoxClient) ClusterMembers() (*proto.GetClusterMembersResponse, err
 	return m.client.GetClusterMembers(ctx, req)
 }
 
+func (m *ModelBoxClient) CreateAction(name, arch, object, params string) (*proto.CreateActionResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
+	defer cancel()
+
+	req := &proto.CreateActionRequest{
+		Name:     name,
+		Arch:     arch,
+		ObjectId: object,
+		//	Params: params,
+	}
+	return m.client.CreateActions(ctx, req)
+}
+
+func (m *ModelBoxClient) ListActions(objectId string) (*proto.ListActionsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
+	defer cancel()
+
+	req := &proto.ListActionsRequest{ObjectId: objectId}
+	return m.client.ListActions(ctx, req)
+}
+
 func (m *ModelBoxClient) CreateModel(name, owner, namespace, task, description string, metadata map[string]string, files []*proto.FileMetadata) (*CreateModelApiResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), DEADLINE)
 	defer cancel()

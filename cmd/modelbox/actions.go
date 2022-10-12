@@ -5,7 +5,10 @@ import (
 	"go.uber.org/zap"
 )
 
-var modelId string
+var (
+	modelId string
+	params  string
+)
 
 var actionsCommand = &cobra.Command{
 	Use:   "actions",
@@ -15,7 +18,7 @@ var actionsCommand = &cobra.Command{
 var createAction = &cobra.Command{
 	Use: "create",
 	Run: func(cmd *cobra.Command, args []string) {
-		_, err := NewClientUi(ConfigPath)
+		client, err := NewClientUi(ConfigPath)
 		if err != nil {
 			zap.L().Sugar().Panicf("unable to create client: %v", err)
 		}
@@ -38,6 +41,7 @@ func init() {
 	actionsCommand.AddCommand(createAction)
 	createAction.Flags().StringVar(&experimentId, "experiment-id", "", "experiment id to which this action is attached to")
 	createAction.Flags().StringVar(&modelId, "model-id", "", "model id to which this action is attached to")
+	createAction.Flags().StringVar(&params, "params", "", "json encoded params for the action")
 
 	listActions.Flags().StringVar(&experimentId, "experiment-id", "", "experiment id to which this action is attached to")
 	listActions.Flags().StringVar(&modelId, "model-id", "", "model id to which this action is attached to")

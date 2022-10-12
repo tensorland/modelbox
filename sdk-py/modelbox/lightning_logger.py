@@ -12,7 +12,7 @@ from pytorch_lightning.utilities.distributed import rank_zero_only
 from weakref import ReferenceType
 from pytorch_lightning.callbacks.model_checkpoint import ModelCheckpoint
 
-from modelbox.modelbox import ModelBoxClient, Experiment, MLFramework, MetricValue
+from modelbox.modelbox import ModelBox, Experiment, MLFramework
 
 logger = logging.getLogger("pytorch_lightning")
 
@@ -42,7 +42,7 @@ class ModelBoxLogger(LightningLoggerBase):
         self._experiment = None
 
         # Create the MBox client
-        self._mbox = ModelBoxClient(server_addr)
+        self._mbox = ModelBox(server_addr)
         self._experiment = None
         self._upload_checkpoints = upload_checkpoints
         self._checkpoint_paths = set()
@@ -72,7 +72,7 @@ class ModelBoxLogger(LightningLoggerBase):
     def experiment(self) -> Experiment:
         logger.info("modelbox - attempting to create a project")
         if self._experiment is None:
-            self._experiment = self._mbox.create_experiment(
+            self._experiment = self._mbox.new_experiment(
                 name=self._experiment_name,
                 owner=self._owner,
                 namespace=self._namepsace,
@@ -80,7 +80,7 @@ class ModelBoxLogger(LightningLoggerBase):
                 framework=MLFramework.PYTORCH,
             )
         logger.info(
-            "modelbox - created experiment with id: {}".format(self._experiment.experiment_id)
+            "modelbox - created experiment with id: {}".format(self._experiment.id)
         )
         return self._experiment
 
@@ -90,16 +90,17 @@ class ModelBoxLogger(LightningLoggerBase):
         self._epoch = metrics.pop('epoch')
         if self._experiment is None:
             return
+        m = {}
         for k, v in metrics.items():
-            val = MetricValue(step=step, wallclock_time=int(time.time()), value=v)
-            self._mbox.log_metrics(self._experiment.experiment_id, k, val)
-            logger.info(
-                "modelbox - log metrics, step: {}, key: {}, metrics: {}".format(step, k, val)
-                )
+            m[k] = v
+        self._experiment.log_metrics(metrics=m, step=step)
+        logger.info(
+            "modelbox - log metrics, step: {}, metrics: {}".format(step, m)
+            )
 
     @rank_zero_only
     def log_hyperparams(self, params: Union[Dict[str, Any], Namespace], metrics: Optional[Dict[str, Any]] = None) -> None:
-        self._mbox.update_metadata(parent_id=self.experiment.experiment_id, key="hyperparams", val=params)
+        self._experiment.update_metadata(key="hyperparams", value=params)
         logger.info(f"modelbox - log hpraams params {params}")
         logger.info(f"modelbox - log hpraams metrics {metrics}")
 
@@ -116,10 +117,7 @@ class ModelBoxLogger(LightningLoggerBase):
         new_chk_paths = file_names - self._checkpoint_paths
         for chk_path in new_chk_paths:
             logger.info("modelbox - recording checkpoint {}".format(chk_path))
-            metrics = {"val_accu": chk_state[chk_path]}
-            chk_id = self._mbox.create_checkpoint(
-                self.experiment.id, self._epoch, chk_path, metrics
-            )
+            chk_id = self._experiment.track_artifacts(files=[chk_path])
             logger.info("modelbox - recorded checkpoint {}".format(chk_id))
 
         # Updating the state with all the checkpoints we have just discovered

@@ -3,5 +3,5 @@
 FROM ubuntu
 WORKDIR /app
 COPY modelbox /app/modelbox
-COPY cmd/modelbox/assets/modelbox_server.toml /app/modelbox_server.toml
+COPY cmd/modelbox/assets/modelbox_server.yaml /app/modelbox_server.yaml
 EXPOSE 8085

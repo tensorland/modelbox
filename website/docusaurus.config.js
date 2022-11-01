@@ -7,7 +7,7 @@ const darkCodeTheme = require('prism-react-renderer/themes/dracula');
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'ModelBox',
-  tagline: 'An extensible AI Metadata and Model Oeprations Service',
+  tagline: 'An extensible AI Metadata and Model Operations Service',
   url: 'https://modelbox.io',
   baseUrl: '/',
   onBrokenLinks: 'throw',

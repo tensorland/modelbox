@@ -24,10 +24,16 @@ test-server:
 	@echo "==> Test Modelbox Server"
 	go test ./server/storage/...
 
-.PHONY: install-sdk-py 
+.PHONY: install-sdk-py
 install-sdk-py:
 	@echo "==> Installing Python SDK"
 	cd sdk-py && pip install .
+
+.PHONY: test-sdk-py
+test-sdk-py:
+	@echo "==> Testing python sdk"
+	cd sdk-py && pip install .
+	cd sdk-py && python tests/test_modelbox_api.py
 
 .PHONY: build-sdk-py
 build-sdk-py:

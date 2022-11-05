@@ -126,6 +126,16 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.GetClusterMembersRequest.SerializeToString,
                 response_deserializer=service__pb2.GetClusterMembersResponse.FromString,
                 )
+        self.CreateActions = channel.unary_unary(
+                '/modelbox.ModelStore/CreateActions',
+                request_serializer=service__pb2.CreateActionRequest.SerializeToString,
+                response_deserializer=service__pb2.CreateActionResponse.FromString,
+                )
+        self.ListActions = channel.unary_unary(
+                '/modelbox.ModelStore/ListActions',
+                request_serializer=service__pb2.ListActionsRequest.SerializeToString,
+                response_deserializer=service__pb2.ListActionsResponse.FromString,
+                )
 
 
 class ModelStoreServicer(object):
@@ -290,6 +300,18 @@ class ModelStoreServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def CreateActions(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ListActions(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ModelStoreServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -402,6 +424,16 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     servicer.GetClusterMembers,
                     request_deserializer=service__pb2.GetClusterMembersRequest.FromString,
                     response_serializer=service__pb2.GetClusterMembersResponse.SerializeToString,
+            ),
+            'CreateActions': grpc.unary_unary_rpc_method_handler(
+                    servicer.CreateActions,
+                    request_deserializer=service__pb2.CreateActionRequest.FromString,
+                    response_serializer=service__pb2.CreateActionResponse.SerializeToString,
+            ),
+            'ListActions': grpc.unary_unary_rpc_method_handler(
+                    servicer.ListActions,
+                    request_deserializer=service__pb2.ListActionsRequest.FromString,
+                    response_serializer=service__pb2.ListActionsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -787,5 +819,39 @@ class ModelStore(object):
         return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/GetClusterMembers',
             service__pb2.GetClusterMembersRequest.SerializeToString,
             service__pb2.GetClusterMembersResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def CreateActions(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/CreateActions',
+            service__pb2.CreateActionRequest.SerializeToString,
+            service__pb2.CreateActionResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ListActions(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/ListActions',
+            service__pb2.ListActionsRequest.SerializeToString,
+            service__pb2.ListActionsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

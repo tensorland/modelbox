@@ -45,6 +45,18 @@ func (*postgresQueryEngine) listEventsForObject() string {
 	return "select id, parent_id, name, source_name, wallclock, metadata from events where parent_id=$1"
 }
 
+func (*postgresQueryEngine) createModelVersion() string {
+	return `insert into model_versions(id, name, model_id, version, description, ml_framework, unique_tags, created_at, updated_at) values(:id, :name, :model_id, :version, :description, :ml_framework, :unique_tags, :created_at, :updated_at)`
+}
+
+func (*postgresQueryEngine) createAction() string {
+	return "insert into actions (id, parent_id, name, arch, params, created_at, updated_at, finished_at) VALUES (:id, :parent_id, :name, :arch, :params, :created_at, :updated_at, :finished_at)"
+}
+
+func (*postgresQueryEngine) blobMultiWrite() string {
+	return "insert into blobs(id, parent_id, metadata) VALUES "
+}
+
 type PostgresStorage struct {
 	*SQLStorage
 	*PostgresDriverUtils

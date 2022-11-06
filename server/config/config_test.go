@@ -13,12 +13,12 @@ func TestServerConfig(t *testing.T) {
 	assert.Equal(t, ":8086", config.GrpcListenAddr)
 	assert.Equal(t, ":8081", config.HttpListenAddr)
 	assert.Equal(t, "filesystem", config.ArtifactStorageBackend)
-	assert.Equal(t, "ephemeral", config.MetadataBackend)
+	assert.Equal(t, "sqlite3", config.MetadataBackend)
 	assert.Equal(t, "inmemory", config.MetricsBackend)
 
 	assert.Equal(t, "/tmp/modelboxblobs", config.FileStorage.BaseDir)
 
-	assert.Equal(t, "/tmp/modelbox.dat", config.IntegratedStorage.Path)
+	assert.Equal(t, "/tmp/modelbox.dat", config.SqliteConfig.Path)
 }
 
 func TestS3Config(t *testing.T) {

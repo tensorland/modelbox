@@ -23,13 +23,9 @@ const (
 
 	MODELS_NS_LIST = "select id, name, owner, namespace, task, description, created_at, updated_at from models where namespace = ?"
 
-	MODEL_VERSION_CREATE = `insert into model_versions(id, name, model_id, version, description, ml_framework, unique_tags, created_at, updated_at) values(:id, :name, :model_id, :version, :description, :ml_framework, :unique_tags, :created_at, :updated_at)`
-
 	MODEL_VERSION_GET = "select name, model_id, version, description, ml_framework, unique_tags, created_at, updated_at from model_versions where id = ?"
 
 	MODEL_VERSION_LIST = "select name, model_id, version, description, ml_framework, unique_tags, created_at, updated_at from model_versions where model_id = ?"
-
-	BLOB_MULTI_WRITE = "insert into blobs(id, parent_id, metadata) VALUES "
 
 	BLOBSET_GET = "select id, parent_id, metadata from blobs where parent_id=?"
 
@@ -48,8 +44,6 @@ const (
 	ACTIONS_LIST = "select id, parent_id, name, arch, params, created_at, updated_at, finished_at from actions where parent_id=?"
 
 	ACTION_GET = "select id, parent_id, name, arch, params, created_at, updated_at, finished_at from actions where id=?"
-
-	ACTION_CREATE = "insert into actions (id, parent_id, name, arch, params, created_at, updated_at, finished_at) VALUES (:id, :parent_id, :name, :arch, :params, :created_at, :updated_at, :finished_at)"
 )
 
 type queryEngine interface {
@@ -64,6 +58,12 @@ type queryEngine interface {
 	createModel() string
 
 	listEventsForObject() string
+
+	createModelVersion() string
+
+	createAction() string
+
+	blobMultiWrite() string
 }
 
 type SQLStorage struct {
@@ -274,7 +274,7 @@ func (s *SQLStorage) CreateModelVersion(
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := ModelVersionToSchema(modelVersion)
 		if _, err := tx.NamedExec(
-			MODEL_VERSION_CREATE,
+			s.queryEngine.createModelVersion(),
 			schema,
 		); err != nil {
 			if s.queryEngine.isDuplicate(err) {
@@ -441,7 +441,7 @@ func (s *SQLStorage) writeFileSet(ctx context.Context, tx *sqlx.Tx, files artifa
 		return nil
 	}
 	vals := []interface{}{}
-	sqlStr := BLOB_MULTI_WRITE
+	sqlStr := s.queryEngine.blobMultiWrite()
 	for _, file := range files {
 		bJson, err := file.ToJson()
 		if err != nil {
@@ -535,7 +535,7 @@ func (s *SQLStorage) GetAction(ctx context.Context, id string) (*ActionState, er
 func (s *SQLStorage) CreateAction(ctx context.Context, action *Action) error {
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := newActionSchema(action)
-		_, err := tx.NamedExecContext(ctx, ACTION_CREATE, schema)
+		_, err := tx.NamedExecContext(ctx, s.queryEngine.createAction(), schema)
 		return err
 	})
 	return err

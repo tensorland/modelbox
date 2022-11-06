@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	METADATA_BACKEND_MYSQL     = "mysql"
-	METADATA_BACKEND_POSTGRES  = "postgres"
-	METADATA_BACKEND_EPHEMERAL = "ephemeral"
+	METADATA_BACKEND_MYSQL    = "mysql"
+	METADATA_BACKEND_POSTGRES = "postgres"
+	METADATA_BACKEND_SQLITE3  = "sqlite3"
 
 	BLOB_STORAGE_BACKEND_FS = "filesystem"
 	BLOB_STORAGE_BACKEND_S3 = "s3"
@@ -73,7 +73,7 @@ type ServerConfig struct {
 	HttpListenAddr           string                   `yaml:"http_listen_addr"`
 	FileStorage              *FileStorageConfig       `yaml:"artifact_storage_filesystem"`
 	S3Storage                *S3StorageConfig         `yaml:"artifact_storage_s3"`
-	IntegratedStorage        *IntegratedStorageConfig `yaml:"metadata_storage_integrated"`
+	SqliteConfig             *IntegratedStorageConfig `yaml:"metadata_storage_sqlite3"`
 	MySQLConfig              *MySQLConfig             `yaml:"metadata_storage_mysql"`
 	PostgresConfig           *PostgresConfig          `yaml:"metadata_storage_postgres"`
 	TimescaleDb              *TimescaleDbConfig       `yaml:"metrics_storage_timescaledb"`
@@ -128,7 +128,7 @@ type IntegratedStorageConfig struct {
 func defaultServerConfig() *ServerConfig {
 	return &ServerConfig{
 		ArtifactStorageBackend:   "filesystem",
-		MetadataBackend:          "ephemeral",
+		MetadataBackend:          "sqlite3",
 		GrpcListenAddr:           ":8080",
 		HttpListenAddr:           ":8085",
 		MetricsBackend:           "inmemory",

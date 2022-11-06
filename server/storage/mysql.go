@@ -42,6 +42,18 @@ func (*mysqlQueryEngine) listEventsForObject() string {
 	return "select id, parent_id, name, source_name, wallclock, metadata from events where parent_id=?"
 }
 
+func (*mysqlQueryEngine) createModelVersion() string {
+	return `insert into model_versions(id, name, model_id, version, description, ml_framework, unique_tags, created_at, updated_at) values(:id, :name, :model_id, :version, :description, :ml_framework, :unique_tags, :created_at, :updated_at)`
+}
+
+func (*mysqlQueryEngine) createAction() string {
+	return "insert into actions (id, parent_id, name, arch, params, created_at, updated_at, finished_at) VALUES (:id, :parent_id, :name, :arch, :params, :created_at, :updated_at, :finished_at)"
+}
+
+func (*mysqlQueryEngine) blobMultiWrite() string {
+	return "insert into blobs(id, parent_id, metadata) VALUES "
+}
+
 type MySqlStorage struct {
 	*SQLStorage
 	*MYSQLDriverUtils

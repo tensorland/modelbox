@@ -18,7 +18,7 @@ var actionsCommand = &cobra.Command{
 var createAction = &cobra.Command{
 	Use: "create",
 	Run: func(cmd *cobra.Command, args []string) {
-		client, err := NewClientUi(ConfigPath)
+		_, err := NewClientUi(ConfigPath)
 		if err != nil {
 			zap.L().Sugar().Panicf("unable to create client: %v", err)
 		}

@@ -44,3 +44,17 @@ func (p *PostgresConfig) DsnAdmin() string {
 		p.Host, p.Port, p.UserName, p.Password, "postgres")
 	return dsn
 }
+
+type Sqlite3Config struct {
+	File     string
+	InMemory bool
+}
+
+func (s *Sqlite3Config) DataSource() string {
+	dsn := fmt.Sprintf("%v", s.File)
+	return dsn
+}
+
+func (s *Sqlite3Config) DsnAdmin() string {
+	return s.DataSource()
+}

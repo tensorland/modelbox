@@ -6,7 +6,7 @@ artifact_storage: "filesystem"
 # Storage system used for storing metadata related to training artifacts
 # such as models and checkpoints, and lineage of artifacts
 # Possible values - ephemeral, mysql, postgres
-metadata_storage: "ephemeral"
+metadata_storage: "sqlite3"
 
 # Storage system to use for storing metrics.
 # Possible values - inmemory, timescaledb
@@ -28,7 +28,7 @@ artifact_storage_s3:
   bucket: "modelbox-artifacts"
 
 # Additional configuration for integrated metadata storage
-metadata_storage_integrated:
+metadata_storage_sqlite3:
   path: "/tmp/modelbox.dat"
 
 # Additional configuration for metadata storage in PostgreSQL

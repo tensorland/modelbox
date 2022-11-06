@@ -479,8 +479,6 @@ func NewMetadataStorage(
 	logger *zap.Logger,
 ) (MetadataStorage, error) {
 	switch svrConfig.MetadataBackend {
-	case config.METADATA_BACKEND_EPHEMERAL:
-		return NewEphemeralStorage(svrConfig.IntegratedStorage.Path, logger)
 	case config.METADATA_BACKEND_MYSQL:
 		mysqlConfig := svrConfig.MySQLConfig
 		if mysqlConfig == nil {
@@ -506,6 +504,12 @@ func NewMetadataStorage(
 				UserName: postgresConfig.User,
 				DbName:   postgresConfig.DbName,
 			}, logger)
+	case config.METADATA_BACKEND_SQLITE3:
+		sqliteConfig := &storageconfig.Sqlite3Config{
+			File: svrConfig.SqliteConfig.Path,
+		}
+		return NewSqlite3Storage(sqliteConfig, logger)
+
 	}
 	return nil, fmt.Errorf("unknown metadata backend: %v", svrConfig.MetadataBackend)
 }

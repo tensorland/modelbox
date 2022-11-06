@@ -57,3 +57,8 @@ upload-sdk-py:
 update-protos:
 	@echo "==> Updating protos"
 	./proto/gen_proto.sh
+
+.PHONY: gen-static
+gen-static:
+	@echo "==> Generating static files" 
+	cd cmd/modelbox && go-bindata assets/...

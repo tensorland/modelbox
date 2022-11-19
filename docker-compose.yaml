@@ -11,8 +11,7 @@ networks:
 services:
   modelbox:
     image: modelboxdotio/modelbox:0.0.1-next-amd64
-    profiles:
-      - local
+    profiles: ["local"]
     command: ["/app/scripts/compose_start.sh"]
     volumes:
       - type: volume
@@ -36,9 +35,7 @@ services:
         dependencies:
   postgres:
     image: postgres
-    profiles:
-      - local
-      - unittests
+    profiles: ["local", "unittests"]
     restart: always
     environment:
       - POSTGRES_PASSWORD=foo
@@ -47,8 +44,7 @@ services:
             ipv4_address: 172.20.0.5
   mysql:
     image: mysql
-    profiles:
-      - unittests
+    profiles: ["unittests"]
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     networks:
@@ -58,9 +54,7 @@ services:
       - MYSQL_ROOT_PASSWORD=foo
   timescaledb:
     image: timescale/timescaledb:latest-pg14
-    profiles:
-      - local
-      - unittests
+    profiles: ["local", "unittests"]
     restart: always
     networks:
         dependencies:
@@ -70,8 +64,7 @@ services:
   jupyter:
     image: jupyter/scipy-notebook:0fd03d9356de
     command: ["/home/jovyan/work/scripts/jupyter_server_start.sh"]
-    profiles:
-      - local
+    profiles: ["local"]
     restart: always
     ports:
       - "8888:8888"

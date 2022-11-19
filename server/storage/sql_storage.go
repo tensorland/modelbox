@@ -289,7 +289,15 @@ func (s *SQLStorage) CreateModelVersion(
 		if err := s.writeMetadata(ctx, tx, modelVersion.Id, metadata); err != nil {
 			return fmt.Errorf("can't write metadata: %v", err)
 		}
-		return s.writeFileSet(ctx, tx, modelVersion.Files)
+
+		if err := s.writeFileSet(ctx, tx, modelVersion.Files); err != nil {
+			return err
+		}
+
+		if err := s.createMutationEvent(ctx, tx, schema.mutationSchema()); err != nil {
+			return fmt.Errorf("unable to create mutation for modle version: %v", err)
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, err

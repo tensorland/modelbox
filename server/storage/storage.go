@@ -164,10 +164,6 @@ type ChangeEvent struct {
 	Payload    map[string]interface{}
 }
 
-func (ce *ChangeEvent) json() ([]byte, error) {
-	return json.Marshal(ce)
-}
-
 func ToFloatLogFromProto(value *proto.MetricsValue) *logging.FloatLog {
 	return &logging.FloatLog{
 		Value:     value.GetFVal(),

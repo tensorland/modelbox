@@ -53,11 +53,20 @@ const (
 	OutcomeFailure
 )
 
+type ActionEval struct {
+	Id          string
+	ParentId    string
+	ParentType  string
+	CreatedAt   int64
+	ProcessedAt int64
+}
+
 // Action represents work associated with a model or an experiment
 type Action struct {
 	Id         string
 	ParentId   string
 	Name       string
+	Command    string
 	Params     map[string]*structpb.Value
 	Arch       string
 	CreatedAt  int64
@@ -81,6 +90,20 @@ func NewAction(name, arch, parent string, params map[string]*structpb.Value) *Ac
 		Params:    params,
 		CreatedAt: currentTime,
 		UpdatedAt: currentTime,
+	}
+}
+
+func (a *Action) actionEval() *ActionEval {
+	h := sha1.New()
+	utils.HashString(h, a.Id)
+	utils.HashString(h, "action-create")
+	utils.HashUint64(h, uint64(time.Now().Unix()))
+	id := fmt.Sprintf("%x", h.Sum(nil))
+	return &ActionEval{
+		Id:         id,
+		ParentId:   a.Id,
+		ParentType: "action",
+		CreatedAt:  time.Now().Unix(),
 	}
 }
 
@@ -470,6 +493,8 @@ type MetadataStorage interface {
 	ListActions(ctx context.Context, parentId string) ([]*Action, error)
 
 	GetAction(ctx context.Context, id string) (*ActionState, error)
+
+	GetActionEvals(ctx context.Context) ([]*ActionEval, error)
 
 	Close() error
 }

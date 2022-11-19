@@ -58,6 +58,10 @@ func (*sqliteQueryEngine) blobMultiWrite() string {
 	return "insert or ignore into blobs(id, parent_id, metadata) VALUES "
 }
 
+func (*sqliteQueryEngine) createActionEval() string {
+	return "insert into action_evals (id, parent_id, parent_type, created_at, processed_at) VALUES (:id, :parent_id, :parent_type, :created_at, :processed_at)"
+}
+
 type Sqlite3Storage struct {
 	*SQLStorage
 	config *storageconfig.Sqlite3Config

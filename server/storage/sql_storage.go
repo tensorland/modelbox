@@ -44,6 +44,8 @@ const (
 	ACTIONS_LIST = "select id, parent_id, name, arch, params, created_at, updated_at, finished_at from actions where parent_id=?"
 
 	ACTION_GET = "select id, parent_id, name, arch, params, created_at, updated_at, finished_at from actions where id=?"
+
+	ACTION_EVALS_GET = "select id, parent_id, parent_type, created_at, processed_at from action_evals where processed_at = 0"
 )
 
 type queryEngine interface {
@@ -62,6 +64,8 @@ type queryEngine interface {
 	createModelVersion() string
 
 	createAction() string
+
+	createActionEval() string
 
 	blobMultiWrite() string
 }
@@ -535,10 +539,30 @@ func (s *SQLStorage) GetAction(ctx context.Context, id string) (*ActionState, er
 func (s *SQLStorage) CreateAction(ctx context.Context, action *Action) error {
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := newActionSchema(action)
-		_, err := tx.NamedExecContext(ctx, s.queryEngine.createAction(), schema)
+		if _, err := tx.NamedExecContext(ctx, s.queryEngine.createAction(), schema); err != nil {
+			return err
+		}
+
+		evalSchema := newActionEvalSchema(action.actionEval())
+		_, err := tx.NamedExecContext(ctx, s.queryEngine.createActionEval(), evalSchema)
 		return err
 	})
 	return err
+}
+
+func (s *SQLStorage) GetActionEvals(ctx context.Context) ([]*ActionEval, error) {
+	actionEvals := []*ActionEval{}
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		rows := []*ActionEvalSchema{}
+		if err := tx.SelectContext(ctx, &rows, ACTION_EVALS_GET); err != nil {
+			return err
+		}
+		for _, row := range rows {
+			actionEvals = append(actionEvals, row.toActionEval())
+		}
+		return nil
+	})
+	return actionEvals, err
 }
 
 func (s *SQLStorage) transact(ctx context.Context, fn func(*sqlx.Tx) error) error {

@@ -349,3 +349,31 @@ func newActionSchema(action *Action) *ActionSchema {
 		FinishedAt: uint64(action.FinishedAt),
 	}
 }
+
+type ActionEvalSchema struct {
+	Id          string
+	ParentId    string `db:"parent_id"`
+	ParentType  string `db:"parent_type"`
+	CreatedAt   uint64 `db:"created_at"`
+	ProcessedAt uint64 `db:"processed_at"`
+}
+
+func (a *ActionEvalSchema) toActionEval() *ActionEval {
+	return &ActionEval{
+		Id:          a.Id,
+		ParentId:    a.ParentId,
+		ParentType:  a.ParentType,
+		CreatedAt:   int64(a.CreatedAt),
+		ProcessedAt: int64(a.ProcessedAt),
+	}
+}
+
+func newActionEvalSchema(action *ActionEval) *ActionEvalSchema {
+	return &ActionEvalSchema{
+		Id:          action.Id,
+		ParentId:    action.ParentId,
+		ParentType:  action.ParentType,
+		CreatedAt:   uint64(action.CreatedAt),
+		ProcessedAt: uint64(action.ProcessedAt),
+	}
+}

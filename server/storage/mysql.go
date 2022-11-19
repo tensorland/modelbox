@@ -50,6 +50,10 @@ func (*mysqlQueryEngine) createAction() string {
 	return "insert into actions (id, parent_id, name, arch, params, created_at, updated_at, finished_at) VALUES (:id, :parent_id, :name, :arch, :params, :created_at, :updated_at, :finished_at)"
 }
 
+func (*mysqlQueryEngine) createActionEval() string {
+	return "insert into action_evals (id, parent_id, parent_type, created_at, processed_at) VALUES (:id, :parent_id, :parent_type, :created_at, :processed_at)"
+}
+
 func (*mysqlQueryEngine) blobMultiWrite() string {
 	return "insert into blobs(id, parent_id, metadata) VALUES "
 }

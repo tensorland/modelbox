@@ -57,6 +57,10 @@ func (*postgresQueryEngine) blobMultiWrite() string {
 	return "insert into blobs(id, parent_id, metadata) VALUES "
 }
 
+func (*postgresQueryEngine) createActionEval() string {
+	return "insert into action_evals (id, parent_id, parent_type, created_at, processed_at) VALUES (:id, :parent_id, :parent_type, :created_at, :processed_at)"
+}
+
 type PostgresStorage struct {
 	*SQLStorage
 	*PostgresDriverUtils

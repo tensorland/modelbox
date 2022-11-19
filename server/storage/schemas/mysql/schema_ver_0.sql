@@ -107,3 +107,11 @@ CREATE TABLE IF NOT EXISTS cluster_members (
    info JSON,
    heartbeat_time BIGINT
 );
+
+CREATE TABLE IF NOT EXISTS action_evals (
+   id VARCHAR(40) PRIMARY KEY,
+   parent_id VARCHAR(40),
+   parent_type VARCHAR(10),
+   created_at BIGINT NOT NULL,
+   processed_at BIGINT
+);

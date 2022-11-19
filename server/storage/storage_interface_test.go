@@ -287,6 +287,11 @@ func (s *StorageInterfaceTestSuite) TestCreateActions() {
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, actionState.Action.Id, a1.Id)
 	assert.Equal(s.t, actionState.Action.Arch, a1.Arch)
+
+	// Get Action Eval
+	actionEvals, err := s.storageIf.GetActionEvals(ctx)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, 1, len(actionEvals))
 }
 
 func (s *StorageInterfaceTestSuite) createMetadata() map[string]*structpb.Value {

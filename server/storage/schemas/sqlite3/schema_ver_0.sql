@@ -93,6 +93,14 @@ CREATE TABLE IF NOT EXISTS actions (
    finished_at BIGINT
 );
 
+CREATE TABLE IF NOT EXISTS action_evals (
+   id VARCHAR(40) PRIMARY KEY,
+   parent_id VARCHAR(40),
+   parent_type VARCHAR(10),
+   created_at BIGINT NOT NULL,
+   processed_at BIGINT
+);
+
 CREATE TABLE IF NOT EXISTS action_state (
    ID VARCHAR(45) PRIMARY KEY,
    attempt BIGINT NOT NULL,

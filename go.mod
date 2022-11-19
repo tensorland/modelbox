@@ -19,7 +19,6 @@ require (
 	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.8.0
 	github.com/vmihailenco/msgpack/v5 v5.3.5
-	go.etcd.io/bbolt v1.3.6
 	go.uber.org/zap v1.21.0
 	google.golang.org/grpc v1.46.0
 	google.golang.org/protobuf v1.28.1

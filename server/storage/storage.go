@@ -135,7 +135,12 @@ type ActionInstance struct {
 
 func NewActionInstance(actionId string, attempt uint) *ActionInstance {
 	createdTime := time.Now().Unix()
+	h := sha1.New()
+	utils.HashString(h, actionId)
+	utils.HashUint64(h, uint64(attempt))
+	id := fmt.Sprintf("%x", h.Sum(nil))
 	return &ActionInstance{
+		Id:        id,
 		ActionId:  actionId,
 		Attempt:   attempt,
 		Status:    StatusPending,
@@ -520,6 +525,8 @@ type MetadataStorage interface {
 	GetAction(ctx context.Context, id string) (*ActionState, error)
 
 	GetActionEvals(ctx context.Context) ([]*ActionEval, error)
+
+	GetActionEvalById(ctx context.Context, id string) (*ActionEval, error)
 
 	Close() error
 }

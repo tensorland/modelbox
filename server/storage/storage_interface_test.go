@@ -2,10 +2,12 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"google.golang.org/protobuf/types/known/structpb"
 )
@@ -289,18 +291,11 @@ func (s *StorageInterfaceTestSuite) TestCreateActions() {
 	assert.Equal(s.t, actionState.Action.Arch, a1.Arch)
 
 	// Get Action Eval
-	actionEvals, err := s.storageIf.GetActionEvals(ctx)
+	actionEvals, err := s.filterEvalByActionId(a1.Id)
 	assert.Nil(s.t, err)
-	numEvals := 0
-	var eval *ActionEval
-	for _, ev := range actionEvals {
-		if ev.ParentId == a1.Id {
-			numEvals += 1
-			eval = ev
-		}
-	}
-	assert.Equal(s.t, 1, numEvals)
+	require.Equal(s.t, 1, len(actionEvals))
 	// Ensure eval matches expectaction
+	eval := actionEvals[0]
 	assert.NotEmpty(s.t, eval.Id)
 	assert.Equal(s.t, eval.ParentId, a1.Id)
 	assert.Equal(s.t, eval.ParentType, EvalAction)
@@ -315,20 +310,37 @@ func (s *StorageInterfaceTestSuite) TestCreateActionInstance() {
 	assert.Nil(s.t, err)
 
 	instance := NewActionInstance(a1.Id, 0)
-	actionEvals, err := s.storageIf.GetActionEvals(ctx)
+	actionEvals, err := s.filterEvalByActionId(a1.Id)
 	assert.Nil(s.t, err)
-	var eval *ActionEval
-	for _, ev := range actionEvals {
-		if ev.ParentId == a1.Id {
-			eval = ev
-		}
-	}
-	err = s.storageIf.CreateActionInstance(ctx, instance, eval)
+	assert.Equal(s.t, 1, len(actionEvals))
+	err = s.storageIf.CreateActionInstance(ctx, instance, actionEvals[0])
 	assert.Nil(s.t, err)
+
 	actionState, err := s.storageIf.GetAction(ctx, a1.Id)
 	assert.Nil(s.t, err)
 	assert.Equal(s.t, 1, len(actionState.Instances))
 	assert.Equal(s.t, instance, actionState.Instances[0])
+
+	// Ensure that the eval is marked as processed
+	actionEval, err := s.storageIf.GetActionEvalById(ctx, actionEvals[0].Id)
+	require.Nil(s.t, err)
+	assert.NotEmpty(s.t, actionEval.ProcessedAt)
+}
+
+func (s *StorageInterfaceTestSuite) filterEvalByActionId(id string) ([]*ActionEval, error) {
+	var evals []*ActionEval
+	actionEvals, err := s.storageIf.GetActionEvals(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	for _, ev := range actionEvals {
+		fmt.Printf("action id %v eval parent %v \n", id, ev.ParentId)
+		if ev.ParentId == id {
+			evals = append(evals, ev)
+		}
+	}
+	fmt.Printf("len evals %v \n", len(evals))
+	return evals, nil
 }
 
 func (s *StorageInterfaceTestSuite) createMetadata() map[string]*structpb.Value {

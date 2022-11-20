@@ -58,7 +58,7 @@ func (*postgresQueryEngine) blobMultiWrite() string {
 }
 
 func (*postgresQueryEngine) createActionEval() string {
-	return "insert into action_evals (id, parent_id, parent_type, created_at, processed_at) VALUES (:id, :parent_id, :parent_type, :created_at, :processed_at)"
+	return "insert into action_evals (id, parent_id, parent_type, eval_type, created_at, processed_at) VALUES (:id, :parent_id, :parent_type, :eval_type, :created_at, :processed_at)"
 }
 
 func (*postgresQueryEngine) updateEval() string {
@@ -67,6 +67,10 @@ func (*postgresQueryEngine) updateEval() string {
 
 func (*postgresQueryEngine) actionInstances() string {
 	return "select id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at from action_instances where action_id=$1"
+}
+
+func (*postgresQueryEngine) getActionEval() string {
+	return "select id, parent_id, parent_type, eval_type, created_at, processed_at from action_evals where id=$1"
 }
 
 type PostgresStorage struct {

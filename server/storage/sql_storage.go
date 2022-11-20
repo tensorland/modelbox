@@ -45,7 +45,7 @@ const (
 
 	ACTION_GET = "select id, parent_id, name, arch, params, created_at, updated_at, finished_at from actions where id=?"
 
-	ACTION_EVALS_GET = "select id, parent_id, parent_type, created_at, processed_at from action_evals where processed_at = 0"
+	ACTION_UNPROCESSED_EVALS_GET = "select id, parent_id, parent_type, created_at, processed_at from action_evals where processed_at = 0"
 
 	ACTION_INSTANCE_CREATE = "insert into action_instances(id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at) values(:id, :action_id, :attempt, :status, :outcome, :outcome_reason, :created_at, :updated_at, :finished_at)"
 )
@@ -68,6 +68,8 @@ type queryEngine interface {
 	createAction() string
 
 	createActionEval() string
+
+	getActionEval() string
 
 	blobMultiWrite() string
 
@@ -577,6 +579,8 @@ func (s *SQLStorage) CreateActionInstance(ctx context.Context, actionInstance *A
 		if _, err := tx.NamedExecContext(ctx, ACTION_INSTANCE_CREATE, schema); err != nil {
 			return fmt.Errorf("unable to create action instance: %v", err)
 		}
+		// Set processed_at so that we mark this eval as processed
+		eval.ProcessedAt = time.Now().Unix()
 		evalSchema := newActionEvalSchema(eval)
 		if _, err := tx.NamedExecContext(ctx, s.queryEngine.updateEval(), evalSchema); err != nil {
 			return fmt.Errorf("unable to create eval schema: %v", err)
@@ -591,7 +595,7 @@ func (s *SQLStorage) GetActionEvals(ctx context.Context) ([]*ActionEval, error) 
 	actionEvals := []*ActionEval{}
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		rows := []*ActionEvalSchema{}
-		if err := tx.SelectContext(ctx, &rows, ACTION_EVALS_GET); err != nil {
+		if err := tx.SelectContext(ctx, &rows, ACTION_UNPROCESSED_EVALS_GET); err != nil {
 			return err
 		}
 		for _, row := range rows {
@@ -600,6 +604,19 @@ func (s *SQLStorage) GetActionEvals(ctx context.Context) ([]*ActionEval, error) 
 		return nil
 	})
 	return actionEvals, err
+}
+
+func (s *SQLStorage) GetActionEvalById(ctx context.Context, id string) (*ActionEval, error) {
+	var eval *ActionEval
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		var row ActionEvalSchema
+		if err := tx.GetContext(ctx, &row, s.queryEngine.getActionEval(), id); err != nil {
+			return fmt.Errorf("unable to get action eval: %v", err)
+		}
+		eval = row.toActionEval()
+		return nil
+	})
+	return eval, err
 }
 
 func (s *SQLStorage) transact(ctx context.Context, fn func(*sqlx.Tx) error) error {

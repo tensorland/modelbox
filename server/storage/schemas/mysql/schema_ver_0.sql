@@ -91,15 +91,16 @@ CREATE TABLE IF NOT EXISTS actions (
    finished_at BIGINT
 );
 
-CREATE TABLE IF NOT EXISTS action_state (
-   ID VARCHAR(45) PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS action_instances (
+   id VARCHAR(45) PRIMARY KEY,
+   action_id VARCHAR(40) NOT NULL,
    attempt BIGINT NOT NULL,
-   status VARCHAR(10) NOT NULL,
-   outcome VARCHAR(20) NOT NULL,
+   status INT NOT NULL,
+   outcome INT NOT NULL,
    outcome_reason VARCHAR(20) NOT NULL,
    created_at BIGINT,
    updated_at BIGINT,
-   finishd_at BIGINT
+   finished_at BIGINT
 );
 
 CREATE TABLE IF NOT EXISTS cluster_members (
@@ -111,7 +112,8 @@ CREATE TABLE IF NOT EXISTS cluster_members (
 CREATE TABLE IF NOT EXISTS action_evals (
    id VARCHAR(40) PRIMARY KEY,
    parent_id VARCHAR(40),
-   parent_type VARCHAR(10),
+   parent_type INT,
+   eval_type INT,
    created_at BIGINT NOT NULL,
    processed_at BIGINT
 );

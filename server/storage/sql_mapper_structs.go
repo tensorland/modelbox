@@ -353,7 +353,8 @@ func newActionSchema(action *Action) *ActionSchema {
 type ActionEvalSchema struct {
 	Id          string
 	ParentId    string `db:"parent_id"`
-	ParentType  string `db:"parent_type"`
+	ParentType  uint8  `db:"parent_type"`
+	EvalType    uint8  `db:"eval_type"`
 	CreatedAt   uint64 `db:"created_at"`
 	ProcessedAt uint64 `db:"processed_at"`
 }
@@ -362,7 +363,8 @@ func (a *ActionEvalSchema) toActionEval() *ActionEval {
 	return &ActionEval{
 		Id:          a.Id,
 		ParentId:    a.ParentId,
-		ParentType:  a.ParentType,
+		ParentType:  EvalParent(a.ParentType),
+		Type:        EvalType(a.EvalType),
 		CreatedAt:   int64(a.CreatedAt),
 		ProcessedAt: int64(a.ProcessedAt),
 	}
@@ -372,8 +374,49 @@ func newActionEvalSchema(action *ActionEval) *ActionEvalSchema {
 	return &ActionEvalSchema{
 		Id:          action.Id,
 		ParentId:    action.ParentId,
-		ParentType:  action.ParentType,
+		ParentType:  uint8(action.ParentType),
+		EvalType:    uint8(action.Type),
 		CreatedAt:   uint64(action.CreatedAt),
 		ProcessedAt: uint64(action.ProcessedAt),
+	}
+}
+
+type ActionInstanceSchema struct {
+	Id            string
+	ActionId      string `db:"action_id"`
+	Attempt       uint64
+	Status        uint8
+	Outcome       uint8
+	OutcomeReason string `db:"outcome_reason"`
+	CreatedAt     int64  `db:"created_at"`
+	UpdatedAt     int64  `db:"updated_at"`
+	FinishedAt    int64  `db:"finished_at"`
+}
+
+func newActionInstanceSchema(ai *ActionInstance) *ActionInstanceSchema {
+	return &ActionInstanceSchema{
+		Id:            ai.Id,
+		ActionId:      ai.ActionId,
+		Attempt:       uint64(ai.Attempt),
+		Status:        uint8(ai.Status),
+		Outcome:       uint8(ai.Outcome),
+		OutcomeReason: ai.OutcomeReason,
+		CreatedAt:     ai.CreatedAt,
+		UpdatedAt:     ai.UpdatedAt,
+		FinishedAt:    ai.FinishedAt,
+	}
+}
+
+func (a *ActionInstanceSchema) toActionInstance() *ActionInstance {
+	return &ActionInstance{
+		Id:            a.Id,
+		ActionId:      a.ActionId,
+		Attempt:       uint(a.Attempt),
+		Status:        ActionStatus(a.Status),
+		Outcome:       ActionOutcome(a.Outcome),
+		OutcomeReason: a.OutcomeReason,
+		CreatedAt:     a.CreatedAt,
+		UpdatedAt:     a.UpdatedAt,
+		FinishedAt:    a.FinishedAt,
 	}
 }

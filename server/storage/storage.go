@@ -53,10 +53,23 @@ const (
 	OutcomeFailure
 )
 
+type EvalType uint8
+
+const (
+	ActionCreated EvalType = iota
+)
+
+type EvalParent uint8
+
+const (
+	EvalAction EvalParent = iota
+)
+
 type ActionEval struct {
 	Id          string
 	ParentId    string
-	ParentType  string
+	ParentType  EvalParent
+	Type        EvalType
 	CreatedAt   int64
 	ProcessedAt int64
 }
@@ -93,28 +106,42 @@ func NewAction(name, arch, parent string, params map[string]*structpb.Value) *Ac
 	}
 }
 
-func (a *Action) actionEval() *ActionEval {
+func (a *Action) actionEval(evalType EvalType) *ActionEval {
 	h := sha1.New()
 	utils.HashString(h, a.Id)
-	utils.HashString(h, "action-create")
+	utils.HashInt(h, int(evalType))
 	utils.HashUint64(h, uint64(time.Now().Unix()))
 	id := fmt.Sprintf("%x", h.Sum(nil))
 	return &ActionEval{
 		Id:         id,
 		ParentId:   a.Id,
-		ParentType: "action",
+		ParentType: EvalAction,
+		Type:       evalType,
 		CreatedAt:  time.Now().Unix(),
 	}
 }
 
 type ActionInstance struct {
 	Id            string
+	ActionId      string
 	Attempt       uint
 	Status        ActionStatus
 	Outcome       ActionOutcome
 	OutcomeReason string
-	CreatedTime   int64
-	FinishedTime  int64
+	CreatedAt     int64
+	UpdatedAt     int64
+	FinishedAt    int64
+}
+
+func NewActionInstance(actionId string, attempt uint) *ActionInstance {
+	createdTime := time.Now().Unix()
+	return &ActionInstance{
+		ActionId:  actionId,
+		Attempt:   attempt,
+		Status:    StatusPending,
+		Outcome:   OutcomeUnknown,
+		CreatedAt: createdTime,
+	}
 }
 
 type ActionState struct {
@@ -485,6 +512,8 @@ type MetadataStorage interface {
 	ListEvents(ctx context.Context, parentId string) ([]*Event, error)
 
 	CreateAction(ctx context.Context, action *Action) error
+
+	CreateActionInstance(ctx context.Context, actionInstance *ActionInstance, eval *ActionEval) error
 
 	ListActions(ctx context.Context, parentId string) ([]*Action, error)
 

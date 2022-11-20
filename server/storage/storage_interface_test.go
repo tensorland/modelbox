@@ -291,7 +291,44 @@ func (s *StorageInterfaceTestSuite) TestCreateActions() {
 	// Get Action Eval
 	actionEvals, err := s.storageIf.GetActionEvals(ctx)
 	assert.Nil(s.t, err)
-	assert.Equal(s.t, 1, len(actionEvals))
+	numEvals := 0
+	var eval *ActionEval
+	for _, ev := range actionEvals {
+		if ev.ParentId == a1.Id {
+			numEvals += 1
+			eval = ev
+		}
+	}
+	assert.Equal(s.t, 1, numEvals)
+	// Ensure eval matches expectaction
+	assert.NotEmpty(s.t, eval.Id)
+	assert.Equal(s.t, eval.ParentId, a1.Id)
+	assert.Equal(s.t, eval.ParentType, EvalAction)
+	assert.Equal(s.t, eval.Type, ActionCreated)
+	assert.Equal(s.t, eval.ProcessedAt, int64(0))
+}
+
+func (s *StorageInterfaceTestSuite) TestCreateActionInstance() {
+	ctx := context.Background()
+	a1 := NewAction("quantize", "x86", "parent2", s.createMetadata())
+	err := s.storageIf.CreateAction(ctx, a1)
+	assert.Nil(s.t, err)
+
+	instance := NewActionInstance(a1.Id, 0)
+	actionEvals, err := s.storageIf.GetActionEvals(ctx)
+	assert.Nil(s.t, err)
+	var eval *ActionEval
+	for _, ev := range actionEvals {
+		if ev.ParentId == a1.Id {
+			eval = ev
+		}
+	}
+	err = s.storageIf.CreateActionInstance(ctx, instance, eval)
+	assert.Nil(s.t, err)
+	actionState, err := s.storageIf.GetAction(ctx, a1.Id)
+	assert.Nil(s.t, err)
+	assert.Equal(s.t, 1, len(actionState.Instances))
+	assert.Equal(s.t, instance, actionState.Instances[0])
 }
 
 func (s *StorageInterfaceTestSuite) createMetadata() map[string]*structpb.Value {

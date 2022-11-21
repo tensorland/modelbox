@@ -45,7 +45,7 @@ const (
 
 	ACTION_GET = "select id, parent_id, name, arch, params, created_at, updated_at, finished_at from actions where id=?"
 
-	ACTION_UNPROCESSED_EVALS_GET = "select id, parent_id, parent_type, created_at, processed_at from action_evals where processed_at = 0"
+	ACTION_UNPROCESSED_EVALS_GET = "select id, parent_id, parent_type, eval_type, created_at, processed_at from action_evals where processed_at = 0"
 
 	ACTION_INSTANCE_CREATE = "insert into action_instances(id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at) values(:id, :action_id, :attempt, :status, :outcome, :outcome_reason, :created_at, :updated_at, :finished_at)"
 )
@@ -566,7 +566,7 @@ func (s *SQLStorage) CreateAction(ctx context.Context, action *Action) error {
 			return err
 		}
 
-		evalSchema := newActionEvalSchema(action.actionEval(ActionCreated))
+		evalSchema := newActionEvalSchema(action.actionEval(EvalTypeActionCreated))
 		_, err := tx.NamedExecContext(ctx, s.queryEngine.createActionEval(), evalSchema)
 		return err
 	})

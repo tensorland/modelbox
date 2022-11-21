@@ -1,4 +1,4 @@
-package server
+package scheduler
 
 import (
 	"context"
@@ -55,21 +55,36 @@ func (a *ActionScheduler) runScheduler() error {
 	}
 	for _, eval := range evals {
 		// Handle create evals
-		if eval.ParentType == storage.EvalAction {
-			if eval.Type == storage.ActionCreated {
-				actionState, err := a.storageIf.GetAction(context.Background(), eval.ParentId)
-				if err != nil {
-					return fmt.Errorf("unable to get action with id: %v", err)
-				}
-				if len(actionState.Instances) > 0 {
-					continue
-				}
-				actionInstance := storage.NewActionInstance(eval.ParentId, 0)
-				if err := a.storageIf.CreateActionInstance(context.Background(), actionInstance, eval); err != nil {
-					return fmt.Errorf("unable to create action instance: %v", err)
-				}
-			}
+		switch eval.ParentType {
+		case storage.EvalParentAction:
+			return a.handleActionEvals(eval)
+		default:
+			return fmt.Errorf("unknown eval parent: %v", eval.ParentType)
 		}
+	}
+	return nil
+}
+
+func (a *ActionScheduler) handleActionEvals(eval *storage.ActionEval) error {
+	switch eval.Type {
+	case storage.EvalTypeActionCreated:
+		return a.handleCreateActionEval(eval)
+	default:
+		return fmt.Errorf("unknown eval type: %v", eval.Type)
+	}
+}
+
+func (a *ActionScheduler) handleCreateActionEval(eval *storage.ActionEval) error {
+	actionState, err := a.storageIf.GetAction(context.Background(), eval.ParentId)
+	if err != nil {
+		return fmt.Errorf("unable to get action with id: %v", err)
+	}
+	if len(actionState.Instances) > 0 {
+		return nil
+	}
+	actionInstance := storage.NewActionInstance(eval.ParentId, 0)
+	if err := a.storageIf.CreateActionInstance(context.Background(), actionInstance, eval); err != nil {
+		return fmt.Errorf("unable to create action instance: %v", err)
 	}
 	return nil
 }

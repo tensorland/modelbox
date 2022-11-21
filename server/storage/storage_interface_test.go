@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -298,8 +297,8 @@ func (s *StorageInterfaceTestSuite) TestCreateActions() {
 	eval := actionEvals[0]
 	assert.NotEmpty(s.t, eval.Id)
 	assert.Equal(s.t, eval.ParentId, a1.Id)
-	assert.Equal(s.t, eval.ParentType, EvalAction)
-	assert.Equal(s.t, eval.Type, ActionCreated)
+	assert.Equal(s.t, eval.ParentType, EvalParentAction)
+	assert.Equal(s.t, eval.Type, EvalTypeActionCreated)
 	assert.Equal(s.t, eval.ProcessedAt, int64(0))
 }
 
@@ -334,12 +333,10 @@ func (s *StorageInterfaceTestSuite) filterEvalByActionId(id string) ([]*ActionEv
 		return nil, err
 	}
 	for _, ev := range actionEvals {
-		fmt.Printf("action id %v eval parent %v \n", id, ev.ParentId)
 		if ev.ParentId == id {
 			evals = append(evals, ev)
 		}
 	}
-	fmt.Printf("len evals %v \n", len(evals))
 	return evals, nil
 }
 

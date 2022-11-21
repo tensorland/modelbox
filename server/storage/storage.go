@@ -56,13 +56,15 @@ const (
 type EvalType uint8
 
 const (
-	ActionCreated EvalType = iota
+	EvalTypeUnknown EvalType = iota
+	EvalTypeActionCreated
 )
 
 type EvalParent uint8
 
 const (
-	EvalAction EvalParent = iota
+	EvalParentUnknown EvalParent = iota
+	EvalParentAction
 )
 
 type ActionEval struct {
@@ -115,7 +117,7 @@ func (a *Action) actionEval(evalType EvalType) *ActionEval {
 	return &ActionEval{
 		Id:         id,
 		ParentId:   a.Id,
-		ParentType: EvalAction,
+		ParentType: EvalParentAction,
 		Type:       evalType,
 		CreatedAt:  time.Now().Unix(),
 	}

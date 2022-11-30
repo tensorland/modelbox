@@ -74,6 +74,19 @@ func (a *ActionScheduler) handleActionEvals(eval *storage.ActionEval) error {
 	}
 }
 
+func (a *ActionScheduler) UpdateInstanceStatus(ctx context.Context, update *storage.ActionInstanceUpdate) error {
+	ai, err := a.storageIf.GetActionInstance(ctx, update.ActionInstanceId)
+	if err != nil {
+		return err
+	}
+
+	hasUpdated, eval := ai.Update(update)
+	if !hasUpdated {
+		return nil
+	}
+	return a.storageIf.UpdateActionInstance(ctx, ai, eval)
+}
+
 func (a *ActionScheduler) handleCreateActionEval(eval *storage.ActionEval) error {
 	actionState, err := a.storageIf.GetAction(context.Background(), eval.ParentId)
 	if err != nil {

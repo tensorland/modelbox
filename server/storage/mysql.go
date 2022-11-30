@@ -58,16 +58,16 @@ func (*mysqlQueryEngine) blobMultiWrite() string {
 	return "insert into blobs(id, parent_id, metadata) VALUES "
 }
 
-func (*mysqlQueryEngine) updateEval() string {
-	return "update action_evals set processed_at=:processed_at where id=:id"
-}
-
 func (*mysqlQueryEngine) actionInstances() string {
 	return "select id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at from action_instances where action_id=?"
 }
 
 func (*mysqlQueryEngine) getActionEval() string {
 	return "select id, parent_id, parent_type, eval_type, created_at, processed_at from action_evals where id=?"
+}
+
+func (*mysqlQueryEngine) getActionInstance() string {
+	return "select id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at from action_instances where id=?"
 }
 
 type MySqlStorage struct {

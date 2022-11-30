@@ -307,11 +307,10 @@ func (s *StorageInterfaceTestSuite) TestCreateActionInstance() {
 	a1 := NewAction("quantize", "x86", "parent2", s.createMetadata())
 	err := s.storageIf.CreateAction(ctx, a1)
 	assert.Nil(s.t, err)
-
-	instance := NewActionInstance(a1.Id, 0)
 	actionEvals, err := s.filterEvalByActionId(a1.Id)
 	assert.Nil(s.t, err)
-	assert.Equal(s.t, 1, len(actionEvals))
+
+	instance := NewActionInstance(a1.Id, 0)
 	err = s.storageIf.CreateActionInstance(ctx, instance, actionEvals[0])
 	assert.Nil(s.t, err)
 
@@ -324,6 +323,63 @@ func (s *StorageInterfaceTestSuite) TestCreateActionInstance() {
 	actionEval, err := s.storageIf.GetActionEvalById(ctx, actionEvals[0].Id)
 	require.Nil(s.t, err)
 	assert.NotEmpty(s.t, actionEval.ProcessedAt)
+}
+
+func (s *StorageInterfaceTestSuite) TestUpdateActionInstanceSuccess() {
+	// 1. Create a action and action instance
+	// 2. Update the action instance to finished
+	// 3. Assert that the action was updated
+	ctx := context.Background()
+	a1 := NewAction("quantize", "x86", "parent3", s.createMetadata())
+	err := s.storageIf.CreateAction(ctx, a1)
+	require.Nil(s.t, err)
+	actionEvals, err := s.filterEvalByActionId(a1.Id)
+	require.Nil(s.t, err)
+	ai1 := NewActionInstance(a1.Id, 0)
+	err = s.storageIf.CreateActionInstance(ctx, ai1, actionEvals[0])
+	require.Nil(s.t, err)
+
+	finishedTime := uint64(ai1.CreatedAt) + uint64(2*time.Minute)
+	_, eval1 := ai1.Update(NewActionInstanceUpdate(ai1.Id, StatusFinished, OutcomeSuccess, "", finishedTime))
+	err = s.storageIf.UpdateActionInstance(ctx, ai1, eval1)
+	require.Nil(s.t, err)
+
+	ai2, err := s.storageIf.GetActionInstance(ctx, ai1.Id)
+	require.Nil(s.t, err)
+	assert.Equal(s.t, OutcomeSuccess, ai2.Outcome)
+	assert.Equal(s.t, StatusFinished, ai2.Status)
+	assert.Equal(s.t, finishedTime, uint64(ai2.FinishedAt))
+}
+
+func (s *StorageInterfaceTestSuite) TestUpdateActionInstanceFail() {
+	// 1. Create a action and action instance
+	// 2. Update the action instance to finished
+	// 3. Assert that the action was updated
+	// 4. Assert that the eval is processed.
+	ctx := context.Background()
+	a1 := NewAction("quantize", "x86", "parent4", s.createMetadata())
+	err := s.storageIf.CreateAction(ctx, a1)
+	require.Nil(s.t, err)
+	actionEvals, err := s.filterEvalByActionId(a1.Id)
+	require.Nil(s.t, err)
+	ai1 := NewActionInstance(a1.Id, 0)
+	err = s.storageIf.CreateActionInstance(ctx, ai1, actionEvals[0])
+	require.Nil(s.t, err)
+
+	finishedTime := uint64(ai1.CreatedAt) + uint64(2*time.Minute)
+	_, eval1 := ai1.Update(NewActionInstanceUpdate(ai1.Id, StatusFinished, OutcomeFailure, "", finishedTime))
+	assert.NotNil(s.t, eval1)
+	err = s.storageIf.UpdateActionInstance(ctx, ai1, eval1)
+	require.Nil(s.t, err)
+
+	ai2, err := s.storageIf.GetActionInstance(ctx, ai1.Id)
+	require.Nil(s.t, err)
+	assert.Equal(s.t, OutcomeFailure, ai2.Outcome)
+	assert.Equal(s.t, StatusFinished, ai2.Status)
+	assert.Equal(s.t, finishedTime, uint64(ai2.FinishedAt))
+	eval2, err := s.storageIf.GetActionEvalById(ctx, eval1.Id)
+	require.Nil(s.t, err)
+	assert.NotEmpty(s.t, eval2.ProcessedAt)
 }
 
 func (s *StorageInterfaceTestSuite) filterEvalByActionId(id string) ([]*ActionEval, error) {

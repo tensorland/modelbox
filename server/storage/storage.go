@@ -58,6 +58,9 @@ type EvalType uint8
 const (
 	EvalTypeUnknown EvalType = iota
 	EvalTypeActionCreated
+	EvalTypeActionRunning
+	EvalTypeActionFailed
+	EvalTypeActionFinished
 )
 
 type EvalParent uint8
@@ -65,6 +68,7 @@ type EvalParent uint8
 const (
 	EvalParentUnknown EvalParent = iota
 	EvalParentAction
+	EvalParentActionInstance
 )
 
 type ActionEval struct {
@@ -74,6 +78,21 @@ type ActionEval struct {
 	Type        EvalType
 	CreatedAt   int64
 	ProcessedAt int64
+}
+
+func NewActionEval(parent string, parentType EvalParent, evalType EvalType) *ActionEval {
+	h := sha1.New()
+	utils.HashString(h, parent)
+	utils.HashInt(h, int(evalType))
+	utils.HashUint64(h, uint64(time.Now().Unix()))
+	id := fmt.Sprintf("%x", h.Sum(nil))
+	return &ActionEval{
+		Id:         id,
+		ParentId:   parent,
+		ParentType: parentType,
+		Type:       evalType,
+		CreatedAt:  time.Now().Unix(),
+	}
 }
 
 // Action represents work associated with a model or an experiment
@@ -109,18 +128,7 @@ func NewAction(name, arch, parent string, params map[string]*structpb.Value) *Ac
 }
 
 func (a *Action) actionEval(evalType EvalType) *ActionEval {
-	h := sha1.New()
-	utils.HashString(h, a.Id)
-	utils.HashInt(h, int(evalType))
-	utils.HashUint64(h, uint64(time.Now().Unix()))
-	id := fmt.Sprintf("%x", h.Sum(nil))
-	return &ActionEval{
-		Id:         id,
-		ParentId:   a.Id,
-		ParentType: EvalParentAction,
-		Type:       evalType,
-		CreatedAt:  time.Now().Unix(),
-	}
+	return NewActionEval(a.Id, EvalParentAction, evalType)
 }
 
 type ActionInstance struct {
@@ -151,9 +159,45 @@ func NewActionInstance(actionId string, attempt uint) *ActionInstance {
 	}
 }
 
+func (a *ActionInstance) Update(update *ActionInstanceUpdate) (bool, *ActionEval) {
+	// This prevents updating the instance when the same update is applied twice
+	if a.Status >= update.Status {
+		return false, nil
+	}
+	a.Status = update.Status
+	a.Outcome = update.Outcome
+	a.OutcomeReason = update.OutcomeReason
+	if update.Outcome == OutcomeFailure || update.Outcome == OutcomeSuccess {
+		a.FinishedAt = int64(update.Time)
+	}
+	if update.Outcome == OutcomeFailure {
+		return true, NewActionEval(a.Id, EvalParentActionInstance, EvalTypeActionFailed)
+	}
+
+	return true, nil
+}
+
 type ActionState struct {
 	Action    *Action
 	Instances []*ActionInstance
+}
+
+type ActionInstanceUpdate struct {
+	ActionInstanceId string
+	Status           ActionStatus
+	Outcome          ActionOutcome
+	OutcomeReason    string
+	Time             uint64
+}
+
+func NewActionInstanceUpdate(instanceId string, status ActionStatus, outcome ActionOutcome, reason string, time uint64) *ActionInstanceUpdate {
+	return &ActionInstanceUpdate{
+		ActionInstanceId: instanceId,
+		Status:           status,
+		Outcome:          outcome,
+		OutcomeReason:    reason,
+		Time:             time,
+	}
 }
 
 type Event struct {
@@ -529,6 +573,10 @@ type MetadataStorage interface {
 	GetActionEvals(ctx context.Context) ([]*ActionEval, error)
 
 	GetActionEvalById(ctx context.Context, id string) (*ActionEval, error)
+
+	UpdateActionInstance(ctx context.Context, instance *ActionInstance, eval *ActionEval) error
+
+	GetActionInstance(ctx context.Context, id string) (*ActionInstance, error)
 
 	Close() error
 }

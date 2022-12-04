@@ -50,7 +50,7 @@ func (*postgresQueryEngine) createModelVersion() string {
 }
 
 func (*postgresQueryEngine) createAction() string {
-	return "insert into actions (id, parent_id, name, arch, params, created_at, updated_at, finished_at) VALUES (:id, :parent_id, :name, :arch, :params, :created_at, :updated_at, :finished_at)"
+	return "insert into actions (id, parent_id, name, arch, trigger_predicate, params, created_at, updated_at, finished_at) VALUES (:id, :parent_id, :name, :arch, :trigger_predicate, :params, :created_at, :updated_at, :finished_at)"
 }
 
 func (*postgresQueryEngine) blobMultiWrite() string {

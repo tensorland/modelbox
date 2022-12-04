@@ -67,8 +67,11 @@ type ModelStoreClient interface {
 	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error)
+	// Returns the list of servers in a cluster.
 	GetClusterMembers(ctx context.Context, in *GetClusterMembersRequest, opts ...grpc.CallOption) (*GetClusterMembersResponse, error)
+	// Create and attach an action to an experiment or a model.
 	CreateActions(ctx context.Context, in *CreateActionRequest, opts ...grpc.CallOption) (*CreateActionResponse, error)
+	// List actions attached to an experiment or a model.
 	ListActions(ctx context.Context, in *ListActionsRequest, opts ...grpc.CallOption) (*ListActionsResponse, error)
 }
 
@@ -416,8 +419,11 @@ type ModelStoreServer interface {
 	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error
+	// Returns the list of servers in a cluster.
 	GetClusterMembers(context.Context, *GetClusterMembersRequest) (*GetClusterMembersResponse, error)
+	// Create and attach an action to an experiment or a model.
 	CreateActions(context.Context, *CreateActionRequest) (*CreateActionResponse, error)
+	// List actions attached to an experiment or a model.
 	ListActions(context.Context, *ListActionsRequest) (*ListActionsResponse, error)
 	mustEmbedUnimplementedModelStoreServer()
 }

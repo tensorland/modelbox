@@ -51,7 +51,7 @@ func (*sqliteQueryEngine) createModelVersion() string {
 }
 
 func (*sqliteQueryEngine) createAction() string {
-	return "insert or ignore into actions (id, parent_id, name, arch, params, created_at, updated_at, finished_at) VALUES (:id, :parent_id, :name, :arch, :params, :created_at, :updated_at, :finished_at)"
+	return "insert or ignore into actions (id, parent_id, name, arch, trigger_predicate, params, created_at, updated_at, finished_at) VALUES (:id, :parent_id, :name, :arch, :trigger_predicate, :params, :created_at, :updated_at, :finished_at)"
 }
 
 func (*sqliteQueryEngine) blobMultiWrite() string {

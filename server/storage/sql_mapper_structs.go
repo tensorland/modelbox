@@ -319,6 +319,7 @@ type ActionSchema struct {
 	Name       string
 	Arch       string
 	Params     SerializableMetadata `db:"params"`
+	Trigger    string               `db:"trigger_predicate"`
 	CreatedAt  uint64               `db:"created_at"`
 	UpdatedAt  uint64               `db:"updated_at"`
 	FinishedAt uint64               `db:"finished_at"`
@@ -331,6 +332,7 @@ func (a *ActionSchema) toAction() *Action {
 		Name:       a.Name,
 		Params:     a.Params,
 		Arch:       a.Arch,
+		Trigger:    a.Trigger,
 		CreatedAt:  int64(a.CreatedAt),
 		UpdatedAt:  int64(a.UpdatedAt),
 		FinishedAt: int64(a.FinishedAt),

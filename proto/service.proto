@@ -471,8 +471,15 @@ message GetClusterMembersResponse {
 message CreateActionRequest {
   string name = 1;
   string object_id = 2;
-  string arch = 3;
-  map<string, google.protobuf.Value> params = 4;
+  string object_type = 3;
+  string arch = 4;
+  map<string, google.protobuf.Value> params = 5;
+  Trigger trigger = 6;
+}
+
+message Trigger {
+  string predicate = 1;
+  
 }
 
 message CreateActionResponse {

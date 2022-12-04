@@ -295,19 +295,22 @@ class ModelStoreServicer(object):
         raise NotImplementedError('Method not implemented!')
 
     def GetClusterMembers(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Returns the list of servers in a cluster.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def CreateActions(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Create and attach an action to an experiment or a model.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
     def ListActions(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """List actions attached to an experiment or a model.
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')

@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS actions (
    name VARCHAR(100) NOT NULL,
    arch VARCHAR(20) NOT NULL,
    params JSON,
+   trigger_predicate TEXT,
    created_at BIGINT NOT NULL,
    updated_at BIGINT NOT NULL,
    finished_at BIGINT

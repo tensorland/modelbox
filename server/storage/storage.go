@@ -102,17 +102,19 @@ type Action struct {
 	Name       string
 	Command    string
 	Params     map[string]*structpb.Value
+	Trigger    string
 	Arch       string
 	CreatedAt  int64
 	UpdatedAt  int64
 	FinishedAt int64
 }
 
-func NewAction(name, arch, parent string, params map[string]*structpb.Value) *Action {
+func NewAction(name, arch, parent, trigger string, params map[string]*structpb.Value) *Action {
 	h := sha1.New()
 	utils.HashString(h, name)
 	utils.HashString(h, parent)
 	utils.HashString(h, arch)
+	utils.HashString(h, trigger)
 	utils.HashMeta(h, params)
 	id := fmt.Sprintf("%x", h.Sum(nil))
 	currentTime := time.Now().Unix()
@@ -122,6 +124,7 @@ func NewAction(name, arch, parent string, params map[string]*structpb.Value) *Ac
 		Name:      name,
 		Arch:      arch,
 		Params:    params,
+		Trigger:   trigger,
 		CreatedAt: currentTime,
 		UpdatedAt: currentTime,
 	}

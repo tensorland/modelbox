@@ -463,7 +463,7 @@ func (s *GrpcServer) ListEvents(ctx context.Context, req *pb.ListEventsRequest) 
 }
 
 func (s *GrpcServer) CreateActions(ctx context.Context, req *pb.CreateActionRequest) (*pb.CreateActionResponse, error) {
-	if err := s.metadataStorage.CreateAction(ctx, storage.NewAction(req.Name, req.Arch, req.ObjectId, req.Params)); err != nil {
+	if err := s.metadataStorage.CreateAction(ctx, storage.NewAction(req.Name, req.Arch, req.ObjectId, req.Trigger.Predicate, req.Params)); err != nil {
 		return nil, err
 	}
 	return &pb.CreateActionResponse{CreatedAt: timestamppb.New(time.Now())}, nil

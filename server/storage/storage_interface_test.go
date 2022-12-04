@@ -274,7 +274,7 @@ func (s *StorageInterfaceTestSuite) TestGetExperiment() {
 
 func (s *StorageInterfaceTestSuite) TestCreateActions() {
 	ctx := context.Background()
-	a1 := NewAction("quantize", "x86", "parent1", s.createMetadata())
+	a1 := NewAction("quantize", "x86", "parent1", "trigger", s.createMetadata())
 	err := s.storageIf.CreateAction(ctx, a1)
 	assert.Nil(s.t, err)
 
@@ -304,7 +304,7 @@ func (s *StorageInterfaceTestSuite) TestCreateActions() {
 
 func (s *StorageInterfaceTestSuite) TestCreateActionInstance() {
 	ctx := context.Background()
-	a1 := NewAction("quantize", "x86", "parent2", s.createMetadata())
+	a1 := NewAction("quantize", "x86", "parent2", "trigger", s.createMetadata())
 	err := s.storageIf.CreateAction(ctx, a1)
 	assert.Nil(s.t, err)
 	actionEvals, err := s.filterEvalByActionId(a1.Id)
@@ -330,7 +330,7 @@ func (s *StorageInterfaceTestSuite) TestUpdateActionInstanceSuccess() {
 	// 2. Update the action instance to finished
 	// 3. Assert that the action was updated
 	ctx := context.Background()
-	a1 := NewAction("quantize", "x86", "parent3", s.createMetadata())
+	a1 := NewAction("quantize", "x86", "parent3", "trigger", s.createMetadata())
 	err := s.storageIf.CreateAction(ctx, a1)
 	require.Nil(s.t, err)
 	actionEvals, err := s.filterEvalByActionId(a1.Id)
@@ -357,7 +357,7 @@ func (s *StorageInterfaceTestSuite) TestUpdateActionInstanceFail() {
 	// 3. Assert that the action was updated
 	// 4. Assert that the eval is processed.
 	ctx := context.Background()
-	a1 := NewAction("quantize", "x86", "parent4", s.createMetadata())
+	a1 := NewAction("quantize", "x86", "parent4", "trigger", s.createMetadata())
 	err := s.storageIf.CreateAction(ctx, a1)
 	require.Nil(s.t, err)
 	actionEvals, err := s.filterEvalByActionId(a1.Id)

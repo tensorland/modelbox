@@ -80,6 +80,8 @@ type queryEngine interface {
 	blobMultiWrite() string
 
 	actionInstances() string
+
+	actionInstancesByStatus() string
 }
 
 type SQLStorage struct {
@@ -655,6 +657,24 @@ func (s *SQLStorage) UpdateActionInstance(ctx context.Context, instance *ActionI
 		return nil
 	})
 	return err
+}
+
+func (s *SQLStorage) GetActionInstances(ctx context.Context, status ActionStatus) ([]*ActionInstance, error) {
+	actionInstances := []*ActionInstance{}
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		rows := []*ActionInstanceSchema{}
+		if err := tx.SelectContext(ctx, &rows, s.queryEngine.actionInstancesByStatus(), status); err != nil {
+			return fmt.Errorf("unable to get action status: %v", err)
+		}
+		for _, row := range rows {
+			actionInstances = append(actionInstances, row.toActionInstance())
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return actionInstances, nil
 }
 
 func (s *SQLStorage) transact(ctx context.Context, fn func(*sqlx.Tx) error) error {

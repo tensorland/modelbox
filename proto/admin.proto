@@ -12,6 +12,12 @@ service ModelBoxAdmin {
   // Workers heartbeat with the server about their presence
   // and work progress periodically
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+
+  // Download the list of work that can be exectuted by a action runner
+  rpc GetWork(GetWorkRequest) returns (GetWorkResponse);
+
+  // Update action status
+  rpc UpdateActionStatus(UpdateActionStatusRequest) returns (UpdateActionStatusResponse);
 }
 
 message NodeInfo {
@@ -37,5 +43,21 @@ message RegisterAgentRequest {
 }
 
 message RegisterAgentResponse{
+
+}
+
+message GetWorkRequest {
+
+}
+
+message GetWorkResponse {
+
+}
+
+message UpdateActionStatusRequest {
+
+}
+
+message UpdateActionStatusResponse {
 
 }

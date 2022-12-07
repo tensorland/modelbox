@@ -74,6 +74,10 @@ func (*sqliteQueryEngine) getActionInstance() string {
 	return "select id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at from action_instances where id=$1"
 }
 
+func (*sqliteQueryEngine) actionInstancesByStatus() string {
+	return "select id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at from action_instances where status=$1"
+}
+
 type Sqlite3Storage struct {
 	*SQLStorage
 	config *storageconfig.Sqlite3Config

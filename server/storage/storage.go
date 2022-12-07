@@ -581,6 +581,8 @@ type MetadataStorage interface {
 
 	GetActionInstance(ctx context.Context, id string) (*ActionInstance, error)
 
+	GetActionInstances(ctx context.Context, status ActionStatus) ([]*ActionInstance, error)
+
 	Close() error
 }
 

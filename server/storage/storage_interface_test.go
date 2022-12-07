@@ -323,20 +323,23 @@ func (s *StorageInterfaceTestSuite) TestCreateActionInstance() {
 	actionEval, err := s.storageIf.GetActionEvalById(ctx, actionEvals[0].Id)
 	require.Nil(s.t, err)
 	assert.NotEmpty(s.t, actionEval.ProcessedAt)
+
+	ai2 := NewActionInstance("10", 0)
+	err = s.storageIf.CreateActionInstance(ctx, ai2, NewActionEval(ai2.ActionId, EvalParentAction, EvalTypeActionCreated))
+	require.Nil(s.t, err)
+	instances, err := s.storageIf.GetActionInstances(ctx, StatusPending)
+	require.Nil(s.t, err)
+	assert.Equal(s.t, 2, len(instances))
 }
 
-func (s *StorageInterfaceTestSuite) TestUpdateActionInstanceSuccess() {
+func (s *StorageInterfaceTestSuite) TestUpdateActionInstance() {
 	// 1. Create a action and action instance
 	// 2. Update the action instance to finished
 	// 3. Assert that the action was updated
+	// 4. Repeat the same with a different status
 	ctx := context.Background()
-	a1 := NewAction("quantize", "x86", "parent3", "trigger", s.createMetadata())
-	err := s.storageIf.CreateAction(ctx, a1)
-	require.Nil(s.t, err)
-	actionEvals, err := s.filterEvalByActionId(a1.Id)
-	require.Nil(s.t, err)
-	ai1 := NewActionInstance(a1.Id, 0)
-	err = s.storageIf.CreateActionInstance(ctx, ai1, actionEvals[0])
+	ai1 := NewActionInstance("1", 0)
+	err := s.storageIf.CreateActionInstance(ctx, ai1, NewActionEval(ai1.ActionId, EvalParentAction, EvalTypeActionCreated))
 	require.Nil(s.t, err)
 
 	finishedTime := uint64(ai1.CreatedAt) + uint64(2*time.Minute)
@@ -344,42 +347,23 @@ func (s *StorageInterfaceTestSuite) TestUpdateActionInstanceSuccess() {
 	err = s.storageIf.UpdateActionInstance(ctx, ai1, eval1)
 	require.Nil(s.t, err)
 
-	ai2, err := s.storageIf.GetActionInstance(ctx, ai1.Id)
+	ai1out, err := s.storageIf.GetActionInstance(ctx, ai1.Id)
 	require.Nil(s.t, err)
-	assert.Equal(s.t, OutcomeSuccess, ai2.Outcome)
-	assert.Equal(s.t, StatusFinished, ai2.Status)
-	assert.Equal(s.t, finishedTime, uint64(ai2.FinishedAt))
-}
+	assert.Equal(s.t, OutcomeSuccess, ai1out.Outcome)
+	assert.Equal(s.t, StatusFinished, ai1out.Status)
+	assert.Equal(s.t, finishedTime, uint64(ai1out.FinishedAt))
 
-func (s *StorageInterfaceTestSuite) TestUpdateActionInstanceFail() {
-	// 1. Create a action and action instance
-	// 2. Update the action instance to finished
-	// 3. Assert that the action was updated
-	// 4. Assert that the eval is processed.
-	ctx := context.Background()
-	a1 := NewAction("quantize", "x86", "parent4", "trigger", s.createMetadata())
-	err := s.storageIf.CreateAction(ctx, a1)
+	ai2 := NewActionInstance("3", 0)
+	err = s.storageIf.CreateActionInstance(ctx, ai2, NewActionEval(ai1.ActionId, EvalParentAction, EvalTypeActionCreated))
 	require.Nil(s.t, err)
-	actionEvals, err := s.filterEvalByActionId(a1.Id)
+	finishedTime = uint64(ai1.CreatedAt) + uint64(2*time.Minute)
+	_, eval2 := ai2.Update(NewActionInstanceUpdate(ai2.Id, StatusFinished, OutcomeFailure, "", finishedTime))
+	assert.NotNil(s.t, eval2)
+	err = s.storageIf.UpdateActionInstance(ctx, ai2, eval2)
 	require.Nil(s.t, err)
-	ai1 := NewActionInstance(a1.Id, 0)
-	err = s.storageIf.CreateActionInstance(ctx, ai1, actionEvals[0])
+	instances, err := s.storageIf.GetActionInstances(ctx, StatusFinished)
 	require.Nil(s.t, err)
-
-	finishedTime := uint64(ai1.CreatedAt) + uint64(2*time.Minute)
-	_, eval1 := ai1.Update(NewActionInstanceUpdate(ai1.Id, StatusFinished, OutcomeFailure, "", finishedTime))
-	assert.NotNil(s.t, eval1)
-	err = s.storageIf.UpdateActionInstance(ctx, ai1, eval1)
-	require.Nil(s.t, err)
-
-	ai2, err := s.storageIf.GetActionInstance(ctx, ai1.Id)
-	require.Nil(s.t, err)
-	assert.Equal(s.t, OutcomeFailure, ai2.Outcome)
-	assert.Equal(s.t, StatusFinished, ai2.Status)
-	assert.Equal(s.t, finishedTime, uint64(ai2.FinishedAt))
-	eval2, err := s.storageIf.GetActionEvalById(ctx, eval1.Id)
-	require.Nil(s.t, err)
-	assert.NotEmpty(s.t, eval2.ProcessedAt)
+	assert.Equal(s.t, 2, len(instances))
 }
 
 func (s *StorageInterfaceTestSuite) filterEvalByActionId(id string) ([]*ActionEval, error) {

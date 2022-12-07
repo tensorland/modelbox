@@ -73,6 +73,10 @@ func (*postgresQueryEngine) getActionInstance() string {
 	return "select id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at from action_instances where id=$1"
 }
 
+func (*postgresQueryEngine) actionInstancesByStatus() string {
+	return "select id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at from action_instances where status=$1"
+}
+
 type PostgresStorage struct {
 	*SQLStorage
 	*PostgresDriverUtils

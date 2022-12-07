@@ -62,6 +62,10 @@ func (*mysqlQueryEngine) actionInstances() string {
 	return "select id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at from action_instances where action_id=?"
 }
 
+func (*mysqlQueryEngine) actionInstancesByStatus() string {
+	return "select id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at from action_instances where status=?"
+}
+
 func (*mysqlQueryEngine) getActionEval() string {
 	return "select id, parent_id, parent_type, eval_type, created_at, processed_at from action_evals where id=?"
 }

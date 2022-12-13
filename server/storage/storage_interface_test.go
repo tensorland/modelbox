@@ -274,7 +274,7 @@ func (s *StorageInterfaceTestSuite) TestGetExperiment() {
 
 func (s *StorageInterfaceTestSuite) TestCreateActions() {
 	ctx := context.Background()
-	a1 := NewAction("quantize", "x86", "parent1", "trigger", s.createMetadata())
+	a1 := NewAction("quantize", "x86", "parent1", s.createTrigger(), s.createMetadata())
 	err := s.storageIf.CreateAction(ctx, a1)
 	assert.Nil(s.t, err)
 
@@ -289,29 +289,23 @@ func (s *StorageInterfaceTestSuite) TestCreateActions() {
 	assert.Equal(s.t, actionState.Action.Id, a1.Id)
 	assert.Equal(s.t, actionState.Action.Arch, a1.Arch)
 
-	// Get Action Eval
-	actionEvals, err := s.filterEvalByActionId(a1.Id)
-	assert.Nil(s.t, err)
-	require.Equal(s.t, 1, len(actionEvals))
-	// Ensure eval matches expectaction
-	eval := actionEvals[0]
-	assert.NotEmpty(s.t, eval.Id)
-	assert.Equal(s.t, eval.ParentId, a1.Id)
-	assert.Equal(s.t, eval.ParentType, EvalParentAction)
-	assert.Equal(s.t, eval.Type, EvalTypeActionCreated)
-	assert.Equal(s.t, eval.ProcessedAt, int64(0))
+	// Ensure that events were created for the action
+	changeEvents, err := s.storageIf.GetChangeEventsForParent(ctx, a1.Id)
+	require.Nil(s.t, err)
+	require.Equal(s.t, 1, len(changeEvents))
 }
 
 func (s *StorageInterfaceTestSuite) TestCreateActionInstance() {
 	ctx := context.Background()
-	a1 := NewAction("quantize", "x86", "parent2", "trigger", s.createMetadata())
+	a1 := NewAction("quantize", "x86", "parent2", s.createTrigger(), s.createMetadata())
 	err := s.storageIf.CreateAction(ctx, a1)
 	assert.Nil(s.t, err)
-	actionEvals, err := s.filterEvalByActionId(a1.Id)
-	assert.Nil(s.t, err)
+
+	changeEvents, err := s.storageIf.GetChangeEventsForParent(ctx, a1.Id)
+	require.Nil(s.t, err)
 
 	instance := NewActionInstance(a1.Id, 0)
-	err = s.storageIf.CreateActionInstance(ctx, instance, actionEvals[0])
+	err = s.storageIf.CreateActionInstance(ctx, instance, changeEvents[0])
 	assert.Nil(s.t, err)
 
 	actionState, err := s.storageIf.GetAction(ctx, a1.Id)
@@ -319,32 +313,29 @@ func (s *StorageInterfaceTestSuite) TestCreateActionInstance() {
 	assert.Equal(s.t, 1, len(actionState.Instances))
 	assert.Equal(s.t, instance, actionState.Instances[0])
 
-	// Ensure that the eval is marked as processed
-	actionEval, err := s.storageIf.GetActionEvalById(ctx, actionEvals[0].Id)
+	// Ensure that the event was marked as processed
+	changeEvents1, err := s.storageIf.GetChangeEventsForParent(ctx, a1.Id)
 	require.Nil(s.t, err)
-	assert.NotEmpty(s.t, actionEval.ProcessedAt)
-
-	ai2 := NewActionInstance("10", 0)
-	err = s.storageIf.CreateActionInstance(ctx, ai2, NewActionEval(ai2.ActionId, EvalParentAction, EvalTypeActionCreated))
-	require.Nil(s.t, err)
-	instances, err := s.storageIf.GetActionInstances(ctx, StatusPending)
-	require.Nil(s.t, err)
-	assert.Equal(s.t, 2, len(instances))
+	assert.NotEmpty(s.t, changeEvents1[0].ProcessedAt)
 }
 
 func (s *StorageInterfaceTestSuite) TestUpdateActionInstance() {
 	// 1. Create a action and action instance
 	// 2. Update the action instance to finished
-	// 3. Assert that the action was updated
-	// 4. Repeat the same with a different status
+	// 3. Ensure that we have three events at the end for the action
 	ctx := context.Background()
-	ai1 := NewActionInstance("1", 0)
-	err := s.storageIf.CreateActionInstance(ctx, ai1, NewActionEval(ai1.ActionId, EvalParentAction, EvalTypeActionCreated))
+	a1 := NewAction("test-action-update", "x86", "test-model", NewTrigger("", TriggerTypeJs), s.createMetadata())
+	err := s.storageIf.CreateAction(ctx, a1)
+	require.Nil(s.t, err)
+	ai1 := NewActionInstance(a1.Id, 0)
+	cev, err := s.storageIf.GetChangeEventsForParent(ctx, a1.Id)
+	require.Nil(s.t, err)
+	err = s.storageIf.CreateActionInstance(ctx, ai1, cev[0])
 	require.Nil(s.t, err)
 
 	finishedTime := uint64(ai1.CreatedAt) + uint64(2*time.Minute)
-	_, eval1 := ai1.Update(NewActionInstanceUpdate(ai1.Id, StatusFinished, OutcomeSuccess, "", finishedTime))
-	err = s.storageIf.UpdateActionInstance(ctx, ai1, eval1)
+	ai1.Update(NewActionInstanceUpdate(ai1.Id, StatusFinished, OutcomeSuccess, "", finishedTime))
+	err = s.storageIf.UpdateActionInstance(ctx, ai1)
 	require.Nil(s.t, err)
 
 	ai1out, err := s.storageIf.GetActionInstance(ctx, ai1.Id)
@@ -353,34 +344,16 @@ func (s *StorageInterfaceTestSuite) TestUpdateActionInstance() {
 	assert.Equal(s.t, StatusFinished, ai1out.Status)
 	assert.Equal(s.t, finishedTime, uint64(ai1out.FinishedAt))
 
-	ai2 := NewActionInstance("3", 0)
-	err = s.storageIf.CreateActionInstance(ctx, ai2, NewActionEval(ai1.ActionId, EvalParentAction, EvalTypeActionCreated))
+	cev1, err := s.storageIf.GetChangeEventsForParent(ctx, ai1.Id)
 	require.Nil(s.t, err)
-	finishedTime = uint64(ai1.CreatedAt) + uint64(2*time.Minute)
-	_, eval2 := ai2.Update(NewActionInstanceUpdate(ai2.Id, StatusFinished, OutcomeFailure, "", finishedTime))
-	assert.NotNil(s.t, eval2)
-	err = s.storageIf.UpdateActionInstance(ctx, ai2, eval2)
-	require.Nil(s.t, err)
-	instances, err := s.storageIf.GetActionInstances(ctx, StatusFinished)
-	require.Nil(s.t, err)
-	assert.Equal(s.t, 2, len(instances))
-}
-
-func (s *StorageInterfaceTestSuite) filterEvalByActionId(id string) ([]*ActionEval, error) {
-	var evals []*ActionEval
-	actionEvals, err := s.storageIf.GetActionEvals(context.Background())
-	if err != nil {
-		return nil, err
-	}
-	for _, ev := range actionEvals {
-		if ev.ParentId == id {
-			evals = append(evals, ev)
-		}
-	}
-	return evals, nil
+	require.Equal(s.t, 2, len(cev1))
 }
 
 func (s *StorageInterfaceTestSuite) createMetadata() map[string]*structpb.Value {
 	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
 	return map[string]*structpb.Value{"foo": metaVal}
+}
+
+func (s *StorageInterfaceTestSuite) createTrigger() *Trigger {
+	return NewTrigger("trigger", TriggerTypeJs)
 }

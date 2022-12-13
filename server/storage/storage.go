@@ -53,45 +53,50 @@ const (
 	OutcomeFailure
 )
 
-type EvalType uint8
+type EventType uint8
 
 const (
-	EvalTypeUnknown EvalType = iota
-	EvalTypeActionCreated
-	EvalTypeActionRunning
-	EvalTypeActionFailed
-	EvalTypeActionFinished
+	EventTypeUnknown EventType = iota
+
+	EventTypeModelCreated
+	EventTypeModelUpdated
+	EventTypeModelVersionCreated
+	EventTypeModelVersioneUpdated
+
+	EventTypeExperimentCreated
+	EventTypeExperimentUpdated
+
+	EventTypeActionCreated
+
+	EventTypeActionInstanceCreated
+	EventTypeActionInstancePending
+	EventTypeActionInstanceRunning
+	EventTypeActionInstanceSuccess
+	EventTypeActionInstanceFailure
 )
 
-type EvalParent uint8
+type TriggerType uint8
 
 const (
-	EvalParentUnknown EvalParent = iota
-	EvalParentAction
-	EvalParentActionInstance
+	TriggerTypeJs TriggerType = iota
 )
 
-type ActionEval struct {
-	Id          string
-	ParentId    string
-	ParentType  EvalParent
-	Type        EvalType
-	CreatedAt   int64
-	ProcessedAt int64
+/**
+ * Trigger is a user-defined function that invokes an action
+ */
+type Trigger struct {
+	Payload string
+	Type    TriggerType
 }
 
-func NewActionEval(parent string, parentType EvalParent, evalType EvalType) *ActionEval {
-	h := sha1.New()
-	utils.HashString(h, parent)
-	utils.HashInt(h, int(evalType))
-	utils.HashUint64(h, uint64(time.Now().Unix()))
-	id := fmt.Sprintf("%x", h.Sum(nil))
-	return &ActionEval{
-		Id:         id,
-		ParentId:   parent,
-		ParentType: parentType,
-		Type:       evalType,
-		CreatedAt:  time.Now().Unix(),
+func (t *Trigger) GetAction(event *ChangeEvent) *Action {
+	return &Action{}
+}
+
+func NewTrigger(payload string, t TriggerType) *Trigger {
+	return &Trigger{
+		Payload: payload,
+		Type:    t,
 	}
 }
 
@@ -102,19 +107,19 @@ type Action struct {
 	Name       string
 	Command    string
 	Params     map[string]*structpb.Value
-	Trigger    string
+	Trigger    *Trigger
 	Arch       string
 	CreatedAt  int64
 	UpdatedAt  int64
 	FinishedAt int64
 }
 
-func NewAction(name, arch, parent, trigger string, params map[string]*structpb.Value) *Action {
+func NewAction(name, arch, parent string, trigger *Trigger, params map[string]*structpb.Value) *Action {
 	h := sha1.New()
 	utils.HashString(h, name)
 	utils.HashString(h, parent)
 	utils.HashString(h, arch)
-	utils.HashString(h, trigger)
+	utils.HashString(h, trigger.Payload)
 	utils.HashMeta(h, params)
 	id := fmt.Sprintf("%x", h.Sum(nil))
 	currentTime := time.Now().Unix()
@@ -130,8 +135,21 @@ func NewAction(name, arch, parent, trigger string, params map[string]*structpb.V
 	}
 }
 
-func (a *Action) actionEval(evalType EvalType) *ActionEval {
-	return NewActionEval(a.Id, EvalParentAction, evalType)
+func (s *Action) Scan(val interface{}) error {
+	switch v := val.(type) {
+	case []byte:
+		json.Unmarshal(v, &s)
+		return nil
+	case string:
+		json.Unmarshal([]byte(v), &s)
+		return nil
+	default:
+		return fmt.Errorf("unsupported type: %v", v)
+	}
+}
+
+func (s Action) Value() (driver.Value, error) {
+	return json.Marshal(s)
 }
 
 type ActionInstance struct {
@@ -144,6 +162,23 @@ type ActionInstance struct {
 	CreatedAt     int64
 	UpdatedAt     int64
 	FinishedAt    int64
+}
+
+func (a *ActionInstance) Scan(val interface{}) error {
+	switch v := val.(type) {
+	case []byte:
+		json.Unmarshal(v, &a)
+		return nil
+	case string:
+		json.Unmarshal([]byte(v), &a)
+		return nil
+	default:
+		return fmt.Errorf("unsupported type: %v", v)
+	}
+}
+
+func (a ActionInstance) Value() (driver.Value, error) {
+	return json.Marshal(a)
 }
 
 func NewActionInstance(actionId string, attempt uint) *ActionInstance {
@@ -162,10 +197,10 @@ func NewActionInstance(actionId string, attempt uint) *ActionInstance {
 	}
 }
 
-func (a *ActionInstance) Update(update *ActionInstanceUpdate) (bool, *ActionEval) {
+func (a *ActionInstance) Update(update *ActionInstanceUpdate) bool {
 	// This prevents updating the instance when the same update is applied twice
 	if a.Status >= update.Status {
-		return false, nil
+		return false
 	}
 	a.Status = update.Status
 	a.Outcome = update.Outcome
@@ -174,10 +209,10 @@ func (a *ActionInstance) Update(update *ActionInstanceUpdate) (bool, *ActionEval
 		a.FinishedAt = int64(update.Time)
 	}
 	if update.Outcome == OutcomeFailure {
-		return true, NewActionEval(a.Id, EvalParentActionInstance, EvalTypeActionFailed)
+		return true
 	}
 
-	return true, nil
+	return true
 }
 
 type ActionState struct {
@@ -236,13 +271,57 @@ func (i *Event) MarshalMsgpack() ([]byte, error) {
 	return json.Marshal(i)
 }
 
+type EventObjectType uint8
+
+const (
+	EventObjectTypeModel EventObjectType = iota
+	EventObjectTypeModelVersion
+	EventObjectTypeExperiment
+	EventObjectTypeAction
+	EventObjectTypeActionInstance
+)
+
 type ChangeEvent struct {
-	ObjectId   string
-	Time       time.Time
-	ObjectType string
-	Action     string
-	Namespace  string
-	Payload    map[string]interface{}
+	Id             uint64
+	ObjectId       string
+	EventType      EventType
+	ObjectType     EventObjectType
+	Namespace      string
+	ProcessedAt    uint64
+	CreatedAt      uint64
+	Experiment     *Experiment
+	Model          *Model
+	ModelVersion   *ModelVersion
+	Action         *Action
+	ActionInstance *ActionInstance
+}
+
+func NewChangeEvent(objectId string, createdAt uint64, eventType EventType, objType EventObjectType, namespace string, payload interface{}) *ChangeEvent {
+	ce := &ChangeEvent{
+		ObjectId:  objectId,
+		EventType: eventType,
+		Namespace: namespace,
+		CreatedAt: createdAt,
+	}
+
+	switch objType {
+	case EventObjectTypeModel:
+		m, _ := payload.(*Model)
+		ce.Model = m
+	case EventObjectTypeExperiment:
+		e, _ := payload.(*Experiment)
+		ce.Experiment = e
+	case EventObjectTypeModelVersion:
+		mv, _ := payload.(*ModelVersion)
+		ce.ModelVersion = mv
+	case EventObjectTypeAction:
+		a, _ := payload.(*Action)
+		ce.Action = a
+	case EventObjectTypeActionInstance:
+		ai, _ := payload.(*ActionInstance)
+		ce.ActionInstance = ai
+	}
+	return ce
 }
 
 func ToFloatLogFromProto(value *proto.MetricsValue) *logging.FloatLog {
@@ -440,6 +519,23 @@ func (m *Model) SetFiles(files artifacts.FileSet) {
 	m.Files = files
 }
 
+func (m *Model) Scan(val interface{}) error {
+	switch v := val.(type) {
+	case []byte:
+		json.Unmarshal(v, &m)
+		return nil
+	case string:
+		json.Unmarshal([]byte(v), &m)
+		return nil
+	default:
+		return fmt.Errorf("unsupported type: %v", v)
+	}
+}
+
+func (s Model) Value() (driver.Value, error) {
+	return json.Marshal(s)
+}
+
 type ModelVersion struct {
 	Id          string
 	Name        string
@@ -480,6 +576,23 @@ func (m *ModelVersion) CreateId() {
 	utils.HashString(h, m.Version)
 	utils.HashString(h, m.Name)
 	m.Id = fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func (m *ModelVersion) Scan(val interface{}) error {
+	switch v := val.(type) {
+	case []byte:
+		json.Unmarshal(v, &m)
+		return nil
+	case string:
+		json.Unmarshal([]byte(v), &m)
+		return nil
+	default:
+		return fmt.Errorf("unsupported type: %v", v)
+	}
+}
+
+func (s ModelVersion) Value() (driver.Value, error) {
+	return json.Marshal(s)
 }
 
 type CreateErr struct {
@@ -565,23 +678,25 @@ type MetadataStorage interface {
 
 	ListEvents(ctx context.Context, parentId string) ([]*Event, error)
 
+	GetUnprocessedChangeEvents(ctx context.Context) ([]*ChangeEvent, error)
+
+	GetChangeEventsForParent(ctx context.Context, id string) ([]*ChangeEvent, error)
+
 	CreateAction(ctx context.Context, action *Action) error
 
-	CreateActionInstance(ctx context.Context, actionInstance *ActionInstance, eval *ActionEval) error
+	CreateActionInstance(ctx context.Context, actionInstance *ActionInstance, event *ChangeEvent) error
 
 	ListActions(ctx context.Context, parentId string) ([]*Action, error)
 
 	GetAction(ctx context.Context, id string) (*ActionState, error)
 
-	GetActionEvals(ctx context.Context) ([]*ActionEval, error)
-
-	GetActionEvalById(ctx context.Context, id string) (*ActionEval, error)
-
-	UpdateActionInstance(ctx context.Context, instance *ActionInstance, eval *ActionEval) error
+	UpdateActionInstance(ctx context.Context, instance *ActionInstance) error
 
 	GetActionInstance(ctx context.Context, id string) (*ActionInstance, error)
 
 	GetActionInstances(ctx context.Context, status ActionStatus) ([]*ActionInstance, error)
+
+	GetTriggers(ctx context.Context, parentId string) ([]*Trigger, error)
 
 	Close() error
 }

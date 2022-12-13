@@ -65,12 +65,17 @@ CREATE TABLE IF NOT EXISTS metadata (
 CREATE TABLE IF NOT EXISTS mutation_events (
    mutation_id SERIAL PRIMARY KEY,
    mutation_time BIGINT,
-   action VARCHAR(20),
+   event_type INT,
    object_id VARCHAR(40),
-   object_type VARCHAR(20),
+   object_type INT,
    parent_id VARCHAR(40),
    namespace VARCHAR(40),
-   payload JSON
+   processed_at BIGINT,
+   experiment_payload JSON,
+   model_payload JSON,
+   model_version_payload JSON,
+   action_payload JSON,
+   action_instance_payload JSON
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -89,6 +94,7 @@ CREATE TABLE IF NOT EXISTS actions (
    arch VARCHAR(20) NOT NULL,
    params JSON,
    trigger_predicate TEXT,
+   trigger_type INT,
    created_at BIGINT NOT NULL,
    updated_at BIGINT NOT NULL,
    finished_at BIGINT

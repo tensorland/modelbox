@@ -37,7 +37,7 @@ func (s *SchedulerTestSuite) TearDownSuite() {
 
 func (s *SchedulerTestSuite) TestCreateNewAction() {
 	ctx := context.Background()
-	act := storage.NewAction("quantize", "x86", "parent1", s.createMetadata())
+	act := storage.NewAction("quantize", "x86", "parent1", storage.NewTrigger("", storage.TriggerTypeJs), s.createMetadata())
 	err := s.storageIf.CreateAction(ctx, act)
 	assert.Nil(s.T(), err)
 

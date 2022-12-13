@@ -35,9 +35,9 @@ const (
 
 	METADATA_LIST = "select id, parent_id, metadata from metadata where parent_id=?"
 
-	MUTATION_CREATE = "insert into mutation_events (mutation_time, action, object_id, object_type, parent_id, namespace, payload) VALUES(:mutation_time, :action, :object_id, :object_type, :parent_id, :namespace, :payload)"
+	MUTATION_CREATE = "insert into mutation_events (mutation_time, event_type, object_id, object_type, parent_id, namespace, processed_at, experiment_payload, model_payload, model_version_payload, action_payload, action_instance_payload) VALUES(:mutation_time, :event_type, :object_id, :object_type, :parent_id, :namespace, :processed_at, :experiment_payload, :model_payload, :model_version_payload, :action_payload, :action_instance_payload)"
 
-	MUTATION_NS_LIST = "select mutation_id, mutation_time, action, object_id, object_type, parent_id, namespace, payload from mutation_events where namespace =? and mutation_time>=?"
+	MUTATION_NS_LIST = "select mutation_id, mutation_time, event_type, object_id, object_type, parent_id, namespace, processed_at, experiment_payload, model_payload, model_version_payload, action_payload, action_instance_payload from mutation_events where namespace =? and mutation_time>=?"
 
 	EVENT_CREATE = "insert into events (id, parent_id, name, source_name, wallclock, metadata) VALUES(:id, :parent_id, :name, :source_name, :wallclock, :metadata)"
 
@@ -45,13 +45,13 @@ const (
 
 	ACTION_GET = "select id, parent_id, name, arch, params, created_at, updated_at, finished_at from actions where id=?"
 
-	ACTION_UNPROCESSED_EVALS_GET = "select id, parent_id, parent_type, eval_type, created_at, processed_at from action_evals where processed_at = 0"
-
 	ACTION_INSTANCE_CREATE = "insert into action_instances(id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at) values(:id, :action_id, :attempt, :status, :outcome, :outcome_reason, :created_at, :updated_at, :finished_at)"
 
 	ACTION_INSTANCE_UPDATE = "update action_instances set status=:status, outcome=:outcome, outcome_reason=:outcome_reason, updated_at=:updated_at, finished_at=:finished_at where id=:id"
 
-	EVAL_UPDATE = "update action_evals set processed_at=:processed_at where id=:id"
+	CHANGE_EVENT_UPDATE = "update mutation_events set processed_at=:processed_at where mutation_id = :mutation_id"
+
+	CHANGE_EVENT_UNPROCESSED = "select mutation_id, mutation_time, event_type, object_id, object_type, parent_id, namespace, processed_at, experiment_payload, model_payload, model_version_payload, action_payload, action_instance_payload from mutation_events where processed_at >= 0"
 )
 
 type queryEngine interface {
@@ -73,15 +73,13 @@ type queryEngine interface {
 
 	getActionInstance() string
 
-	createActionEval() string
-
-	getActionEval() string
-
 	blobMultiWrite() string
 
 	actionInstances() string
 
 	actionInstancesByStatus() string
+
+	changeEventForObject() string
 }
 
 type SQLStorage struct {
@@ -120,7 +118,7 @@ func (s *SQLStorage) CreateExperiment(
 		if err := s.writeMetadata(ctx, tx, result.ExperimentId, metadata); err != nil {
 			return fmt.Errorf("can't write metadata: %v", err)
 		}
-		if err := s.createMutationEvent(ctx, tx, schema.mutationSchema()); err != nil {
+		if err := s.createMutationEvent(ctx, tx, schema.mutationSchema(experiment)); err != nil {
 			return fmt.Errorf("unable to create mutation for experiment: %v", err)
 		}
 		return nil
@@ -240,7 +238,7 @@ func (s *SQLStorage) CreateModel(ctx context.Context, model *Model, metadata Ser
 		if err := s.writeMetadata(ctx, tx, model.Id, metadata); err != nil {
 			return fmt.Errorf("can't write metadata: %v", err)
 		}
-		if err := s.createMutationEvent(ctx, tx, schema.mutationSchema()); err != nil {
+		if err := s.createMutationEvent(ctx, tx, schema.mutationSchema(model)); err != nil {
 			return fmt.Errorf("unable to create mutation for model: %v", err)
 		}
 		return s.writeFileSet(ctx, tx, model.Files)
@@ -308,7 +306,7 @@ func (s *SQLStorage) CreateModelVersion(
 			return err
 		}
 
-		if err := s.createMutationEvent(ctx, tx, schema.mutationSchema()); err != nil {
+		if err := s.createMutationEvent(ctx, tx, schema.mutationSchema(modelVersion)); err != nil {
 			return fmt.Errorf("unable to create mutation for modle version: %v", err)
 		}
 		return nil
@@ -438,14 +436,7 @@ func (s *SQLStorage) ListChanges(ctx context.Context, namespace string, since ti
 
 	result := make([]*ChangeEvent, len(rows))
 	for i, row := range rows {
-		result[i] = &ChangeEvent{
-			ObjectId:   row.ObjectId,
-			ObjectType: row.ObjectType,
-			Action:     row.Action,
-			Payload:    row.Payload,
-			Time:       time.Unix(int64(row.MutationTime), 0),
-			Namespace:  row.Namespace,
-		}
+		result[i] = row.toChangeEvent()
 	}
 	return result, nil
 }
@@ -572,29 +563,55 @@ func (s *SQLStorage) CreateAction(ctx context.Context, action *Action) error {
 			return err
 		}
 
-		evalSchema := newActionEvalSchema(action.actionEval(EvalTypeActionCreated))
-		_, err := tx.NamedExecContext(ctx, s.queryEngine.createActionEval(), evalSchema)
-		return err
+		mutationSchema := schema.mutationSchema(action)
+		if _, err := tx.NamedExecContext(ctx, MUTATION_CREATE, mutationSchema); err != nil {
+			return err
+		}
+		return nil
 	})
 	return err
 }
 
-func (s *SQLStorage) CreateActionInstance(ctx context.Context, actionInstance *ActionInstance, eval *ActionEval) error {
+func (s *SQLStorage) CreateActionInstance(ctx context.Context, actionInstance *ActionInstance, event *ChangeEvent) error {
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := newActionInstanceSchema(actionInstance)
 		if _, err := tx.NamedExecContext(ctx, ACTION_INSTANCE_CREATE, schema); err != nil {
 			return fmt.Errorf("unable to create action instance: %v", err)
 		}
-		// Set processed_at so that we mark this eval as processed
-		eval.ProcessedAt = time.Now().Unix()
-		evalSchema := newActionEvalSchema(eval)
-		if _, err := tx.NamedExecContext(ctx, EVAL_UPDATE, evalSchema); err != nil {
-			return fmt.Errorf("unable to create eval schema: %v", err)
+		// Set processed_at so that we mark this event as processed
+		event.ProcessedAt = uint64(time.Now().Unix())
+		eventSchema := newMutationEventSchema(event)
+		if _, err := tx.NamedExecContext(ctx, CHANGE_EVENT_UPDATE, eventSchema); err != nil {
+			return fmt.Errorf("unable to update change event: %v", err)
+		}
+
+		// TODO Create event for action instance
+		aiEventSchema := schema.mutationEvent(actionInstance, EventTypeActionCreated)
+		if _, err := tx.NamedExecContext(ctx, MUTATION_CREATE, aiEventSchema); err != nil {
+			return fmt.Errorf("unaeble to create mutation event for action instance: %v", err)
 		}
 		return nil
 	})
 
 	return err
+}
+
+func (s *SQLStorage) GetChangeEventsForParent(ctx context.Context, id string) ([]*ChangeEvent, error) {
+	var changeEvents []*ChangeEvent
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		rows := []*MutationEventSchema{}
+		if err := tx.SelectContext(ctx, &rows, s.queryEngine.changeEventForObject(), id); err != nil {
+			return fmt.Errorf("unable to query changeevents for object %v, err: %v", id, err)
+		}
+		for _, row := range rows {
+			changeEvents = append(changeEvents, row.toChangeEvent())
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return changeEvents, nil
 }
 
 func (s *SQLStorage) GetActionInstance(ctx context.Context, id string) (*ActionInstance, error) {
@@ -613,50 +630,55 @@ func (s *SQLStorage) GetActionInstance(ctx context.Context, id string) (*ActionI
 	return ai, nil
 }
 
-func (s *SQLStorage) GetActionEvals(ctx context.Context) ([]*ActionEval, error) {
-	actionEvals := []*ActionEval{}
-	err := s.transact(ctx, func(tx *sqlx.Tx) error {
-		rows := []*ActionEvalSchema{}
-		if err := tx.SelectContext(ctx, &rows, ACTION_UNPROCESSED_EVALS_GET); err != nil {
-			return err
-		}
-		for _, row := range rows {
-			actionEvals = append(actionEvals, row.toActionEval())
-		}
-		return nil
-	})
-	return actionEvals, err
-}
-
-func (s *SQLStorage) GetActionEvalById(ctx context.Context, id string) (*ActionEval, error) {
-	var eval *ActionEval
-	err := s.transact(ctx, func(tx *sqlx.Tx) error {
-		var row ActionEvalSchema
-		if err := tx.GetContext(ctx, &row, s.queryEngine.getActionEval(), id); err != nil {
-			return fmt.Errorf("unable to get action eval: %v", err)
-		}
-		eval = row.toActionEval()
-		return nil
-	})
-	return eval, err
-}
-
-func (s *SQLStorage) UpdateActionInstance(ctx context.Context, instance *ActionInstance, eval *ActionEval) error {
+func (s *SQLStorage) UpdateActionInstance(ctx context.Context, instance *ActionInstance) error {
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := newActionInstanceSchema(instance)
 		if _, err := tx.NamedExecContext(ctx, ACTION_INSTANCE_UPDATE, schema); err != nil {
 			return fmt.Errorf("unable to update action instance: %v", err)
 		}
-		if eval != nil {
-			eval.ProcessedAt = time.Now().Unix()
-			evalSchema := newActionEvalSchema(eval)
-			if _, err := tx.NamedExecContext(ctx, s.queryEngine.createActionEval(), evalSchema); err != nil {
-				return fmt.Errorf("unable to create action eval: %v", err)
+		var eventType EventType
+		switch instance.Status {
+		case StatusRunning:
+			eventType = EventTypeActionInstanceRunning
+		case StatusPending:
+			eventType = EventTypeActionInstancePending
+		case StatusFinished:
+			switch instance.Outcome {
+			case OutcomeSuccess:
+				eventType = EventTypeActionInstanceSuccess
+			case OutcomeFailure:
+				eventType = EventTypeActionInstanceFailure
 			}
+		}
+		mutationEventSchema := schema.mutationEvent(instance, eventType)
+		if _, err := tx.NamedExecContext(ctx, MUTATION_CREATE, mutationEventSchema); err != nil {
+			return fmt.Errorf("unable to create mutation event for action instance update: %v", err)
 		}
 		return nil
 	})
 	return err
+}
+
+func (s *SQLStorage) GetUnprocessedChangeEvents(ctx context.Context) ([]*ChangeEvent, error) {
+	var changeEvents []*ChangeEvent
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		var rows []*MutationEventSchema
+		if err := tx.SelectContext(ctx, &rows, CHANGE_EVENT_UNPROCESSED); err != nil {
+			return fmt.Errorf("unable to read unprocessed mutation events: %v", err)
+		}
+		for _, row := range rows {
+			changeEvents = append(changeEvents, row.toChangeEvent())
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return changeEvents, nil
+}
+
+func (s *SQLStorage) GetTriggers(ctx context.Context, parentId string) ([]*Trigger, error) {
+	return nil, nil
 }
 
 func (s *SQLStorage) GetActionInstances(ctx context.Context, status ActionStatus) ([]*ActionInstance, error) {

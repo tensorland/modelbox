@@ -49,29 +49,49 @@ func (a *ActionScheduler) heartBeat() {
 }
 
 func (a *ActionScheduler) runScheduler() error {
-	evals, err := a.storageIf.GetActionEvals(context.Background())
+	ctx := context.Background()
+	events, err := a.storageIf.GetUnprocessedChangeEvents(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to get action evals: %v", err)
+		return err
 	}
-	for _, eval := range evals {
-		// Handle create evals
-		switch eval.ParentType {
-		case storage.EvalParentAction:
-			return a.handleActionEvals(eval)
-		default:
-			return fmt.Errorf("unknown eval parent: %v", eval.ParentType)
+	for _, event := range events {
+		triggers, err := a.storageIf.GetTriggers(ctx, event.ObjectId)
+		if err != nil {
+			return err
+		}
+		switch event.EventType {
+		case storage.EventTypeExperimentCreated:
+		case storage.EventTypeModelCreated:
+		case storage.EventTypeModelVersionCreated:
+			if err = a.evaluateTrigger(ctx, triggers, event); err != nil {
+				return a.evaluateTrigger(ctx, triggers, event)
+			}
+
+		case storage.EventTypeActionCreated:
+			if err := a.handleActionCreatedEvent(ctx, event); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func (a *ActionScheduler) handleActionEvals(eval *storage.ActionEval) error {
-	switch eval.Type {
-	case storage.EvalTypeActionCreated:
-		return a.handleCreateActionEval(eval)
-	default:
-		return fmt.Errorf("unknown eval type: %v", eval.Type)
+func (a *ActionScheduler) evaluateTrigger(ctx context.Context, triggers []*storage.Trigger, event *storage.ChangeEvent) error {
+	for _, trigger := range triggers {
+		action := trigger.GetAction(event)
+		if err := a.storageIf.CreateAction(ctx, action); err != nil {
+			return err
+		}
 	}
+	return nil
+}
+
+func (a *ActionScheduler) handleActionCreatedEvent(ctx context.Context, event *storage.ChangeEvent) error {
+	actionInstance := storage.NewActionInstance(event.Action.Id, 0)
+	if err := a.storageIf.CreateActionInstance(context.Background(), actionInstance, event); err != nil {
+		return fmt.Errorf("unable to create action instance: %v", err)
+	}
+	return nil
 }
 
 func (a *ActionScheduler) UpdateInstanceStatus(ctx context.Context, update *storage.ActionInstanceUpdate) error {
@@ -80,28 +100,29 @@ func (a *ActionScheduler) UpdateInstanceStatus(ctx context.Context, update *stor
 		return err
 	}
 
-	hasUpdated, eval := ai.Update(update)
+	hasUpdated := ai.Update(update)
 	if !hasUpdated {
 		return nil
 	}
-	return a.storageIf.UpdateActionInstance(ctx, ai, eval)
+	return a.storageIf.UpdateActionInstance(ctx, ai)
 }
 
 func (a *ActionScheduler) GetRunnableActions(ctx context.Context, arch, action string) ([]*storage.ActionInstance, error) {
-	a.storageIf.Get
-}
-
-func (a *ActionScheduler) handleCreateActionEval(eval *storage.ActionEval) error {
-	actionState, err := a.storageIf.GetAction(context.Background(), eval.ParentId)
+	instances, err := a.storageIf.GetActionInstances(ctx, storage.StatusPending)
 	if err != nil {
-		return fmt.Errorf("unable to get action with id: %v", err)
+		return nil, err
 	}
-	if len(actionState.Instances) > 0 {
-		return nil
+
+	var runnableInstances []*storage.ActionInstance
+
+	for _, instance := range instances {
+		action, err := a.storageIf.GetAction(ctx, instance.ActionId)
+		if err != nil {
+			return nil, err
+		}
+		if action.Action.Arch == arch {
+			runnableInstances = append(runnableInstances, instance)
+		}
 	}
-	actionInstance := storage.NewActionInstance(eval.ParentId, 0)
-	if err := a.storageIf.CreateActionInstance(context.Background(), actionInstance, eval); err != nil {
-		return fmt.Errorf("unable to create action instance: %v", err)
-	}
-	return nil
+	return runnableInstances, nil
 }

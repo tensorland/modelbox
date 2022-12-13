@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fatih/structs"
 	"github.com/jmoiron/sqlx/types"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/tensorland/modelbox/server/utils"
@@ -44,14 +43,14 @@ func (m *ModelSchema) ToModel(files artifacts.FileSet) *Model {
 	return model
 }
 
-func (m *ModelSchema) mutationSchema() *MutationEventSchema {
+func (m *ModelSchema) mutationSchema(model *Model) *MutationEventSchema {
 	return &MutationEventSchema{
 		MutationTime: uint64(time.Now().Unix()),
-		Action:       "create",
-		ObjectType:   "model",
+		EventType:    uint8(EventTypeModelCreated),
+		ObjectType:   uint8(EventObjectTypeModel),
 		ObjectId:     m.Id,
 		Namespace:    m.Namespace,
-		Payload:      structs.Map(m),
+		ModelPayload: model,
 	}
 }
 
@@ -111,14 +110,14 @@ func ModelVersionToSchema(mv *ModelVersion) *ModelVersionSchema {
 	}
 }
 
-func (m *ModelVersionSchema) mutationSchema() *MutationEventSchema {
+func (m *ModelVersionSchema) mutationSchema(mv *ModelVersion) *MutationEventSchema {
 	return &MutationEventSchema{
-		MutationTime: uint64(time.Now().Unix()),
-		Action:       "create",
-		ObjectType:   "modelversion",
-		ObjectId:     m.Id,
-		Namespace:    "",
-		Payload:      structs.Map(m),
+		MutationTime:        uint64(time.Now().Unix()),
+		EventType:           uint8(EventTypeModelVersionCreated),
+		ObjectType:          uint8(EventObjectTypeModelVersion),
+		ObjectId:            m.Id,
+		Namespace:           "",
+		ModelVersionPayload: mv,
 	}
 }
 
@@ -189,14 +188,14 @@ func (e *ExperimentSchema) ToExperiment() *Experiment {
 	}
 }
 
-func (e *ExperimentSchema) mutationSchema() *MutationEventSchema {
+func (e *ExperimentSchema) mutationSchema(ex *Experiment) *MutationEventSchema {
 	return &MutationEventSchema{
-		MutationTime: uint64(time.Now().Unix()),
-		Action:       "create",
-		ObjectType:   "experiment",
-		ObjectId:     e.Id,
-		Namespace:    e.Namespace,
-		Payload:      structs.Map(e),
+		MutationTime:      uint64(time.Now().Unix()),
+		EventType:         uint8(EventTypeExperimentCreated),
+		ObjectType:        uint8(EventObjectTypeExperiment),
+		ObjectId:          e.Id,
+		Namespace:         e.Namespace,
+		ExperimentPayload: ex,
 	}
 }
 
@@ -294,14 +293,51 @@ func (s *SerializablePayload) Scan(value interface{}) error {
 }
 
 type MutationEventSchema struct {
-	MutationId   uint64 `db:"mutation_id"`
-	MutationTime uint64 `db:"mutation_time"`
-	Action       string
-	ObjectId     string `db:"object_id"`
-	ObjectType   string `db:"object_type"`
-	ParentId     string `db:"parent_id"`
-	Namespace    string
-	Payload      SerializablePayload
+	MutationId            uint64 `db:"mutation_id"`
+	MutationTime          uint64 `db:"mutation_time"`
+	EventType             uint8  `db:"event_type"`
+	ObjectId              string `db:"object_id"`
+	ObjectType            uint8  `db:"object_type"`
+	ParentId              string `db:"parent_id"`
+	Namespace             string
+	ProcessedAt           uint64          `db:"processed_at"`
+	ExperimentPayload     *Experiment     `db:"experiment_payload"`
+	ModelPayload          *Model          `db:"model_payload"`
+	ModelVersionPayload   *ModelVersion   `db:"model_version_payload"`
+	ActionPayload         *Action         `db:"action_payload"`
+	ActionInstancePayload *ActionInstance `db:"action_instance_payload"`
+}
+
+func newMutationEventSchema(event *ChangeEvent) *MutationEventSchema {
+	return &MutationEventSchema{
+		MutationId:          event.Id,
+		MutationTime:        event.CreatedAt,
+		EventType:           uint8(event.EventType),
+		ObjectId:            event.ObjectId,
+		ObjectType:          uint8(event.ObjectType),
+		Namespace:           event.Namespace,
+		ProcessedAt:         event.ProcessedAt,
+		ExperimentPayload:   event.Experiment,
+		ModelPayload:        event.Model,
+		ModelVersionPayload: event.ModelVersion,
+		ActionPayload:       event.Action,
+	}
+}
+
+func (m *MutationEventSchema) toChangeEvent() *ChangeEvent {
+	return &ChangeEvent{
+		Id:           m.MutationId,
+		ObjectId:     m.ObjectId,
+		EventType:    EventType(m.EventType),
+		ObjectType:   EventObjectType(m.ObjectType),
+		Namespace:    m.Namespace,
+		ProcessedAt:  m.ProcessedAt,
+		CreatedAt:    m.MutationTime,
+		Experiment:   m.ExperimentPayload,
+		Model:        m.ModelPayload,
+		ModelVersion: m.ModelVersionPayload,
+		Action:       m.ActionPayload,
+	}
 }
 
 type EventSchema struct {
@@ -314,15 +350,16 @@ type EventSchema struct {
 }
 
 type ActionSchema struct {
-	Id         string
-	ParentId   string `db:"parent_id"`
-	Name       string
-	Arch       string
-	Params     SerializableMetadata `db:"params"`
-	Trigger    string               `db:"trigger_predicate"`
-	CreatedAt  uint64               `db:"created_at"`
-	UpdatedAt  uint64               `db:"updated_at"`
-	FinishedAt uint64               `db:"finished_at"`
+	Id          string
+	ParentId    string `db:"parent_id"`
+	Name        string
+	Arch        string
+	Params      SerializableMetadata `db:"params"`
+	Trigger     string               `db:"trigger_predicate"`
+	TriggerType int8                 `db:"trigger_type"`
+	CreatedAt   uint64               `db:"created_at"`
+	UpdatedAt   uint64               `db:"updated_at"`
+	FinishedAt  uint64               `db:"finished_at"`
 }
 
 func (a *ActionSchema) toAction() *Action {
@@ -332,10 +369,23 @@ func (a *ActionSchema) toAction() *Action {
 		Name:       a.Name,
 		Params:     a.Params,
 		Arch:       a.Arch,
-		Trigger:    a.Trigger,
+		Trigger:    NewTrigger(a.Trigger, TriggerType(a.TriggerType)),
 		CreatedAt:  int64(a.CreatedAt),
 		UpdatedAt:  int64(a.UpdatedAt),
 		FinishedAt: int64(a.FinishedAt),
+	}
+}
+
+func (a *ActionSchema) mutationSchema(action *Action) *MutationEventSchema {
+	return &MutationEventSchema{
+		MutationTime:  uint64(time.Now().Unix()),
+		EventType:     uint8(EventTypeActionCreated),
+		ObjectId:      a.Id,
+		ObjectType:    uint8(EventObjectTypeAction),
+		ParentId:      a.ParentId,
+		Namespace:     "",
+		ProcessedAt:   0,
+		ActionPayload: action,
 	}
 }
 
@@ -349,37 +399,6 @@ func newActionSchema(action *Action) *ActionSchema {
 		CreatedAt:  uint64(action.CreatedAt),
 		UpdatedAt:  uint64(action.UpdatedAt),
 		FinishedAt: uint64(action.FinishedAt),
-	}
-}
-
-type ActionEvalSchema struct {
-	Id          string
-	ParentId    string `db:"parent_id"`
-	ParentType  uint8  `db:"parent_type"`
-	EvalType    uint8  `db:"eval_type"`
-	CreatedAt   uint64 `db:"created_at"`
-	ProcessedAt uint64 `db:"processed_at"`
-}
-
-func (a *ActionEvalSchema) toActionEval() *ActionEval {
-	return &ActionEval{
-		Id:          a.Id,
-		ParentId:    a.ParentId,
-		ParentType:  EvalParent(a.ParentType),
-		Type:        EvalType(a.EvalType),
-		CreatedAt:   int64(a.CreatedAt),
-		ProcessedAt: int64(a.ProcessedAt),
-	}
-}
-
-func newActionEvalSchema(action *ActionEval) *ActionEvalSchema {
-	return &ActionEvalSchema{
-		Id:          action.Id,
-		ParentId:    action.ParentId,
-		ParentType:  uint8(action.ParentType),
-		EvalType:    uint8(action.Type),
-		CreatedAt:   uint64(action.CreatedAt),
-		ProcessedAt: uint64(action.ProcessedAt),
 	}
 }
 
@@ -406,6 +425,19 @@ func newActionInstanceSchema(ai *ActionInstance) *ActionInstanceSchema {
 		CreatedAt:     ai.CreatedAt,
 		UpdatedAt:     ai.UpdatedAt,
 		FinishedAt:    ai.FinishedAt,
+	}
+}
+
+func (a *ActionInstanceSchema) mutationEvent(ai *ActionInstance, eventType EventType) *MutationEventSchema {
+	return &MutationEventSchema{
+		MutationTime:          uint64(time.Now().Unix()),
+		EventType:             uint8(eventType),
+		ObjectId:              ai.Id,
+		ObjectType:            uint8(EventObjectTypeActionInstance),
+		ParentId:              ai.ActionId,
+		Namespace:             "",
+		ProcessedAt:           0,
+		ActionInstancePayload: ai,
 	}
 }
 

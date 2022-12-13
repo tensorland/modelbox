@@ -77,6 +77,10 @@ func (*postgresQueryEngine) actionInstancesByStatus() string {
 	return "select id, action_id, attempt, status, outcome, outcome_reason, created_at, updated_at, finished_at from action_instances where status=$1"
 }
 
+func (*postgresQueryEngine) changeEventForObject() string {
+	return "select mutation_id, mutation_time, event_type, object_id, object_type, parent_id, namespace, processed_at, experiment_payload, model_payload, model_version_payload, action_payload, action_instance_payload from mutation_events where object_id = $1"
+}
+
 type PostgresStorage struct {
 	*SQLStorage
 	*PostgresDriverUtils

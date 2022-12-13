@@ -463,7 +463,7 @@ func (s *GrpcServer) ListEvents(ctx context.Context, req *pb.ListEventsRequest) 
 }
 
 func (s *GrpcServer) CreateActions(ctx context.Context, req *pb.CreateActionRequest) (*pb.CreateActionResponse, error) {
-	if err := s.metadataStorage.CreateAction(ctx, storage.NewAction(req.Name, req.Arch, req.ObjectId, req.Trigger.Predicate, req.Params)); err != nil {
+	if err := s.metadataStorage.CreateAction(ctx, storage.NewAction(req.Name, req.Arch, req.ObjectId, storage.NewTrigger(req.Trigger.Predicate, storage.TriggerTypeJs), req.Params)); err != nil {
 		return nil, err
 	}
 	return &pb.CreateActionResponse{CreatedAt: timestamppb.New(time.Now())}, nil
@@ -519,7 +519,7 @@ func (s *GrpcServer) WatchNamespace(
 				return fmt.Errorf("unable to list changes: %v", err)
 			}
 			for _, change := range changes {
-				val, err := structpb.NewValue(change.Payload)
+				val, err := structpb.NewValue(change.Action)
 				if err != nil {
 					return fmt.Errorf("unable to create proto value: %v", err)
 				}

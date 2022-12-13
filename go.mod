@@ -5,7 +5,6 @@ go 1.19
 require (
 	github.com/VividCortex/mysqlerr v1.0.0
 	github.com/aws/aws-sdk-go v1.44.82
-	github.com/fatih/structs v1.1.0
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0

@@ -680,7 +680,7 @@ type MetadataStorage interface {
 
 	GetUnprocessedChangeEvents(ctx context.Context) ([]*ChangeEvent, error)
 
-	GetChangeEventsForParent(ctx context.Context, id string) ([]*ChangeEvent, error)
+	GetChangeEventsForObject(ctx context.Context, id string) ([]*ChangeEvent, error)
 
 	CreateAction(ctx context.Context, action *Action) error
 

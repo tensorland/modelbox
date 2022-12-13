@@ -290,7 +290,7 @@ func (s *StorageInterfaceTestSuite) TestCreateActions() {
 	assert.Equal(s.t, actionState.Action.Arch, a1.Arch)
 
 	// Ensure that events were created for the action
-	changeEvents, err := s.storageIf.GetChangeEventsForParent(ctx, a1.Id)
+	changeEvents, err := s.storageIf.GetChangeEventsForObject(ctx, a1.Id)
 	require.Nil(s.t, err)
 	require.Equal(s.t, 1, len(changeEvents))
 }
@@ -301,7 +301,7 @@ func (s *StorageInterfaceTestSuite) TestCreateActionInstance() {
 	err := s.storageIf.CreateAction(ctx, a1)
 	assert.Nil(s.t, err)
 
-	changeEvents, err := s.storageIf.GetChangeEventsForParent(ctx, a1.Id)
+	changeEvents, err := s.storageIf.GetChangeEventsForObject(ctx, a1.Id)
 	require.Nil(s.t, err)
 
 	instance := NewActionInstance(a1.Id, 0)
@@ -314,7 +314,7 @@ func (s *StorageInterfaceTestSuite) TestCreateActionInstance() {
 	assert.Equal(s.t, instance, actionState.Instances[0])
 
 	// Ensure that the event was marked as processed
-	changeEvents1, err := s.storageIf.GetChangeEventsForParent(ctx, a1.Id)
+	changeEvents1, err := s.storageIf.GetChangeEventsForObject(ctx, a1.Id)
 	require.Nil(s.t, err)
 	assert.NotEmpty(s.t, changeEvents1[0].ProcessedAt)
 }
@@ -328,7 +328,7 @@ func (s *StorageInterfaceTestSuite) TestUpdateActionInstance() {
 	err := s.storageIf.CreateAction(ctx, a1)
 	require.Nil(s.t, err)
 	ai1 := NewActionInstance(a1.Id, 0)
-	cev, err := s.storageIf.GetChangeEventsForParent(ctx, a1.Id)
+	cev, err := s.storageIf.GetChangeEventsForObject(ctx, a1.Id)
 	require.Nil(s.t, err)
 	err = s.storageIf.CreateActionInstance(ctx, ai1, cev[0])
 	require.Nil(s.t, err)
@@ -344,7 +344,7 @@ func (s *StorageInterfaceTestSuite) TestUpdateActionInstance() {
 	assert.Equal(s.t, StatusFinished, ai1out.Status)
 	assert.Equal(s.t, finishedTime, uint64(ai1out.FinishedAt))
 
-	cev1, err := s.storageIf.GetChangeEventsForParent(ctx, ai1.Id)
+	cev1, err := s.storageIf.GetChangeEventsForObject(ctx, ai1.Id)
 	require.Nil(s.t, err)
 	require.Equal(s.t, 2, len(cev1))
 }

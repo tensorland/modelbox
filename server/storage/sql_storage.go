@@ -596,7 +596,7 @@ func (s *SQLStorage) CreateActionInstance(ctx context.Context, actionInstance *A
 	return err
 }
 
-func (s *SQLStorage) GetChangeEventsForParent(ctx context.Context, id string) ([]*ChangeEvent, error) {
+func (s *SQLStorage) GetChangeEventsForObject(ctx context.Context, id string) ([]*ChangeEvent, error) {
 	var changeEvents []*ChangeEvent
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		rows := []*MutationEventSchema{}

@@ -99,8 +99,8 @@ message WatchNamespaceRequest {
   uint64 since = 2;
 }
 
-enum ServerEvent {
-  SERVER_EVENT_UNDEFINED  = 0;
+enum ChangeEvent {
+  CHANGE_EVENT_UNDEFINED  = 0;
 
   OBJECT_CREATED = 1;
 
@@ -108,7 +108,7 @@ enum ServerEvent {
 }
 
 message WatchNamespaceResponse {
-  ServerEvent event = 1;
+  ChangeEvent event = 1;
 
   google.protobuf.Value payload = 2;
 }

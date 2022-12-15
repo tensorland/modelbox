@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/tensorland/modelbox/sdk-go/proto"
@@ -94,4 +95,23 @@ func getMetadataOrDefault(meta *proto.Metadata) map[string]*structpb.Value {
 		return meta.Metadata
 	}
 	return nil
+}
+
+func createChangeEventPayload(cv *storage.ChangeEvent) (*structpb.Value, error) {
+	if cv.Action != nil {
+		return structpb.NewValue(cv.Action)
+	}
+	if cv.Experiment != nil {
+		return structpb.NewValue(cv.Experiment)
+	}
+	if cv.Model != nil {
+		return structpb.NewValue(cv.Model)
+	}
+	if cv.ModelVersion != nil {
+		return structpb.NewValue(cv.ModelVersion)
+	}
+	if cv.ActionInstance != nil {
+		return structpb.NewValue(cv.ActionInstance)
+	}
+	return nil, fmt.Errorf("all the payloads are nil")
 }

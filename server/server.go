@@ -22,7 +22,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -519,12 +518,14 @@ func (s *GrpcServer) WatchNamespace(
 				return fmt.Errorf("unable to list changes: %v", err)
 			}
 			for _, change := range changes {
-				val, err := structpb.NewValue(change.Action)
+				val, err := createChangeEventPayload(change)
 				if err != nil {
 					return fmt.Errorf("unable to create proto value: %v", err)
 				}
 				resp := &pb.WatchNamespaceResponse{
-					Event:   pb.ServerEvent_OBJECT_CREATED,
+					// TODO Set this based on Event Type of the Change Event
+					// Also copy all the differnet event types in ChangeEvent to the proto definition
+					Event:   pb.ChangeEvent_OBJECT_CREATED,
 					Payload: val,
 				}
 				stream.Send(resp)

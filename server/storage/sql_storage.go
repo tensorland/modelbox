@@ -51,7 +51,7 @@ const (
 
 	CHANGE_EVENT_UPDATE = "update mutation_events set processed_at=:processed_at where mutation_id = :mutation_id"
 
-	CHANGE_EVENT_UNPROCESSED = "select mutation_id, mutation_time, event_type, object_id, object_type, parent_id, namespace, processed_at, experiment_payload, model_payload, model_version_payload, action_payload, action_instance_payload from mutation_events where processed_at >= 0"
+	CHANGE_EVENT_UNPROCESSED = "select mutation_id, mutation_time, event_type, object_id, object_type, parent_id, namespace, processed_at, experiment_payload, model_payload, model_version_payload, action_payload, action_instance_payload from mutation_events where processed_at = 0"
 )
 
 type queryEngine interface {
@@ -585,8 +585,7 @@ func (s *SQLStorage) CreateActionInstance(ctx context.Context, actionInstance *A
 			return fmt.Errorf("unable to update change event: %v", err)
 		}
 
-		// TODO Create event for action instance
-		aiEventSchema := schema.mutationEvent(actionInstance, EventTypeActionCreated)
+		aiEventSchema := schema.mutationEvent(actionInstance, EventTypeActionInstanceCreated)
 		if _, err := tx.NamedExecContext(ctx, MUTATION_CREATE, aiEventSchema); err != nil {
 			return fmt.Errorf("unaeble to create mutation event for action instance: %v", err)
 		}

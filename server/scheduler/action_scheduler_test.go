@@ -49,8 +49,30 @@ func (s *SchedulerTestSuite) TestCreateNewAction() {
 }
 
 func (s *SchedulerTestSuite) TestFinishAction() {
+	ctx := context.Background()
+	act := storage.NewAction("quantize1", "x86", "parent1", storage.NewTrigger("", storage.TriggerTypeJs), s.createMetadata())
+	err := s.storageIf.CreateAction(ctx, act)
+	assert.Nil(s.T(), err)
+
+	err = s.actionScheduler.runScheduler()
+	require.Nil(s.T(), err)
+	actionState, err := s.storageIf.GetAction(ctx, act.Id)
+	require.Nil(s.T(), err)
+	assert.Equal(s.T(), 1, len(actionState.Instances))
+
+	update := storage.NewActionInstanceUpdate(actionState.Instances[0].Id, storage.StatusFinished, storage.OutcomeSuccess, "", uint64(time.Now().Unix()))
+	hasUpdated, err := s.actionScheduler.UpdateInstanceStatus(ctx, update)
+	require.Nil(s.T(), err)
+	assert.Equal(s.T(), true, hasUpdated)
+
+	// Ensure we don't update again for same update
+	hasUpdated1, err := s.actionScheduler.UpdateInstanceStatus(ctx, update)
+	require.Nil(s.T(), err)
+	assert.Equal(s.T(), false, hasUpdated1)
 }
 
+// TODO When we add support for retry this will mean we create a new action instance
+// Test wether we retry
 func (s *SchedulerTestSuite) TestFailAction() {
 }
 

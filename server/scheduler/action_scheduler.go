@@ -61,7 +61,9 @@ func (a *ActionScheduler) runScheduler() error {
 		}
 		switch event.EventType {
 		case storage.EventTypeExperimentCreated:
+			fallthrough
 		case storage.EventTypeModelCreated:
+			fallthrough
 		case storage.EventTypeModelVersionCreated:
 			if err = a.evaluateTrigger(ctx, triggers, event); err != nil {
 				return a.evaluateTrigger(ctx, triggers, event)
@@ -94,17 +96,20 @@ func (a *ActionScheduler) handleActionCreatedEvent(ctx context.Context, event *s
 	return nil
 }
 
-func (a *ActionScheduler) UpdateInstanceStatus(ctx context.Context, update *storage.ActionInstanceUpdate) error {
+func (a *ActionScheduler) UpdateInstanceStatus(ctx context.Context, update *storage.ActionInstanceUpdate) (bool, error) {
 	ai, err := a.storageIf.GetActionInstance(ctx, update.ActionInstanceId)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	hasUpdated := ai.Update(update)
 	if !hasUpdated {
-		return nil
+		return false, nil
 	}
-	return a.storageIf.UpdateActionInstance(ctx, ai)
+	if err := a.storageIf.UpdateActionInstance(ctx, ai); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (a *ActionScheduler) GetRunnableActions(ctx context.Context, arch, action string) ([]*storage.ActionInstance, error) {

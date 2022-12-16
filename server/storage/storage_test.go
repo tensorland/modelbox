@@ -26,3 +26,16 @@ func TestEventIdUniquess(t *testing.T) {
 	assert.NotEqual(t, e1.Id, e3.Id)
 	assert.NotEqual(t, e2.Id, e4.Id)
 }
+
+func TestActionIdUniqueNess(t *testing.T) {
+	act := NewAction("quantize1", "x86", "parent1", NewTrigger("", TriggerTypeJs), createMetadata())
+
+	act1 := NewAction("quantize", "x86", "parent1", NewTrigger("", TriggerTypeJs), createMetadata())
+
+	assert.NotEqual(t, act, act1)
+}
+
+func createMetadata() map[string]*structpb.Value {
+	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
+	return map[string]*structpb.Value{"foo": metaVal}
+}

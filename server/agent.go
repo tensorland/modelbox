@@ -9,6 +9,7 @@ import (
 
 	"github.com/tensorland/modelbox/server/config"
 	"github.com/tensorland/modelbox/server/membership"
+	"github.com/tensorland/modelbox/server/scheduler"
 	"github.com/tensorland/modelbox/server/storage"
 	"github.com/tensorland/modelbox/server/storage/artifacts"
 	"github.com/tensorland/modelbox/server/storage/logging"
@@ -17,8 +18,10 @@ import (
 
 type Agent struct {
 	grpcServer        *GrpcServer
+	adminServer       *AdminServer
 	promServer        *PromServer
 	storage           storage.MetadataStorage
+	scheduler         *scheduler.ActionScheduler
 	clusterMembership membership.ClusterMembership
 	ShutdownCh        <-chan struct{}
 
@@ -33,6 +36,10 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	httpLis, err := net.Listen("tcp", config.HttpListenAddr)
 	if err != nil {
 		return nil, fmt.Errorf("unable to listen grpc-web on interface: %v", err)
+	}
+	adminLis, err := net.Listen("tcp", config.AdminListenAddr)
+	if err != nil {
+		return nil, fmt.Errorf("unable to listen to admin server on interface: %v", err)
 	}
 	pSrvr, err := NewPromServer(config, logger)
 	if err != nil {
@@ -59,9 +66,15 @@ func NewAgent(config *config.ServerConfig, logger *zap.Logger) (*Agent, error) {
 	}
 	logger.Sugar().Infof("cluster membership backend: %v", clusterMembership.Backend())
 	server := NewGrpcServer(metadataStorage, fileStorageBuilder, experimentLogger, grpcLis, httpLis, clusterMembership, logger)
+
+	scheduler := scheduler.NewActionScheduler(metadataStorage, config.SchedulerTickDuration, logger)
+
+	adminSrvr := NewAdminServer(logger, adminLis, metadataStorage, scheduler)
 	return &Agent{
 		grpcServer:        server,
+		adminServer:       adminSrvr,
 		storage:           metadataStorage,
+		scheduler:         scheduler,
 		clusterMembership: clusterMembership,
 		logger:            logger,
 		promServer:        pSrvr,
@@ -72,6 +85,8 @@ func (a *Agent) StartAndBlock() (int, error) {
 	a.clusterMembership.Join()
 	go a.promServer.Start()
 	go a.grpcServer.Start()
+	go a.adminServer.Start()
+	a.scheduler.Start()
 	return a.handleSignals(), nil
 }
 
@@ -99,6 +114,9 @@ WAIT:
 		goto WAIT
 	}
 
+	// Stop the scheduler
+	a.scheduler.Stop()
+
 	// leave the cluster
 	a.clusterMembership.Leave()
 
@@ -106,6 +124,9 @@ WAIT:
 
 	// Stop grpc server
 	a.grpcServer.Stop()
+
+	// stop admin server
+	a.adminServer.Stop()
 
 	// stop the storage
 	if err := a.storage.Close(); err != nil {

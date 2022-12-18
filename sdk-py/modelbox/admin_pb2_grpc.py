@@ -25,10 +25,10 @@ class ModelBoxAdminStub(object):
                 request_serializer=admin__pb2.HeartbeatRequest.SerializeToString,
                 response_deserializer=admin__pb2.HeartbeatResponse.FromString,
                 )
-        self.GetWork = channel.unary_unary(
-                '/modelbox.ModelBoxAdmin/GetWork',
-                request_serializer=admin__pb2.GetWorkRequest.SerializeToString,
-                response_deserializer=admin__pb2.GetWorkResponse.FromString,
+        self.GetRunnableActionInstances = channel.unary_unary(
+                '/modelbox.ModelBoxAdmin/GetRunnableActionInstances',
+                request_serializer=admin__pb2.GetRunnableActionInstancesRequest.SerializeToString,
+                response_deserializer=admin__pb2.GetRunnableActionInstancesResponse.FromString,
                 )
         self.UpdateActionStatus = channel.unary_unary(
                 '/modelbox.ModelBoxAdmin/UpdateActionStatus',
@@ -56,7 +56,7 @@ class ModelBoxAdminServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetWork(self, request, context):
+    def GetRunnableActionInstances(self, request, context):
         """Download the list of work that can be exectuted by a action runner
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -83,10 +83,10 @@ def add_ModelBoxAdminServicer_to_server(servicer, server):
                     request_deserializer=admin__pb2.HeartbeatRequest.FromString,
                     response_serializer=admin__pb2.HeartbeatResponse.SerializeToString,
             ),
-            'GetWork': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetWork,
-                    request_deserializer=admin__pb2.GetWorkRequest.FromString,
-                    response_serializer=admin__pb2.GetWorkResponse.SerializeToString,
+            'GetRunnableActionInstances': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetRunnableActionInstances,
+                    request_deserializer=admin__pb2.GetRunnableActionInstancesRequest.FromString,
+                    response_serializer=admin__pb2.GetRunnableActionInstancesResponse.SerializeToString,
             ),
             'UpdateActionStatus': grpc.unary_unary_rpc_method_handler(
                     servicer.UpdateActionStatus,
@@ -139,7 +139,7 @@ class ModelBoxAdmin(object):
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
-    def GetWork(request,
+    def GetRunnableActionInstances(request,
             target,
             options=(),
             channel_credentials=None,
@@ -149,9 +149,9 @@ class ModelBoxAdmin(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelBoxAdmin/GetWork',
-            admin__pb2.GetWorkRequest.SerializeToString,
-            admin__pb2.GetWorkResponse.FromString,
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelBoxAdmin/GetRunnableActionInstances',
+            admin__pb2.GetRunnableActionInstancesRequest.SerializeToString,
+            admin__pb2.GetRunnableActionInstancesResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

@@ -1,5 +1,6 @@
 syntax = "proto3";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
 
 option go_package = "github.com/tensorland/modelbox/sdk-go/proto";
 
@@ -14,7 +15,7 @@ service ModelBoxAdmin {
   rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
 
   // Download the list of work that can be exectuted by a action runner
-  rpc GetWork(GetWorkRequest) returns (GetWorkResponse);
+  rpc GetRunnableActionInstances(GetRunnableActionInstancesRequest) returns (GetRunnableActionInstancesResponse);
 
   // Update action status
   rpc UpdateActionStatus(UpdateActionStatusRequest) returns (UpdateActionStatusResponse);
@@ -22,15 +23,17 @@ service ModelBoxAdmin {
 
 message NodeInfo {
   string host_name = 1;
-  string arch = 2;
+  string ip_addr = 2;
+  string arch = 3;
 }
 
 message HeartbeatRequest {
-  NodeInfo node = 1;
+  string node_id = 1;
   google.protobuf.Timestamp at = 20;
 }
 
-message HeartbeatResponse {}
+message HeartbeatResponse {
+}
 
 message SubscribeEventRequest {
   string namespace = 1;
@@ -40,14 +43,28 @@ message SubscribeEventRequest {
 }
 
 message RegisterAgentRequest {
+  NodeInfo node_info = 1;
+  string agent_name = 2;
 }
 
 message RegisterAgentResponse{
-
+  string node_id = 1;
 }
 
-message GetWorkRequest {
+message GetRunnableActionInstancesRequest {
+  string action_name = 1;
+  string arch = 2;
+}
 
+message RunnableAction {
+	string id = 1;
+	string action_id = 2;
+	string command = 3;
+  map<string, google.protobuf.Value> params = 5;
+}
+
+message GetRunnableActionInstancesResponse {
+  repeated RunnableAction instances = 1;
 }
 
 message GetWorkResponse {
@@ -55,7 +72,12 @@ message GetWorkResponse {
 }
 
 message UpdateActionStatusRequest {
-
+  string action_instance_id = 1;
+  // Make the following uint32 enum 
+  uint32 status = 2;
+  uint32 outcome = 3;
+  string outcome_reason = 4;
+  uint64 udpate_time = 5;
 }
 
 message UpdateActionStatusResponse {

@@ -20,6 +20,7 @@ func NewActionScheduler(storageIf storage.MetadataStorage, intv time.Duration, l
 	return &ActionScheduler{
 		storageIf: storageIf,
 		syncIntv:  intv,
+		stopCh:    make(chan struct{}),
 		logger:    logger,
 	}
 }
@@ -35,11 +36,12 @@ func (a *ActionScheduler) Stop() error {
 }
 
 func (a *ActionScheduler) heartBeat() {
+	a.logger.Sugar().Infof("[scheduler] starting the scheduler in duration: %v", a.syncIntv)
 	next := time.After(a.syncIntv)
 	for {
 		select {
 		case <-a.stopCh:
-			a.logger.Sugar().Infof("stopping action scheduler")
+			a.logger.Sugar().Infof("[scheduler] stopping action scheduler")
 			return
 		case <-next:
 			a.runScheduler()
@@ -91,7 +93,7 @@ func (a *ActionScheduler) evaluateTrigger(ctx context.Context, triggers []*stora
 func (a *ActionScheduler) handleActionCreatedEvent(ctx context.Context, event *storage.ChangeEvent) error {
 	actionInstance := storage.NewActionInstance(event.Action.Id, 0)
 	if err := a.storageIf.CreateActionInstance(context.Background(), actionInstance, event); err != nil {
-		return fmt.Errorf("unable to create action instance: %v", err)
+		return fmt.Errorf("[scheduler] unable to create action instance: %v", err)
 	}
 	return nil
 }

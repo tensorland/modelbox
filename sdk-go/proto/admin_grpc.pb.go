@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.20.1
-// source: proto/admin.proto
+// source: admin.proto
 
 package proto
 
@@ -28,7 +28,7 @@ type ModelBoxAdminClient interface {
 	// and work progress periodically
 	Heartbeat(ctx context.Context, in *HeartbeatRequest, opts ...grpc.CallOption) (*HeartbeatResponse, error)
 	// Download the list of work that can be exectuted by a action runner
-	GetWork(ctx context.Context, in *GetWorkRequest, opts ...grpc.CallOption) (*GetWorkResponse, error)
+	GetRunnableActionInstances(ctx context.Context, in *GetRunnableActionInstancesRequest, opts ...grpc.CallOption) (*GetRunnableActionInstancesResponse, error)
 	// Update action status
 	UpdateActionStatus(ctx context.Context, in *UpdateActionStatusRequest, opts ...grpc.CallOption) (*UpdateActionStatusResponse, error)
 }
@@ -59,9 +59,9 @@ func (c *modelBoxAdminClient) Heartbeat(ctx context.Context, in *HeartbeatReques
 	return out, nil
 }
 
-func (c *modelBoxAdminClient) GetWork(ctx context.Context, in *GetWorkRequest, opts ...grpc.CallOption) (*GetWorkResponse, error) {
-	out := new(GetWorkResponse)
-	err := c.cc.Invoke(ctx, "/modelbox.ModelBoxAdmin/GetWork", in, out, opts...)
+func (c *modelBoxAdminClient) GetRunnableActionInstances(ctx context.Context, in *GetRunnableActionInstancesRequest, opts ...grpc.CallOption) (*GetRunnableActionInstancesResponse, error) {
+	out := new(GetRunnableActionInstancesResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelBoxAdmin/GetRunnableActionInstances", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ type ModelBoxAdminServer interface {
 	// and work progress periodically
 	Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error)
 	// Download the list of work that can be exectuted by a action runner
-	GetWork(context.Context, *GetWorkRequest) (*GetWorkResponse, error)
+	GetRunnableActionInstances(context.Context, *GetRunnableActionInstancesRequest) (*GetRunnableActionInstancesResponse, error)
 	// Update action status
 	UpdateActionStatus(context.Context, *UpdateActionStatusRequest) (*UpdateActionStatusResponse, error)
 	mustEmbedUnimplementedModelBoxAdminServer()
@@ -103,8 +103,8 @@ func (UnimplementedModelBoxAdminServer) RegisterAgent(context.Context, *Register
 func (UnimplementedModelBoxAdminServer) Heartbeat(context.Context, *HeartbeatRequest) (*HeartbeatResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Heartbeat not implemented")
 }
-func (UnimplementedModelBoxAdminServer) GetWork(context.Context, *GetWorkRequest) (*GetWorkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetWork not implemented")
+func (UnimplementedModelBoxAdminServer) GetRunnableActionInstances(context.Context, *GetRunnableActionInstancesRequest) (*GetRunnableActionInstancesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRunnableActionInstances not implemented")
 }
 func (UnimplementedModelBoxAdminServer) UpdateActionStatus(context.Context, *UpdateActionStatusRequest) (*UpdateActionStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateActionStatus not implemented")
@@ -158,20 +158,20 @@ func _ModelBoxAdmin_Heartbeat_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ModelBoxAdmin_GetWork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetWorkRequest)
+func _ModelBoxAdmin_GetRunnableActionInstances_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetRunnableActionInstancesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ModelBoxAdminServer).GetWork(ctx, in)
+		return srv.(ModelBoxAdminServer).GetRunnableActionInstances(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/modelbox.ModelBoxAdmin/GetWork",
+		FullMethod: "/modelbox.ModelBoxAdmin/GetRunnableActionInstances",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelBoxAdminServer).GetWork(ctx, req.(*GetWorkRequest))
+		return srv.(ModelBoxAdminServer).GetRunnableActionInstances(ctx, req.(*GetRunnableActionInstancesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -210,8 +210,8 @@ var ModelBoxAdmin_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ModelBoxAdmin_Heartbeat_Handler,
 		},
 		{
-			MethodName: "GetWork",
-			Handler:    _ModelBoxAdmin_GetWork_Handler,
+			MethodName: "GetRunnableActionInstances",
+			Handler:    _ModelBoxAdmin_GetRunnableActionInstances_Handler,
 		},
 		{
 			MethodName: "UpdateActionStatus",
@@ -219,5 +219,5 @@ var ModelBoxAdmin_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/admin.proto",
+	Metadata: "admin.proto",
 }

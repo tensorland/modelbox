@@ -70,7 +70,9 @@ type ServerConfig struct {
 	MetadataBackend          string                   `yaml:"metadata_storage"`
 	MetricsBackend           string                   `yaml:"metrics_storage"`
 	GrpcListenAddr           string                   `yaml:"grpc_listen_addr"`
+	AdminListenAddr          string                   `yaml:"admin_listen_addr"`
 	HttpListenAddr           string                   `yaml:"http_listen_addr"`
+	SchedulerTickDuration    time.Duration            `yaml:"scheduler_tick_duration"`
 	FileStorage              *FileStorageConfig       `yaml:"artifact_storage_filesystem"`
 	S3Storage                *S3StorageConfig         `yaml:"artifact_storage_s3"`
 	SqliteConfig             *IntegratedStorageConfig `yaml:"metadata_storage_sqlite3"`
@@ -100,11 +102,17 @@ func (c *ServerConfig) Merge(anotherConfig *ServerConfig) {
 	if c.GrpcListenAddr == "" {
 		c.GrpcListenAddr = anotherConfig.GrpcListenAddr
 	}
+	if c.AdminListenAddr == "" {
+		c.AdminListenAddr = anotherConfig.AdminListenAddr
+	}
 	if c.HttpListenAddr == "" {
 		c.HttpListenAddr = anotherConfig.HttpListenAddr
 	}
 	if c.PromAddr == "" {
 		c.PromAddr = anotherConfig.PromAddr
+	}
+	if c.SchedulerTickDuration == 0 {
+		c.SchedulerTickDuration = anotherConfig.SchedulerTickDuration
 	}
 }
 
@@ -130,9 +138,11 @@ func defaultServerConfig() *ServerConfig {
 		ArtifactStorageBackend:   "filesystem",
 		MetadataBackend:          "sqlite3",
 		GrpcListenAddr:           ":8080",
+		AdminListenAddr:          ":8081",
 		HttpListenAddr:           ":8085",
 		MetricsBackend:           "inmemory",
 		PromAddr:                 ":2112",
+		SchedulerTickDuration:    1 * time.Second,
 		ClusterMembershipBackend: "static",
 		StaticClusterMembership: &StaticClusterMembership{
 			Members: []*ClusterMember{

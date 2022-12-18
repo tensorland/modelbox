@@ -16,6 +16,12 @@ metrics_storage: "timescaledb"
 grpc_listen_addr: ":8085"
 http_listen_addr: ":8081"
 
+# Interface on which the admin/scheduler server is listening
+admin_listen_addr: ":8085"
+
+# Tick duration of the scheduler
+scheduler_tick_duration: 5s
+
 cluster_membership: "mysql"
 
 # Additional configuration for filesystem based blob_storage
@@ -27,8 +33,9 @@ artifact_storage_s3:
   bucket: "modelbox-artifacts"
 
 # Additional configuration for integrated metadata storage
-metadata_storage_integrated:
+metadata_storage_sqlite3:
   path: "/tmp/modelbox.dat"
+
 
 # Additional configuration for metadata storage in PostgreSQL
 metadata_storage_postgres:

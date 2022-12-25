@@ -29,7 +29,7 @@ func (a *AdminServer) RegisterAgent(context.Context, *pb.RegisterAgentRequest) (
 }
 
 func (a *AdminServer) Heartbeat(context.Context, *pb.HeartbeatRequest) (*pb.HeartbeatResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Heartbeat not implemented")
+	return &pb.HeartbeatResponse{}, nil
 }
 
 func (a *AdminServer) GetWork(ctx context.Context, req *pb.GetRunnableActionInstancesRequest) (*pb.GetRunnableActionInstancesResponse, error) {

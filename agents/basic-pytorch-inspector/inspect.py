@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from modelbox.modelbox import Event, Model, Experiment
 
-class ModelBoxAgent(ABC):
+class ModelBoxWorker(ABC):
 
     @abstractmethod
     def handle_event(event: Event):
@@ -15,7 +15,7 @@ class ModelBoxAgent(ABC):
         pass
 
 
-class PytorchModelInspectorAgent(ModelBoxAgent):
+class PytorchModelInspector(ModelBoxWorker):
 
     def __init__(self) -> None:
         super().__init__()

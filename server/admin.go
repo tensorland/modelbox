@@ -39,7 +39,7 @@ func (a *AdminServer) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest) (
 	return &pb.HeartbeatResponse{}, nil
 }
 
-func (a *AdminServer) GetWork(ctx context.Context, req *pb.GetRunnableActionInstancesRequest) (*pb.GetRunnableActionInstancesResponse, error) {
+func (a *AdminServer) GetRunnableActionInstances(ctx context.Context, req *pb.GetRunnableActionInstancesRequest) (*pb.GetRunnableActionInstancesResponse, error) {
 	instances, err := a.storage.GetActionInstances(ctx, storage.StatusPending)
 	if err != nil {
 		return nil, err

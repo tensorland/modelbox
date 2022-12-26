@@ -20,11 +20,13 @@ class AdminClient:
         req = admin_pb2.HeartbeatRequest(node_id=node_id, at=ts.GetCurrentTime())
         return self._client.Heartbeat(req)
 
-    def get_runnable_actions(self) -> admin_pb2.GetRunnableActionInstancesResponse:
-        pass
+    def get_runnable_actions(self, action: str, arch: str) -> admin_pb2.GetRunnableActionInstancesResponse:
+        req = admin_pb2.GetRunnableActionInstancesRequest(action_name=action, arch=arch)
+        return self._client.GetRunnableActionInstances(req)
 
-    def update_action_status(self) -> admin_pb2.UpdateActionStatusResponse:
-        pass
+    def update_action_status(self, action_instance: str, status: int, outcome: int, reason: str, time: int) -> admin_pb2.UpdateActionStatusResponse:
+        req =admin_pb2.UpdateActionStatusRequest(action_instance_id=action_instance, status=status, outcome=outcome, outcome_reason=reason, update_time=time)
+        return self._client.UpdateActionStatus(req)
 
     def close(self):
         if self._channel is not None:

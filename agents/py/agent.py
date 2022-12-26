@@ -6,6 +6,7 @@ import logging
 import platform
 import socket
 import sys
+from typing import List
 
 from client import AdminClient
 from modelbox import admin_pb2
@@ -21,8 +22,8 @@ class AgentConfig:
 
 @dataclass
 class Node:
-    host: str
-
+    hostname: str
+    arch: str
 
 # TODO Make this configurable by adding some flags and such
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
@@ -30,11 +31,12 @@ logger = logging.getLogger(__name__)
 
 
 class ModelBoxAgent:
-    def __init__(self, config: AgentConfig) -> None:
+    def __init__(self, config: AgentConfig, worker: str) -> None:
         super().__init__()
         self._config: AgentConfig = config
         self._client: AdminClient = AdminClient(self._config.server_addr)
-        self._node: Node = Node(host=platform.node())
+        self._worker = worker
+        self._node: Node = Node(hostname=platform.node(), arch=platform.machine())
         self._server_node_id: str = None
 
     async def register_node(self):
@@ -45,7 +47,7 @@ class ModelBoxAgent:
             else self._config.ip_addr
         )
         node_info = admin_pb2.NodeInfo(
-            host_name=platform.node(), ip_addr=advertise_addr, arch=platform.machine()
+            host_name=self._node.hostname, ip_addr=advertise_addr, arch=self._node.arch
         )
         while True:
             try:
@@ -66,15 +68,19 @@ class ModelBoxAgent:
         logger.info(f"starting to heartbeat sever {self._config.heartbeat_dur}s")
         while True:
             try:
+                logger.info("heartbeat....")
                 response = self._client.heartbeat(node_id=self._server_node_id)
             except Exception as ex:
                 logger.error(f"couldn't register heartbeat {ex}")
             await asyncio.sleep(self._config.heartbeat_dur)
 
     async def poll_for_work(self):
+        logger.info(f"polling for work every {self._config.heartbeat_dur}")
         while True:
             try:
-                respone = self._client.get_runnable_actions()
+                logger.info("work poll....")
+                response: admin_pb2.GetRunnableActionInstancesResponse = self._client.get_runnable_actions(self._worker, self._node.arch)
+                logger.info(f"respone {response}")
             except Exception as ex:
                 logger.error(f"unable to get work {ex}")
             await asyncio.sleep(self._config.heartbeat_dur)
@@ -85,11 +91,8 @@ class ModelBoxAgent:
             # Register Node
             await self.register_node()
 
-            # Start the heartbeat
-            await self.heartbeat()
-
-            # Keep waiting for available work
-            await self.poll_for_work()
+            # Start the heartbeat and poll for work concurrently
+            await asyncio.gather(self.heartbeat(), self.poll_for_work())
         except asyncio.CancelledError:
             logger.info("exiting agent")
 
@@ -110,7 +113,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--heartbeat_dur", default=5, help="heart beat duration")
     parser.add_argument(
-        "--workers", nargs="+", help="list of workers(separated by space)"
+        "--worker", help="list of workers(separated by space)"
     )
     parser.add_argument("--name", default="default-agent", help="agent name")
     parser.add_argument(
@@ -124,7 +127,8 @@ if __name__ == "__main__":
             args.heartbeat_dur,
             name=args.name,
             ip_addr=args.agent_ip_addr,
-        )
+        ),
+        worker=args.worker,
     )
     loop = asyncio.get_event_loop()
     main_task = asyncio.ensure_future(agent.agent_runner())

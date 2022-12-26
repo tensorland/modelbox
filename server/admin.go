@@ -23,7 +23,7 @@ type AdminServer struct {
 }
 
 func (a *AdminServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
-	agent := storage.NewAgent(req.AgentName, req.NodeInfo.HostName, "todo", req.NodeInfo.Arch, []string{"todo"})
+	agent := storage.NewAgent(req.AgentName, req.NodeInfo.HostName, req.NodeInfo.IpAddr, req.NodeInfo.Arch, []string{"todo"})
 	if err := a.storage.RegisterNode(ctx, agent); err != nil {
 		return nil, err
 	}

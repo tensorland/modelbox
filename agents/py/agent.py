@@ -8,22 +8,21 @@ import logging
 from client import AdminClient
 from modelbox import admin_pb2
 import platform
+import socket
+import sys 
 
 @dataclass
 class AgentConfig:
     server_addr: str
     heartbeat_dur: int
     name: str
+    ip_addr: str
 
 @dataclass
 class Node:
     host: str
 
-    def get_id(self) -> str:
-        #TODO Probe the node for more metadata
-        #and hash them into a node
-        return self.host
-
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class ModelBoxAgent:
@@ -36,7 +35,8 @@ class ModelBoxAgent:
 
     async def register_node(self):
         logger.info(f"registering node")
-        node_info = admin_pb2.NodeInfo(host_name=platform.node(), ip_addr="", arch="x86")
+        advertise_addr = self._get_default_addr() if self._config.ip_addr is  None else self._config.ip_addr
+        node_info = admin_pb2.NodeInfo(host_name=platform.node(), ip_addr=advertise_addr, arch=platform.machine())
         while True:
             try:
                 resp = self._client.register_agent(node_info=node_info, name=self._config.name)
@@ -80,6 +80,13 @@ class ModelBoxAgent:
         except asyncio.CancelledError:
             logger.info("exiting agent")
 
+    def _get_default_addr(self) -> str:
+        #TODO This is really hacky. We should use https://pypi.org/project/netifaces/
+        # to probe for interfaces and pick up a reasonable address as default
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        return s.getsockname()[0]
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="modelbox-agent", description="modelbox agent")
@@ -87,9 +94,10 @@ if __name__ == "__main__":
     parser.add_argument('--heartbeat_dur', default=5, help="heart beat duration")
     parser.add_argument("--workers", nargs="+", help="list of workers(separated by space)")
     parser.add_argument("--name", default="default-agent", help="agent name")
+    parser.add_argument("--agent_ip_addr", default=None, help="advertise ip addr of the host")
     args = parser.parse_args()
 
-    agent = ModelBoxAgent(config=AgentConfig(args.server_addr, args.heartbeat_dur, name=args.name))
+    agent = ModelBoxAgent(config=AgentConfig(args.server_addr, args.heartbeat_dur, name=args.name, ip_addr=args.agent_ip_addr))
     loop = asyncio.get_event_loop()
     main_task = asyncio.ensure_future(agent.agent_runner())
     for sig in [signal.SIGTERM, signal.SIGINT]:

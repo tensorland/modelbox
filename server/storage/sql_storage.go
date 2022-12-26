@@ -52,6 +52,10 @@ const (
 	CHANGE_EVENT_UPDATE = "update mutation_events set processed_at=:processed_at where mutation_id = :mutation_id"
 
 	CHANGE_EVENT_UNPROCESSED = "select mutation_id, mutation_time, event_type, object_id, object_type, parent_id, namespace, processed_at, experiment_payload, model_payload, model_version_payload, action_payload, action_instance_payload from mutation_events where processed_at = 0"
+
+	REGISTER_AGENT = "insert into agents (node_id, info, heartbeat_time) VALUES(:node_id, :info, :heartbeat_time)"
+
+	HEARTBEAT = "update agents set heartbeat_time = :heartbeat_time where node_id = :node_id"
 )
 
 type queryEngine interface {
@@ -678,6 +682,31 @@ func (s *SQLStorage) GetUnprocessedChangeEvents(ctx context.Context) ([]*ChangeE
 
 func (s *SQLStorage) GetTriggers(ctx context.Context, parentId string) ([]*Trigger, error) {
 	return nil, nil
+}
+
+func (s *SQLStorage) RegisterNode(ctx context.Context, agent *Agent) error {
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		schema := NewAgentSchema(agent, uint64(time.Now().Unix()))
+		if _, err := tx.NamedExecContext(ctx, REGISTER_AGENT, schema); err != nil {
+			return fmt.Errorf("unable to register agent: %v", err)
+		}
+		return nil
+	})
+	return err
+}
+
+func (s *SQLStorage) Heartbeat(ctx context.Context, hb *Heartbeat) error {
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		schema := &AgentSchema{
+			NodeId:        hb.AgentId,
+			HeartbeatTime: hb.Time,
+		}
+		if _, err := tx.NamedExecContext(ctx, s.db.Rebind(HEARTBEAT), schema); err != nil {
+			return fmt.Errorf("unable to update heartbeat: %v", err)
+		}
+		return nil
+	})
+	return err
 }
 
 func (s *SQLStorage) GetActionInstances(ctx context.Context, status ActionStatus) ([]*ActionInstance, error) {

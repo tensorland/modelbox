@@ -126,3 +126,9 @@ CREATE TABLE IF NOT EXISTS cluster_members (
    info JSON,
    heartbeat_time BIGINT
 );
+
+CREATE TABLE IF NOT EXISTS agents (
+   node_id VARCHAR(40) PRIMARY KEY,
+   info JSON,
+   heartbeat_time BIGINT
+);

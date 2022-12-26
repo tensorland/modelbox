@@ -35,6 +35,54 @@ func (s *SerializableMetadata) Scan(value interface{}) error {
 	return json.Unmarshal(b, &s)
 }
 
+type Agent struct {
+	Name     string
+	Actions  []string
+	HostName string
+	IpAddr   string
+	Arch     string
+}
+
+func NewAgent(name, hostname, ipAddr, arch string, actions []string) *Agent {
+	return &Agent{
+		Name:     name,
+		Actions:  actions,
+		HostName: hostname,
+		IpAddr:   ipAddr,
+		Arch:     arch,
+	}
+}
+
+func (a *Agent) AgentId() string {
+	h := sha1.New()
+	utils.HashString(h, a.Name)
+	utils.HashString(h, a.HostName)
+	utils.HashString(h, a.IpAddr)
+	utils.HashString(h, a.Arch)
+	for _, action := range a.Actions {
+		utils.HashString(h, action)
+	}
+	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func (a Agent) Value() (driver.Value, error) {
+	return json.Marshal(a)
+}
+
+func (a *Agent) Scan(value interface{}) error {
+	b, ok := value.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+
+	return json.Unmarshal(b, &a)
+}
+
+type Heartbeat struct {
+	AgentId string
+	Time    uint64
+}
+
 // Status of an action associated with a model or experiment
 type ActionStatus uint8
 
@@ -691,6 +739,10 @@ type MetadataStorage interface {
 	GetAction(ctx context.Context, id string) (*ActionState, error)
 
 	UpdateActionInstance(ctx context.Context, instance *ActionInstance) error
+
+	RegisterNode(ctx context.Context, agent *Agent) error
+
+	Heartbeat(ctx context.Context, hb *Heartbeat) error
 
 	GetActionInstance(ctx context.Context, id string) (*ActionInstance, error)
 

@@ -349,6 +349,20 @@ func (s *StorageInterfaceTestSuite) TestUpdateActionInstance() {
 	require.Equal(s.t, 2, len(cev1))
 }
 
+func (s *StorageInterfaceTestSuite) TestRegisterAndHeartbeatAgent() {
+	ctx := context.Background()
+	agent := NewAgent("base", "host1", "10.10.11.1", "x86", []string{"pytorch-inspector"})
+	err := s.storageIf.RegisterNode(ctx, agent)
+	require.Nil(s.t, err)
+
+	hb := &Heartbeat{
+		AgentId: agent.AgentId(),
+		Time:    uint64(time.Now().Unix()) + 100,
+	}
+	err = s.storageIf.Heartbeat(ctx, hb)
+	require.Nil(s.t, err)
+}
+
 func (s *StorageInterfaceTestSuite) createMetadata() map[string]*structpb.Value {
 	metaVal, _ := structpb.NewValue(map[string]interface{}{"/foo": 5})
 	return map[string]*structpb.Value{"foo": metaVal}

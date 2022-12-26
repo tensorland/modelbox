@@ -10,8 +10,6 @@ import (
 	"github.com/tensorland/modelbox/server/storage"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -24,11 +22,20 @@ type AdminServer struct {
 	pb.UnimplementedModelBoxAdminServer
 }
 
-func (a *AdminServer) RegisterAgent(context.Context, *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegisterAgent not implemented")
+func (a *AdminServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRequest) (*pb.RegisterAgentResponse, error) {
+	agent := storage.NewAgent(req.AgentName, req.NodeInfo.HostName, "todo", req.NodeInfo.Arch, []string{"todo"})
+	if err := a.storage.RegisterNode(ctx, agent); err != nil {
+		return nil, err
+	}
+	return &pb.RegisterAgentResponse{
+		NodeId: agent.AgentId(),
+	}, nil
 }
 
-func (a *AdminServer) Heartbeat(context.Context, *pb.HeartbeatRequest) (*pb.HeartbeatResponse, error) {
+func (a *AdminServer) Heartbeat(ctx context.Context, req *pb.HeartbeatRequest) (*pb.HeartbeatResponse, error) {
+	if err := a.storage.Heartbeat(ctx, &storage.Heartbeat{AgentId: req.NodeId, Time: uint64(req.At.AsTime().Unix())}); err != nil {
+		return nil, err
+	}
 	return &pb.HeartbeatResponse{}, nil
 }
 

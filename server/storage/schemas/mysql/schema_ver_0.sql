@@ -124,3 +124,9 @@ CREATE TABLE IF NOT EXISTS action_evals (
    created_at BIGINT NOT NULL,
    processed_at BIGINT
 );
+
+CREATE TABLE IF NOT EXISTS agents (
+   node_id VARCHAR(40) PRIMARY KEY,
+   info JSON,
+   heartbeat_time BIGINT
+);

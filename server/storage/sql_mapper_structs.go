@@ -454,3 +454,17 @@ func (a *ActionInstanceSchema) toActionInstance() *ActionInstance {
 		FinishedAt:    a.FinishedAt,
 	}
 }
+
+type AgentSchema struct {
+	NodeId        string `db:"node_id"`
+	Info          *Agent `db:"info"`
+	HeartbeatTime uint64 `db:"heartbeat_time"`
+}
+
+func NewAgentSchema(a *Agent, hbTime uint64) *AgentSchema {
+	return &AgentSchema{
+		NodeId:        a.AgentId(),
+		Info:          a,
+		HeartbeatTime: hbTime,
+	}
+}

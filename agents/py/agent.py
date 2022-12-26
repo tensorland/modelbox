@@ -36,7 +36,7 @@ class ModelBoxAgent:
 
     async def register_node(self):
         logger.info(f"registering node")
-        node_info = admin_pb2.NodeInfo(host_name=platform.node(), ip_addr="", arch="")
+        node_info = admin_pb2.NodeInfo(host_name=platform.node(), ip_addr="", arch="x86")
         while True:
             try:
                 resp = self._client.register_agent(node_info=node_info, name=self._config.name)
@@ -53,7 +53,7 @@ class ModelBoxAgent:
         logger.info(f"starting to heartbeat ever {self._config.heartbeat_dur}s")
         while True:
             try:
-                response = self._client.heartbeat(node_id=self._node.get_id())
+                response = self._client.heartbeat(node_id=self._server_node_id)
             except Exception as ex:
                 logger.error(f"couldn't register heartbeat {ex}")
             await asyncio.sleep(self._config.heartbeat_dur)
@@ -86,9 +86,10 @@ if __name__ == "__main__":
     parser.add_argument('--server_addr', default="localhost:8081", help="address of the admin api")
     parser.add_argument('--heartbeat_dur', default=5, help="heart beat duration")
     parser.add_argument("--workers", nargs="+", help="list of workers(separated by space)")
+    parser.add_argument("--name", default="default-agent", help="agent name")
     args = parser.parse_args()
 
-    agent = ModelBoxAgent(config=AgentConfig(args.server_addr, args.heart_beat_dur))
+    agent = ModelBoxAgent(config=AgentConfig(args.server_addr, args.heartbeat_dur, name=args.name))
     loop = asyncio.get_event_loop()
     main_task = asyncio.ensure_future(agent.agent_runner())
     for sig in [signal.SIGTERM, signal.SIGINT]:

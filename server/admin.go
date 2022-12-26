@@ -28,7 +28,7 @@ func (a *AdminServer) RegisterAgent(ctx context.Context, req *pb.RegisterAgentRe
 		return nil, err
 	}
 	return &pb.RegisterAgentResponse{
-		NodeId: agent.AgentId(),
+		NodeId: agent.Id,
 	}, nil
 }
 

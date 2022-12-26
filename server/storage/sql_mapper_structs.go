@@ -463,7 +463,7 @@ type AgentSchema struct {
 
 func NewAgentSchema(a *Agent, hbTime uint64) *AgentSchema {
 	return &AgentSchema{
-		NodeId:        a.AgentId(),
+		NodeId:        a.Id,
 		Info:          a,
 		HeartbeatTime: hbTime,
 	}

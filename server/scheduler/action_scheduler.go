@@ -10,18 +10,21 @@ import (
 )
 
 type ActionScheduler struct {
-	storageIf storage.MetadataStorage
-	syncIntv  time.Duration
-	stopCh    chan struct{}
-	logger    *zap.Logger
+	storageIf       storage.MetadataStorage
+	syncIntv        time.Duration
+	agentHbDeadline time.Duration
+	stopCh          chan struct{}
+	logger          *zap.Logger
 }
 
 func NewActionScheduler(storageIf storage.MetadataStorage, intv time.Duration, logger *zap.Logger) *ActionScheduler {
+	// TODO Make agent hb deadline configurable
 	return &ActionScheduler{
-		storageIf: storageIf,
-		syncIntv:  intv,
-		stopCh:    make(chan struct{}),
-		logger:    logger,
+		storageIf:       storageIf,
+		syncIntv:        intv,
+		agentHbDeadline: 10 * time.Second,
+		stopCh:          make(chan struct{}),
+		logger:          logger,
 	}
 }
 
@@ -86,6 +89,14 @@ func (a *ActionScheduler) evaluateTrigger(ctx context.Context, triggers []*stora
 		if err := a.storageIf.CreateAction(ctx, action); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (a *ActionScheduler) evictDeadAgents(ctx context.Context) error {
+	_, err := a.storageIf.GetDeadAgents(ctx)
+	if err != nil {
+		return err
 	}
 	return nil
 }

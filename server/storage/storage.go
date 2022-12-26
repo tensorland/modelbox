@@ -36,6 +36,7 @@ func (s *SerializableMetadata) Scan(value interface{}) error {
 }
 
 type Agent struct {
+	Id       string
 	Name     string
 	Actions  []string
 	HostName string
@@ -44,25 +45,23 @@ type Agent struct {
 }
 
 func NewAgent(name, hostname, ipAddr, arch string, actions []string) *Agent {
-	return &Agent{
+	agent := &Agent{
 		Name:     name,
 		Actions:  actions,
 		HostName: hostname,
 		IpAddr:   ipAddr,
 		Arch:     arch,
 	}
-}
-
-func (a *Agent) AgentId() string {
 	h := sha1.New()
-	utils.HashString(h, a.Name)
-	utils.HashString(h, a.HostName)
-	utils.HashString(h, a.IpAddr)
-	utils.HashString(h, a.Arch)
-	for _, action := range a.Actions {
+	utils.HashString(h, name)
+	utils.HashString(h, hostname)
+	utils.HashString(h, ipAddr)
+	utils.HashString(h, arch)
+	for _, action := range actions {
 		utils.HashString(h, action)
 	}
-	return fmt.Sprintf("%x", h.Sum(nil))
+	agent.Id = fmt.Sprintf("%x", h.Sum(nil))
+	return agent
 }
 
 func (a Agent) Value() (driver.Value, error) {
@@ -743,6 +742,8 @@ type MetadataStorage interface {
 	RegisterNode(ctx context.Context, agent *Agent) error
 
 	Heartbeat(ctx context.Context, hb *Heartbeat) error
+
+	GetDeadAgents(ctx context.Context) ([]*Agent, error)
 
 	GetActionInstance(ctx context.Context, id string) (*ActionInstance, error)
 

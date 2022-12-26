@@ -53,9 +53,9 @@ const (
 
 	CHANGE_EVENT_UNPROCESSED = "select mutation_id, mutation_time, event_type, object_id, object_type, parent_id, namespace, processed_at, experiment_payload, model_payload, model_version_payload, action_payload, action_instance_payload from mutation_events where processed_at = 0"
 
-	REGISTER_AGENT = "insert into agents (node_id, info, heartbeat_time) VALUES(:node_id, :info, :heartbeat_time)"
-
 	HEARTBEAT = "update agents set heartbeat_time = :heartbeat_time where node_id = :node_id"
+
+	DEAD_AGENTS = "select node_id, info, heartbeat_time from agents where heartbeat_time < ?"
 )
 
 type queryEngine interface {
@@ -84,6 +84,8 @@ type queryEngine interface {
 	actionInstancesByStatus() string
 
 	changeEventForObject() string
+
+	registerAgent() string
 }
 
 type SQLStorage struct {
@@ -687,7 +689,7 @@ func (s *SQLStorage) GetTriggers(ctx context.Context, parentId string) ([]*Trigg
 func (s *SQLStorage) RegisterNode(ctx context.Context, agent *Agent) error {
 	err := s.transact(ctx, func(tx *sqlx.Tx) error {
 		schema := NewAgentSchema(agent, uint64(time.Now().Unix()))
-		if _, err := tx.NamedExecContext(ctx, REGISTER_AGENT, schema); err != nil {
+		if _, err := tx.NamedExecContext(ctx, s.queryEngine.registerAgent(), schema); err != nil {
 			return fmt.Errorf("unable to register agent: %v", err)
 		}
 		return nil
@@ -707,6 +709,24 @@ func (s *SQLStorage) Heartbeat(ctx context.Context, hb *Heartbeat) error {
 		return nil
 	})
 	return err
+}
+
+func (s *SQLStorage) GetDeadAgents(ctx context.Context) ([]*Agent, error) {
+	agents := []*Agent{}
+	err := s.transact(ctx, func(tx *sqlx.Tx) error {
+		rows := []*AgentSchema{}
+		if err := tx.SelectContext(ctx, &rows, DEAD_AGENTS); err != nil {
+			return fmt.Errorf("unable to get dead agents: %v", err)
+		}
+		for _, row := range rows {
+			agents = append(agents, row.Info)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return agents, nil
 }
 
 func (s *SQLStorage) GetActionInstances(ctx context.Context, status ActionStatus) ([]*ActionInstance, error) {

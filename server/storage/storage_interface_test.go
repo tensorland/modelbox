@@ -356,11 +356,16 @@ func (s *StorageInterfaceTestSuite) TestRegisterAndHeartbeatAgent() {
 	require.Nil(s.t, err)
 
 	hb := &Heartbeat{
-		AgentId: agent.AgentId(),
+		AgentId: agent.Id,
 		Time:    uint64(time.Now().Unix()) + 100,
 	}
 	err = s.storageIf.Heartbeat(ctx, hb)
 	require.Nil(s.t, err)
+
+	// Insert the same agent again to ensure that it goes through
+	agent1 := NewAgent("base", "host1", "10.10.11.1", "x86", []string{"pytorch-inspector"})
+	err1 := s.storageIf.RegisterNode(ctx, agent1)
+	require.Nil(s.t, err1)
 }
 
 func (s *StorageInterfaceTestSuite) createMetadata() map[string]*structpb.Value {

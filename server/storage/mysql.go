@@ -70,6 +70,10 @@ func (*mysqlQueryEngine) changeEventForObject() string {
 	return "select mutation_id, mutation_time, event_type, object_id, object_type, parent_id, namespace, processed_at, experiment_payload, model_payload, model_version_payload, action_payload, action_instance_payload from mutation_events where object_id = ?"
 }
 
+func (*mysqlQueryEngine) registerAgent() string {
+	return "insert into agents (node_id, info, heartbeat_time) VALUES(:node_id, :info, :heartbeat_time) on duplicate key update node_id=:node_id, info=:info, heartbeat_time=:heartbeat_time"
+}
+
 type MySqlStorage struct {
 	*SQLStorage
 	*MYSQLDriverUtils

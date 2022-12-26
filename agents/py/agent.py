@@ -50,7 +50,7 @@ class ModelBoxAgent:
         
 
     async def heartbeat(self):
-        logger.info(f"starting to heartbeat ever {self._config.heartbeat_dur}s")
+        logger.info(f"starting to heartbeat sever {self._config.heartbeat_dur}s")
         while True:
             try:
                 response = self._client.heartbeat(node_id=self._server_node_id)
@@ -73,7 +73,7 @@ class ModelBoxAgent:
             await self.register_node()
             
             # Start the heartbeat
-            self.heartbeat()
+            await self.heartbeat()
 
             # Keep waiting for available work
             await self.poll_for_work()

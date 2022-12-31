@@ -477,9 +477,14 @@ message CreateActionRequest {
   Trigger trigger = 6;
 }
 
+enum TriggerType  {
+  TRIGGER_UNDEFINED = 0;
+  TRIGGER_JS = 1;
+}
+
 message Trigger {
   string predicate = 1;
-  
+  TriggerType type = 2;
 }
 
 message CreateActionResponse {
@@ -493,8 +498,28 @@ message Action {
   repeated ActionInstance states = 3;
 }
 
+enum ActionStatus {
+  STATUS_UNDEFINED = 0;
+  STATUS_PENDING = 1;
+  STATUS_RUNNING = 2;
+  STATUS_FINISHED = 3;
+}
+
+enum ActionOutcome {
+  OUTCOME_UNDEFINED = 0;
+  OUTCOME_SUCCESS = 1;
+  OUTCOME_FAILURE = 2;
+}
+
 message ActionInstance {
-  
+  string id = 1;
+  string action_id = 2;
+  uint32 attempt = 3;
+  uint32 status = 4;
+  uint32 outcome = 5;
+  string reason = 6;
+  google.protobuf.Timestamp created_at = 20;
+  google.protobuf.Timestamp updated_at = 21;
 }
 
 message ListActionsRequest {

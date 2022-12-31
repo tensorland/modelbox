@@ -67,10 +67,6 @@ message GetRunnableActionInstancesResponse {
   repeated RunnableAction instances = 1;
 }
 
-message GetWorkResponse {
-
-}
-
 message UpdateActionStatusRequest {
   string action_instance_id = 1;
   // Make the following uint32 enum 

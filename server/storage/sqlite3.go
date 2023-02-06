@@ -91,6 +91,7 @@ func NewSqlite3Storage(config *storageconfig.Sqlite3Config, logger *zap.Logger) 
 		return nil, fmt.Errorf("unable to connect to sqlite3: %v", err)
 	}
 	sqlStorage := NewSQLStorage(db, &sqliteQueryEngine{}, logger)
+	logger.Sugar().Infof("opened sqlite datastore at: %v", config.DataSource())
 	return &Sqlite3Storage{SQLStorage: sqlStorage, db: db, config: config, logger: logger}, nil
 }
 
@@ -105,10 +106,12 @@ func (*Sqlite3Storage) Close() error {
 }
 
 func (s *Sqlite3Storage) CreateSchema(path string) error {
+	s.logger.Sugar().Infof("sqlite3: reading schema files from path: %v", path)
 	files, err := filepath.Glob(fmt.Sprintf("%s/schema_ver*", path))
 	if err != nil {
 		return fmt.Errorf("unable to create schema: %v", err)
 	}
+	s.logger.Sugar().Infof("applying schema change files: %v", files)
 	for _, file := range files {
 		buf, err := os.ReadFile(file)
 		if err != nil {

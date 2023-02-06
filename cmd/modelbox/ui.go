@@ -33,6 +33,7 @@ func CreateSchema(configPath, schemaDir string, logger *zap.Logger) error {
 	if err != nil {
 		return fmt.Errorf("unable to create storage: %v", err)
 	}
+	logger.Sugar().Infof("creating schema for storage backend: %v", storage.Backend())
 	if err := storage.CreateSchema(fmt.Sprintf("%s/%s", schemaDir, config.MetadataBackend)); err != nil {
 		return err
 	}

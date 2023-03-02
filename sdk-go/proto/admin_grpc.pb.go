@@ -31,6 +31,8 @@ type ModelBoxAdminClient interface {
 	GetRunnableActionInstances(ctx context.Context, in *GetRunnableActionInstancesRequest, opts ...grpc.CallOption) (*GetRunnableActionInstancesResponse, error)
 	// Update action status
 	UpdateActionStatus(ctx context.Context, in *UpdateActionStatusRequest, opts ...grpc.CallOption) (*UpdateActionStatusResponse, error)
+	// Returns the list of servers in a cluster.
+	GetClusterMembers(ctx context.Context, in *GetClusterMembersRequest, opts ...grpc.CallOption) (*GetClusterMembersResponse, error)
 }
 
 type modelBoxAdminClient struct {
@@ -77,6 +79,15 @@ func (c *modelBoxAdminClient) UpdateActionStatus(ctx context.Context, in *Update
 	return out, nil
 }
 
+func (c *modelBoxAdminClient) GetClusterMembers(ctx context.Context, in *GetClusterMembersRequest, opts ...grpc.CallOption) (*GetClusterMembersResponse, error) {
+	out := new(GetClusterMembersResponse)
+	err := c.cc.Invoke(ctx, "/modelbox.ModelBoxAdmin/GetClusterMembers", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ModelBoxAdminServer is the server API for ModelBoxAdmin service.
 // All implementations must embed UnimplementedModelBoxAdminServer
 // for forward compatibility
@@ -90,6 +101,8 @@ type ModelBoxAdminServer interface {
 	GetRunnableActionInstances(context.Context, *GetRunnableActionInstancesRequest) (*GetRunnableActionInstancesResponse, error)
 	// Update action status
 	UpdateActionStatus(context.Context, *UpdateActionStatusRequest) (*UpdateActionStatusResponse, error)
+	// Returns the list of servers in a cluster.
+	GetClusterMembers(context.Context, *GetClusterMembersRequest) (*GetClusterMembersResponse, error)
 	mustEmbedUnimplementedModelBoxAdminServer()
 }
 
@@ -108,6 +121,9 @@ func (UnimplementedModelBoxAdminServer) GetRunnableActionInstances(context.Conte
 }
 func (UnimplementedModelBoxAdminServer) UpdateActionStatus(context.Context, *UpdateActionStatusRequest) (*UpdateActionStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateActionStatus not implemented")
+}
+func (UnimplementedModelBoxAdminServer) GetClusterMembers(context.Context, *GetClusterMembersRequest) (*GetClusterMembersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetClusterMembers not implemented")
 }
 func (UnimplementedModelBoxAdminServer) mustEmbedUnimplementedModelBoxAdminServer() {}
 
@@ -194,6 +210,24 @@ func _ModelBoxAdmin_UpdateActionStatus_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModelBoxAdmin_GetClusterMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetClusterMembersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModelBoxAdminServer).GetClusterMembers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/modelbox.ModelBoxAdmin/GetClusterMembers",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModelBoxAdminServer).GetClusterMembers(ctx, req.(*GetClusterMembersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ModelBoxAdmin_ServiceDesc is the grpc.ServiceDesc for ModelBoxAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -216,6 +250,10 @@ var ModelBoxAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateActionStatus",
 			Handler:    _ModelBoxAdmin_UpdateActionStatus_Handler,
+		},
+		{
+			MethodName: "GetClusterMembers",
+			Handler:    _ModelBoxAdmin_GetClusterMembers_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

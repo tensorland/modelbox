@@ -51,21 +51,6 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.GetExperimentRequest.SerializeToString,
                 response_deserializer=service__pb2.GetExperimentResponse.FromString,
                 )
-        self.CreateCheckpoint = channel.unary_unary(
-                '/modelbox.ModelStore/CreateCheckpoint',
-                request_serializer=service__pb2.CreateCheckpointRequest.SerializeToString,
-                response_deserializer=service__pb2.CreateCheckpointResponse.FromString,
-                )
-        self.ListCheckpoints = channel.unary_unary(
-                '/modelbox.ModelStore/ListCheckpoints',
-                request_serializer=service__pb2.ListCheckpointsRequest.SerializeToString,
-                response_deserializer=service__pb2.ListCheckpointsResponse.FromString,
-                )
-        self.GetCheckpoint = channel.unary_unary(
-                '/modelbox.ModelStore/GetCheckpoint',
-                request_serializer=service__pb2.GetCheckpointRequest.SerializeToString,
-                response_deserializer=service__pb2.GetCheckpointResponse.FromString,
-                )
         self.UploadFile = channel.stream_unary(
                 '/modelbox.ModelStore/UploadFile',
                 request_serializer=service__pb2.UploadFileRequest.SerializeToString,
@@ -121,21 +106,6 @@ class ModelStoreStub(object):
                 request_serializer=service__pb2.WatchNamespaceRequest.SerializeToString,
                 response_deserializer=service__pb2.WatchNamespaceResponse.FromString,
                 )
-        self.GetClusterMembers = channel.unary_unary(
-                '/modelbox.ModelStore/GetClusterMembers',
-                request_serializer=service__pb2.GetClusterMembersRequest.SerializeToString,
-                response_deserializer=service__pb2.GetClusterMembersResponse.FromString,
-                )
-        self.CreateActions = channel.unary_unary(
-                '/modelbox.ModelStore/CreateActions',
-                request_serializer=service__pb2.CreateActionRequest.SerializeToString,
-                response_deserializer=service__pb2.CreateActionResponse.FromString,
-                )
-        self.ListActions = channel.unary_unary(
-                '/modelbox.ModelStore/ListActions',
-                request_serializer=service__pb2.ListActionsRequest.SerializeToString,
-                response_deserializer=service__pb2.ListActionsResponse.FromString,
-                )
 
 
 class ModelStoreServicer(object):
@@ -189,27 +159,6 @@ class ModelStoreServicer(object):
 
     def GetExperiment(self, request, context):
         """Get Experiments
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def CreateCheckpoint(self, request, context):
-        """Uploads a new checkpoint for an experiment
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ListCheckpoints(self, request, context):
-        """Lists all the checkpoints for an experiment
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def GetCheckpoint(self, request, context):
-        """Gets a checkpoint from the modelstore for an experiment
         """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -294,27 +243,6 @@ class ModelStoreServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
-    def GetClusterMembers(self, request, context):
-        """Returns the list of servers in a cluster.
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def CreateActions(self, request, context):
-        """Create and attach an action to an experiment or a model.
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def ListActions(self, request, context):
-        """List actions attached to an experiment or a model.
-        """
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
 
 def add_ModelStoreServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -352,21 +280,6 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     servicer.GetExperiment,
                     request_deserializer=service__pb2.GetExperimentRequest.FromString,
                     response_serializer=service__pb2.GetExperimentResponse.SerializeToString,
-            ),
-            'CreateCheckpoint': grpc.unary_unary_rpc_method_handler(
-                    servicer.CreateCheckpoint,
-                    request_deserializer=service__pb2.CreateCheckpointRequest.FromString,
-                    response_serializer=service__pb2.CreateCheckpointResponse.SerializeToString,
-            ),
-            'ListCheckpoints': grpc.unary_unary_rpc_method_handler(
-                    servicer.ListCheckpoints,
-                    request_deserializer=service__pb2.ListCheckpointsRequest.FromString,
-                    response_serializer=service__pb2.ListCheckpointsResponse.SerializeToString,
-            ),
-            'GetCheckpoint': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetCheckpoint,
-                    request_deserializer=service__pb2.GetCheckpointRequest.FromString,
-                    response_serializer=service__pb2.GetCheckpointResponse.SerializeToString,
             ),
             'UploadFile': grpc.stream_unary_rpc_method_handler(
                     servicer.UploadFile,
@@ -422,21 +335,6 @@ def add_ModelStoreServicer_to_server(servicer, server):
                     servicer.WatchNamespace,
                     request_deserializer=service__pb2.WatchNamespaceRequest.FromString,
                     response_serializer=service__pb2.WatchNamespaceResponse.SerializeToString,
-            ),
-            'GetClusterMembers': grpc.unary_unary_rpc_method_handler(
-                    servicer.GetClusterMembers,
-                    request_deserializer=service__pb2.GetClusterMembersRequest.FromString,
-                    response_serializer=service__pb2.GetClusterMembersResponse.SerializeToString,
-            ),
-            'CreateActions': grpc.unary_unary_rpc_method_handler(
-                    servicer.CreateActions,
-                    request_deserializer=service__pb2.CreateActionRequest.FromString,
-                    response_serializer=service__pb2.CreateActionResponse.SerializeToString,
-            ),
-            'ListActions': grpc.unary_unary_rpc_method_handler(
-                    servicer.ListActions,
-                    request_deserializer=service__pb2.ListActionsRequest.FromString,
-                    response_serializer=service__pb2.ListActionsResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -567,57 +465,6 @@ class ModelStore(object):
         return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/GetExperiment',
             service__pb2.GetExperimentRequest.SerializeToString,
             service__pb2.GetExperimentResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def CreateCheckpoint(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/CreateCheckpoint',
-            service__pb2.CreateCheckpointRequest.SerializeToString,
-            service__pb2.CreateCheckpointResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def ListCheckpoints(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/ListCheckpoints',
-            service__pb2.ListCheckpointsRequest.SerializeToString,
-            service__pb2.ListCheckpointsResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def GetCheckpoint(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/GetCheckpoint',
-            service__pb2.GetCheckpointRequest.SerializeToString,
-            service__pb2.GetCheckpointResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
@@ -805,56 +652,5 @@ class ModelStore(object):
         return grpc.experimental.unary_stream(request, target, '/modelbox.ModelStore/WatchNamespace',
             service__pb2.WatchNamespaceRequest.SerializeToString,
             service__pb2.WatchNamespaceResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def GetClusterMembers(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/GetClusterMembers',
-            service__pb2.GetClusterMembersRequest.SerializeToString,
-            service__pb2.GetClusterMembersResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def CreateActions(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/CreateActions',
-            service__pb2.CreateActionRequest.SerializeToString,
-            service__pb2.CreateActionResponse.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def ListActions(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelStore/ListActions',
-            service__pb2.ListActionsRequest.SerializeToString,
-            service__pb2.ListActionsResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

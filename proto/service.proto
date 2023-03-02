@@ -36,16 +36,6 @@ service ModelStore {
   // Get Experiments
   rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse);
 
-  // Uploads a new checkpoint for an experiment
-  rpc CreateCheckpoint(CreateCheckpointRequest)
-      returns (CreateCheckpointResponse);
-
-  // Lists all the checkpoints for an experiment
-  rpc ListCheckpoints(ListCheckpointsRequest) returns (ListCheckpointsResponse);
-
-  // Gets a checkpoint from the modelstore for an experiment
-  rpc GetCheckpoint(GetCheckpointRequest) returns (GetCheckpointResponse);
-
   // UploadFile streams a files to ModelBox and stores the binaries to the condfigured storage
   rpc UploadFile(stream UploadFileRequest) returns (UploadFileResponse);
 
@@ -80,15 +70,6 @@ service ModelStore {
   // Streams change events in any of objects such as experiments, models, etc, for a given namespace
   // Response is a json representation of the new state of the obejct
   rpc WatchNamespace(WatchNamespaceRequest) returns (stream WatchNamespaceResponse);
-
-  // Returns the list of servers in a cluster.
-  rpc GetClusterMembers(GetClusterMembersRequest) returns (GetClusterMembersResponse);
-
-  // Create and attach an action to an experiment or a model.
-  rpc CreateActions(CreateActionRequest) returns (CreateActionResponse);
-
-  // List actions attached to an experiment or a model.
-  rpc ListActions(ListActionsRequest) returns (ListActionsResponse);
 }
 
 // Request to watch events in a namespace, such as experiments/models/mocel versions
@@ -151,25 +132,25 @@ message GetMetricsRequest {
 }
 
 message GetMetricsResponse {
-  repeated Metrics metrics = 1;
+  map<string, Metrics> metrics = 1;
 }
 
 message TrackArtifactsRequest {
-  repeated FileMetadata files = 1;
+  string name = 1;
+  string object_id = 2;
+  repeated FileMetadata files = 3;
 }
 
 message TrackArtifactsResponse {
-  int32 num_files_tracked = 1;
-
-  google.protobuf.Timestamp created_at = 10;
+  string id =  1;
 }
 
 message ListArtifactsRequest {
-  string parent_id = 1;
+  string object_id = 1;
 }
 
 message ListArtifactsResponse {
-  repeated FileMetadata  files = 1;
+  repeated Artifact artifacts = 1;
 }
 
 /*
@@ -182,7 +163,7 @@ message ListArtifactsResponse {
 message FileMetadata {
   string id = 1;
 
-  // The ID of the checkpoint, experiment, model to which this file belongs to
+  // The ID of the experiment, model to which this file belongs to
   string parent_id = 2;
 
   // MIMEType of the file
@@ -192,7 +173,10 @@ message FileMetadata {
   string checksum = 4;
 
   // path of the file
-  string path = 5;
+  string src_path = 5;
+
+  // path of uploaded file 
+  string upload_path = 6;
 
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;
@@ -219,51 +203,28 @@ message DownloadFileResponse {
 
 message UploadFileRequest {
   oneof stream_frame {
-    FileMetadata metadata = 1;
+    UploadFileMetadata metadata = 1;
     bytes chunks = 2;
   }
 }
 
-message UploadFileResponse { string file_id = 1; }
+message UploadFileResponse {
+  string file_id = 1;
+  string artifact_id = 2;
+}
 
-/**
- * Checkpoint is an artifact of training produced after an epoch of
- * training run.
- */
-message Checkpoint {
+message UploadFileMetadata {
+  string artifact_name = 1;
+  string object_id = 2;
+  FileMetadata metadata = 3;
+}
+
+message Artifact {
   string id = 1;
-  uint64 epoch = 2;
-  string experiment_id = 3;
+  string name = 2;
+  string object_id = 3;
   repeated FileMetadata files = 4;
-  map<string, float> metrics = 5;
-  google.protobuf.Timestamp created_at = 20;
-  google.protobuf.Timestamp updated_at = 21;
 }
-
-message CreateCheckpointRequest {
-  string experiment_id = 1;
-  uint64 epoch = 2;
-  repeated FileMetadata files = 3;
-  map<string, float> metrics = 4;
-  Metadata metadata = 5;
-}
-
-message CreateCheckpointResponse {
-  string checkpoint_id = 1;
-  google.protobuf.Timestamp created_at = 20;
-  google.protobuf.Timestamp updated_at = 21;
-}
-
-message GetCheckpointRequest {
-  string experiment_id = 1;
-  uint64 epoch = 2;
-}
-
-message GetCheckpointResponse { Checkpoint checkpoint = 1; }
-
-message ListCheckpointsRequest { string experiment_id = 1; }
-
-message ListCheckpointsResponse { repeated Checkpoint checkpoints = 1; }
 
 /*
  * Model contains metadata about a model which solves a particular use case.
@@ -275,7 +236,6 @@ message Model {
   string namespace = 4;
   string description = 5;
   string task = 6;
-  repeated FileMetadata files = 9;
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;
 }
@@ -290,12 +250,11 @@ message CreateModelRequest {
   string namespace = 4;
   string task = 5;
   string description = 6;
-  Metadata metadata = 7;
-  repeated FileMetadata files = 8;
 }
 
 message CreateModelResponse {
   string id = 1;
+  bool exists = 2;
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;
 }
@@ -320,8 +279,6 @@ message ModelVersion {
   string name = 3;
   string version = 4;
   string description = 5;
-  repeated FileMetadata files = 6;
-  Metadata metadata = 7;
   MLFramework framework = 8;
   repeated string unique_tags = 9;
   google.protobuf.Timestamp created_at = 20;
@@ -333,14 +290,14 @@ message CreateModelVersionRequest {
   string name = 2;
   string version = 3;
   string description = 4;
-  repeated FileMetadata files = 5;
-  Metadata metadata = 6;
-  MLFramework framework = 7;
-  repeated string unique_tags = 8;
+  string namespace = 5;
+  MLFramework framework = 8;
+  repeated string unique_tags = 9;
 }
 
 message CreateModelVersionResponse { 
   string model_version = 1; 
+  bool exists = 2;
   google.protobuf.Timestamp created_at = 20;
   google.protobuf.Timestamp updated_at = 21;
 }
@@ -367,7 +324,6 @@ message CreateExperimentRequest {
   string namespace = 3;
   MLFramework framework = 4;
   string task = 5;
-  Metadata metadata = 6;
   string external_id = 7;
 }
 
@@ -382,17 +338,16 @@ message ListExperimentsRequest { string namespace= 1; }
 
 message ListExperimentsResponse { repeated Experiment experiments = 1; }
 
-
 message ListModelVersionsRequest { string model = 1; }
 
-message ListModelVersionsResponse { ModelVersion models = 1; }
+message ListModelVersionsResponse { repeated ModelVersion model_versions = 1; }
 
 message ListModelsRequest { string namespace = 1; }
 
 message ListModelsResponse { repeated Model models = 1; }
 
 message Metadata {
-  map<string, google.protobuf.Value> metadata = 1;
+  map<string, string> metadata = 1;
 }
 
 message UpdateMetadataRequest {
@@ -401,8 +356,6 @@ message UpdateMetadataRequest {
 }
 
 message UpdateMetadataResponse {
-  int32 num_keys_written = 1;
-  google.protobuf.Timestamp updated_at = 5;
 }
 
 message ListMetadataRequest {
@@ -410,7 +363,7 @@ message ListMetadataRequest {
 }
 
 message ListMetadataResponse {
-  map<string, google.protobuf.Value> metadata = 1;
+  Metadata metadata = 1;
 }
 
 message EventSource {
@@ -453,79 +406,4 @@ message GetExperimentRequest {
 
 message GetExperimentResponse {
   Experiment experiment = 1;
-}
-
-message GetClusterMembersRequest {}
-
-message ClusterMember {
-  string id = 1;
-  string host_name = 2;
-  string rpc_addr = 3;
-  string http_addr = 4;
-}
-
-message GetClusterMembersResponse {
-  repeated ClusterMember members = 1;
-}
-
-message CreateActionRequest {
-  string name = 1;
-  string object_id = 2;
-  string object_type = 3;
-  string arch = 4;
-  map<string, google.protobuf.Value> params = 5;
-  Trigger trigger = 6;
-}
-
-enum TriggerType  {
-  TRIGGER_UNDEFINED = 0;
-  TRIGGER_JS = 1;
-}
-
-message Trigger {
-  string predicate = 1;
-  TriggerType type = 2;
-}
-
-message CreateActionResponse {
-  google.protobuf.Timestamp created_at = 10;
-}
-
-message Action {
-  string id = 1;
-  string name = 2;
-
-  repeated ActionInstance states = 3;
-}
-
-enum ActionStatus {
-  STATUS_UNDEFINED = 0;
-  STATUS_PENDING = 1;
-  STATUS_RUNNING = 2;
-  STATUS_FINISHED = 3;
-}
-
-enum ActionOutcome {
-  OUTCOME_UNDEFINED = 0;
-  OUTCOME_SUCCESS = 1;
-  OUTCOME_FAILURE = 2;
-}
-
-message ActionInstance {
-  string id = 1;
-  string action_id = 2;
-  uint32 attempt = 3;
-  uint32 status = 4;
-  uint32 outcome = 5;
-  string reason = 6;
-  google.protobuf.Timestamp created_at = 20;
-  google.protobuf.Timestamp updated_at = 21;
-}
-
-message ListActionsRequest {
-  string object_id = 1;
-}
-
-message ListActionsResponse {
-  repeated Action actions = 1;
 }

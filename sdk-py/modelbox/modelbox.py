@@ -53,7 +53,7 @@ class ArtifactMime(Enum):
 
     def to_proto(self) -> service_pb2.FileType:
         if self == self.ModelVersion:
-            return service_pb2.Model
+            return service_pb2.MODEL
         if self == self.Checkpoint:
             return service_pb2.CHECKPOINT
         if self == self.Text:
@@ -67,47 +67,62 @@ class ArtifactMime(Enum):
 
         return service_pb2.UNDEFINED
 
+    @staticmethod
+    def from_path(path: str) -> ArtifactMime:
+        _, ext = os.path.splitext(path)
+        if ext in ["jpg", "png", "jpeg", "gif", "bmp"]:
+            return ArtifactMime.Image
+        if ext in ["mp4", "ogg", "ogv", "mov", "m4v", "mkv", "webm"]:
+            return ArtifactMime.Audio
+        if ext in ["pt", "pth"]:
+            return ArtifactMime.ModelVersion
+        if ext in ["txt"]:
+            return ArtifactMime.Text
+        return ArtifactMime.Unknown
+
+
+class LocalFile:
+    def __init__(
+        self,
+        path: str,
+        checksum: str = "",
+        mime_type: ArtifactMime = ArtifactMime.Unknown,
+    ):
+        self.path = path
+        self.checksum = checksum
+        self.mime_type = mime_type
+
+    @classmethod
+    def from_path(cls, p: str, checksum: str = "") -> LocalFile:
+        p = os.path.abspath(p)
+        _checksum = file_checksum(p) if checksum == "" else checksum
+        mime_type = ArtifactMime.from_path(p)
+        return cls(p, _checksum, mime_type)
+
+    def to_proto(self, parent_id: str) -> service_pb2.FileMetadata:
+        return service_pb2.FileMetadata(
+            parent_id=parent_id,
+            src_path=self.path,
+            checksum=self.checksum,
+            file_type=self.mime_type.to_proto(),
+        )
+
 
 @dataclass
-class Artifact:
+class ArtifactAsset:
     parent: str
-    path: str
+    src_path: str
+    upload_path: str = ""
     mime_type: ArtifactMime = ArtifactMime.Unknown
     checksum: str = ""
     id: str = ""
 
-    def __post_init__(self):
-        if self.checksum == "":
-            self.update_checksum()
-        if self.mime_type == ArtifactMime.Unknown:
-            self.update_mime()
-
-    def to_proto(self) -> service_pb2.FileMetadata:
-        return service_pb2.FileMetadata(
-            parent_id=self.parent,
-            path=self.path,
-            checksum=self.checksum,
-            file_type=self.mime_type.to_proto(),
-            id=self.id,
-        )
-
-    def update_mime(self):
-        _, ext = os.path.splitext(self.path)
-        if ext in ["jpg", "png", "jpeg", "gif", "bmp"]:
-            self.mime_type = ArtifactMime.Image
-        if ext in ["mp4", "ogg", "ogv", "mov", "m4v", "mkv", "webm"]:
-            self.mime_type = ArtifactMime.Audio
-        if ext in ["pt", "pth"]:
-            self.mime_type = ArtifactMime.ModelVersion
-
-    def update_checksum(self):
-        if self.checksum == "":
-            self.checksum = file_checksum(self.path)
-
-    def from_proto(file: service_pb2.FileMetadata) -> Artifact:
-        return Artifact(
+    @staticmethod
+    def from_proto(file: service_pb2.FileMetadata) -> ArtifactAsset:
+        return ArtifactAsset(
             parent=file.parent_id,
-            path=file.path,
+            src_path=file.src_path,
+            upload_path=file.upload_path,
             mime_type=ArtifactMime(file.file_type),
             checksum=file.checksum,
             id=file.id,
@@ -146,7 +161,7 @@ class LogEventResponse:
 
 @dataclass
 class UpdateMetadataResponse:
-    updated_at: Timestamp
+    ...
 
 
 @dataclass
@@ -157,35 +172,6 @@ class LogMetricsResponse:
 @dataclass
 class ListMetadataResponse:
     metadata: Dict
-
-
-@dataclass
-class CreateExperimentResult:
-    experiment_id: str
-    exists: bool
-
-
-@dataclass
-class CreateCheckpointResponse:
-    checkpoint_id: str
-    exists: bool
-
-
-@dataclass
-class UploadArtifactResponse:
-    artifact_ids: Dict[str, str] = field(default_factory=dict)
-
-
-@dataclass
-class DownloadArtifactResponse:
-    id: str
-    path: str
-    checksum: str
-
-
-@dataclass
-class TrackArtifactsResponse:
-    num_artifacts_tracked: int
 
 
 @dataclass
@@ -209,9 +195,7 @@ class EventLoggerMixin:
     def log_event(self, event: Event) -> LogEventResponse:
         meta_dict = {}
         for k, v in event.metadata.items():
-            json_value = Value()
-            json_format.Parse(json.dumps(v), json_value)
-            meta_dict[k] = json_value
+            meta_dict[k] = json.dumps(v)
         wallclock_time = Timestamp()
         wallclock_time.GetCurrentTime()
         event = service_pb2.Event(
@@ -259,85 +243,71 @@ class MetadataLoggerMixin:
 
     def update_metadata(self, key: str, value: Any) -> UpdateMetadataResponse:
         response = self._client.update_metadata(self._id, key, value)
-        return UpdateMetadataResponse(response.updated_at)
+        return UpdateMetadataResponse()
 
     def metadata(self) -> ListMetadataResponse:
         resp = self._client.list_metadata(self._id)
-        return ListMetadataResponse(metadata=resp)
+        metadata = {}
+        for k, v in resp.items():
+            metadata[k] = json.loads(v)
+        return ListMetadataResponse(metadata=metadata)
 
 
 class ArtifactLoggerMixin:
     def __init__(self, parent_id: str, client: ModelBoxClient) -> None:
-        self._id = parent_id
+        self._parent_id = parent_id
         self._client = client
-
-    def track_artifacts(self, files: List[str]) -> TrackArtifactsResponse:
-        proto_artifacts = self._build_artifacts(files)
-        resp = self._client.track_artifacts(proto_artifacts)
-        return TrackArtifactsResponse(num_artifacts_tracked=resp.num_artifacts_tracked)
 
     @property
     def artifacts(self) -> List[Artifact]:
         resp = self._client.list_artifacts(self._id)
         artifact_list = []
-        for file in resp.files:
-            artifact_list.append(Artifact.from_proto(file))
+        for artifact in resp.artifacts:
+            artifact_list.append(Artifact.from_proto(artifact, self._client))
         return artifact_list
 
-    def upload_artifact(self, files: List[str]) -> UploadArtifactResponse:
-        proto_artifacts = self._build_artifacts(files)
-        result = UploadArtifactResponse()
-        for artifact in proto_artifacts:
-            resp = self._client.upload_artifact(
-                self._id, artifact.path, artifact.checksum, artifact.file_type
-            )
-            result.artifact_ids[artifact.path] = resp.id
-        return result
+    def track_file(self, artifact_name: str, f: LocalFile) -> Artifact:
+        proto = f.to_proto(self._parent_id)
+        self._client.track_artifacts(artifact_name, self._parent_id, [proto])
 
-    def download_artifact(self, id: str, path: str) -> DownloadArtifactResponse:
-        resp = self._client.download_artifact(id, path)
-        return DownloadArtifactResponse(id, path, resp.checksum)
-
-    def _build_artifacts(self, files: List[str]) -> List[Artifact]:
-        proto_artifacts = []
-        tracked_files = []
-        for f_path in files:
-            if os.path.isdir(f_path):
-                files_in_dir = [
-                    os.path.join(dp, f)
-                    for dp, dn, filenames in os.walk(f_path)
-                    for f in filenames
-                ]
-                tracked_files.append(files_in_dir)
-            else:
-                tracked_files.append(f_path)
-            for f in tracked_files:
-                artifact = Artifact(parent=self._id, path=f)
-                proto_artifacts.append(artifact.to_proto())
-            return proto_artifacts
+    def upload_file(self, artifact_name: str, f: LocalFile):
+        self._client.upload_artifact(
+            artifact_name,
+            self._parent_id,
+            f.path,
+            f.mime_type.to_proto(),
+        )
 
 
 @dataclass
-class Checkpoint(
-    ArtifactLoggerMixin, MetricsLoggerMixin, MetadataLoggerMixin, EventLoggerMixin
-):
+class Artifact(MetricsLoggerMixin, EventLoggerMixin):
+    name: str
     id: str
-    experiment_id: str
-    epoch: str
-    metrics: Dict[str, List[MetricValue]]
+    parent_id: str
+    assets: List[ArtifactAsset] = field(default_factory=list)
     _client: InitVar[ModelBoxClient] = None
 
     def __post_init__(self, _client: ModelBoxClient):
-        ArtifactLoggerMixin.__init__(self, self.id, _client)
         MetricsLoggerMixin.__init__(self, self.id, _client)
-        MetadataLoggerMixin.__init__(self, self.id, _client)
         EventLoggerMixin.__init__(self, self.id, _client)
         self._client = _client
 
+    @staticmethod
+    def from_proto(artifact: service_pb2.Artifact, client: ModelBoxClient) -> Artifact:
+        assets = []
+        for file in artifact.files:
+            assets.append(ArtifactAsset.from_proto(file))
+        return Artifact(
+            name=artifact.name,
+            id=artifact.id,
+            parent_id=artifact.object_id,
+            assets=assets,
+            _client=client,
+        )
 
-@dataclass
-class ListCheckpointsResponse:
-    checkpoints: List[Checkpoint]
+    def download(self, dst_path: str):
+        for asset in self.assets:
+            self._client.download_asset(asset.id, dst_path)
 
 
 @dataclass
@@ -350,7 +320,6 @@ class ModelVersion(
     version: str
     description: str
     files: List
-    _metadata: Dict
     unique_tags: List = field(default_factory=list)
     framework: MLFramework = MLFramework.PYTORCH
     _client: InitVar[ModelBoxClient] = None
@@ -373,8 +342,6 @@ class Model(
     namespace: str
     task: str
     description: str
-    _metadata: Dict
-    _artifacts: List[Artifact] = field(default_factory=list)
     _client: InitVar[ModelBoxClient] = None
 
     def __post_init__(self, _client: ModelBoxClient):
@@ -390,7 +357,6 @@ class Model(
         name: str = "",
         description: str = "",
         artifacts: List[Artifact] = [],
-        metadata: Dict = {},
         unique_tags: List[str] = [],
         framework: MLFramework = MLFramework.PYTORCH,
     ):
@@ -411,7 +377,6 @@ class Model(
             version=version,
             description=description,
             files=artifacts,
-            _metadata=metadata,
             unique_tags=unique_tags,
             framework=framework,
             _client=self._client,
@@ -459,32 +424,6 @@ class Experiment(
         ArtifactLoggerMixin.__init__(self, self.id, _client)
         EventLoggerMixin.__init__(self, self.id, _client)
         self._client = _client
-
-    # TODO Extend the api to track artifacts. Currently it's another line of code.
-    def new_checkpoint(self, epoch: int, metrics=Dict[str, float]) -> Checkpoint:
-        resp = self._client.create_checkpoint(self.id, epoch, [], metrics)
-        return Checkpoint(
-            id=resp.checkpoint_id,
-            experiment_id=self.id,
-            epoch=epoch,
-            metrics=metrics,
-            _client=self._client,
-        )
-
-    def checkpoints(self) -> List[Checkpoint]:
-        result = []
-        resp = self._client.list_checkpoints(self.id)
-        for cp_proto in resp.checkpoints:
-            result.append(
-                Checkpoint(
-                    id=cp_proto.id,
-                    experiment_id=self.id,
-                    epoch=cp_proto.epoch,
-                    metrics={},
-                    _client=self._client,
-                )
-            )
-        return result
 
     # TODO Plumb this into parent_experiment when we have the graph of experiments
     def parent(self) -> Experiment:
@@ -551,11 +490,8 @@ class ModelBox:
         task: str,
         description: str,
         artifacts: List[Artifact] = [],
-        metadata: Dict = {},
     ) -> Model:
-        response = self._client.create_model(
-            name, owner, namespace, task, description, metadata
-        )
+        response = self._client.create_model(name, owner, namespace, task, description)
         # TODO Plumb in the artifacts into create_model
         return Model(
             response.id,
@@ -564,8 +500,6 @@ class ModelBox:
             namespace,
             task,
             description,
-            metadata,
-            artifacts,
             self._client,
         )
 
@@ -594,17 +528,6 @@ class ModelBox:
         resp = self._client.list_models(namespace)
         result = []
         for m in resp.models:
-            artifacts = []
-            for f in m.files:
-                artifacts.append(
-                    Artifact(
-                        parent=f.parent_id,
-                        path=f.path,
-                        checksum=f.checksum,
-                        mime_type=ArtifactMime(f.file_type),
-                        id=f.id,
-                    )
-                )
             result.append(
                 Model(
                     id=m.id,
@@ -613,8 +536,6 @@ class ModelBox:
                     namespace=m.namespace,
                     task=m.task,
                     description=m.description,
-                    _metadata={},  # TODO Fix this when we pull meta from top level objects
-                    _artifacts=artifacts,
                     _client=self._client,
                 )
             )

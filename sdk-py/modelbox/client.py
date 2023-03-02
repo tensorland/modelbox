@@ -1,3 +1,4 @@
+import os
 from os import times
 from typing import Any, Union, Dict, List
 import json
@@ -24,12 +25,13 @@ def file_checksum(path) -> str:
 
 @dataclass
 class ClientFileUploadResult:
-    id: str
+    file_id: str
+    artifact_id: str
 
 
 @dataclass
 class ClientTrackArtifactsResult:
-    num_artifacts_tracked: int
+    id: str
 
 
 @dataclass
@@ -72,9 +74,8 @@ class ModelBoxClient:
     def update_metadata(
         self, parent_id: str, key: str, value: Any
     ) -> service_pb2.UpdateMetadataResponse:
-        json_value = Value()
-        json_format.Parse(json.dumps(value), json_value)
-        meta = service_pb2.Metadata(metadata={key: json_value})
+        value = json.dumps(value)
+        meta = service_pb2.Metadata(metadata={key: value})
         req = service_pb2.UpdateMetadataRequest(parent_id=parent_id, metadata=meta)
         return self._client.UpdateMetadata(req)
 
@@ -94,7 +95,7 @@ class ModelBoxClient:
         req = service_pb2.GetMetricsRequest(parent_id=parent_id)
         resp = self._client.GetMetrics(req)
         metrics = {}
-        for metric in resp.metrics:
+        for key, metric in resp.metrics.items():
             m_vals = []
             for v in metric.values:
                 m_vals.append(
@@ -102,7 +103,7 @@ class ModelBoxClient:
                         step=v.step, wallclock_time=v.wallclock_time, value=v.f_val
                     )
                 )
-            metrics[metric.key] = m_vals
+            metrics[key] = m_vals
 
         return metrics
 
@@ -113,7 +114,6 @@ class ModelBoxClient:
         namespace: str,
         task: str,
         description: str,
-        metadata: Dict,
     ) -> service_pb2.Model:
         req = service_pb2.CreateModelRequest(
             name=name,
@@ -125,17 +125,21 @@ class ModelBoxClient:
         return self._client.CreateModel(req)
 
     def _file_chunk_iterator(
-        self, parent: str, path: str, checksum: str, file_type_proto: int
+        self, artifact_name: str, object_id: str, path: str, file_type_proto: int
     ):
-        if checksum == "":
-            checksum = file_checksum(path)
+        checksum = file_checksum(path)
         file_meta = service_pb2.FileMetadata(
-            parent_id=parent,
+            parent_id=object_id,
             checksum=checksum,
             file_type=file_type_proto,
-            path=path,
+            src_path=path,
         )
-        yield service_pb2.UploadFileRequest(metadata=file_meta)
+        upload_meta = service_pb2.UploadFileMetadata(
+            artifact_name=artifact_name,
+            object_id=object_id,
+            metadata=file_meta,
+        )
+        yield service_pb2.UploadFileRequest(metadata=upload_meta)
         with open(path, "rb") as f:
             while True:
                 data = f.read(CHUNK_SZ)
@@ -144,34 +148,43 @@ class ModelBoxClient:
                 yield service_pb2.UploadFileRequest(chunks=data)
 
     def upload_artifact(
-        self, parent: str, path: str, checksum: str, file_type_proto: int
+        self, artifact_name: str, object_id: str, path: str, file_type_proto: int
     ) -> ClientFileUploadResult:
-        itr = self._file_chunk_iterator(parent, path, checksum, file_type_proto)
+        itr = self._file_chunk_iterator(artifact_name, object_id, path, file_type_proto)
         resp = self._client.UploadFile(itr)
-        return ClientFileUploadResult(id=resp.file_id)
+        return ClientFileUploadResult(
+            file_id=resp.file_id, artifact_id=resp.artifact_id
+        )
 
-    def download_artifact(self, id: str, path: str) -> ClientFileDownloadResult:
+    def download_asset(self, id: str, dst_path: str) -> ClientFileDownloadResult:
         req = service_pb2.DownloadFileRequest(file_id=id)
         resp_itr = self._client.DownloadFile(req)
         ret = ClientFileDownloadResult
-        with open(path, "wb") as f:
+        src_path, checksum = None, None
+        for resp in resp_itr:
+            if resp.HasField("metadata"):
+                src_path = resp.metadata.src_path
+                checksum = resp.metadata.checksum
+        file_name = os.path.join(dst_path, src_path)
+        os.makedirs(os.path.dirname(file_name), exist_ok=True)
+        with open(file_name, "wb") as f:
             for resp in resp_itr:
                 if resp.HasField("chunks"):
                     f.write(resp.chunks)
-                if resp.HasField("metadata"):
-                    ret.id = resp.metadata.id
-                    ret.checksum = resp.metadata.checksum
-                    ret.path = path
         return ret
 
-    def track_artifacts(self, files: List[service_pb2.FileMetadata]):
-        req = service_pb2.TrackArtifactsRequest(files=files)
+    def track_artifacts(
+        self, name: str, object_id: str, files: List[service_pb2.FileMetadata]
+    ):
+        req = service_pb2.TrackArtifactsRequest(
+            name=name, object_id=object_id, files=files
+        )
         resp = self._client.TrackArtifacts(req)
-        return ClientTrackArtifactsResult(num_artifacts_tracked=resp.num_files_tracked)
+        return ClientTrackArtifactsResult(id=resp.id)
 
-    def list_artifacts(self, id: str) -> service_pb2.ListArtifactsResponse:
+    def list_artifacts(self, object_id: str) -> service_pb2.ListArtifactsResponse:
         return self._client.ListArtifacts(
-            service_pb2.ListArtifactsRequest(parent_id=id)
+            service_pb2.ListArtifactsRequest(object_id=object_id)
         )
 
     def log_event(
@@ -190,10 +203,9 @@ class ModelBoxClient:
     def list_metadata(self, id: str) -> Dict:
         req = service_pb2.ListMetadataRequest(parent_id=id)
         resp = self._client.ListMetadata(req)
-        meta = {}
-        for k, v in resp.metadata.items():
-            meta[k] = json_format.MessageToDict(v)
-        return meta
+        if (resp.metadata is None) or (resp.metadata.metadata is None):
+            return {}
+        return resp.metadata.metadata
 
     def list_models(self, namespace: str) -> service_pb2.ListModelsResponse:
         req = service_pb2.ListModelsRequest(namespace=namespace)
@@ -218,10 +230,10 @@ class ModelBoxClient:
             name=name,
             version=version,
             description=description,
-            files=files,
             framework=framework_proto,
             unique_tags=unique_tags,
         )
+        # TODO: Add files
         return self._client.CreateModelVersion(req)
 
     def list_model_versions(
@@ -231,29 +243,8 @@ class ModelBoxClient:
             service_pb2.ListModelVersionsRequest(model=model_id)
         )
 
-    def create_checkpoint(
-        self,
-        experiment_id: str,
-        epoch: int,
-        files: List[service_pb2.FileMetadata],
-        metrics=Dict[str, float],
-    ) -> service_pb2.CreateCheckpointResponse:
-        req = service_pb2.CreateCheckpointRequest(
-            experiment_id=experiment_id,
-            epoch=epoch,
-            files=files,
-            metrics=metrics,
-        )
-        return self._client.CreateCheckpoint(req)
-
     def get_experiment(self, id: str) -> service_pb2.GetExperimentResponse:
         return self._client.GetExperiment(service_pb2.GetExperimentRequest(id=id))
-
-    def list_checkpoints(
-        self, experiment_id: str
-    ) -> service_pb2.ListCheckpointsResponse:
-        req = service_pb2.ListCheckpointsRequest(experiment_id=experiment_id)
-        return self._client.ListCheckpoints(req)
 
     def close(self):
         if self._channel is not None:

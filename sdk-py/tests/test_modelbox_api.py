@@ -16,9 +16,11 @@ from modelbox.modelbox import (
     ArtifactMime,
     Event,
     EventSource,
+    LocalFile,
 )
 from modelbox import service_pb2_grpc
 from modelbox import service_pb2
+import json
 
 SERVER_ADDR = "localhost:8085"
 
@@ -50,29 +52,11 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
         )
         return service_pb2.GetExperimentResponse(experiment=experiment_resp)
 
-    def CreateCheckpoint(self, request, context):
-        checkpoint = service_pb2.CreateCheckpointResponse(
-            checkpoint_id=self._fake.uuid4()
-        )
-        return checkpoint
-
     def CreateModelVersion(self, request, context):
         model_version = service_pb2.CreateModelVersionResponse(
             model_version=self._fake.uuid4()
         )
         return model_version
-
-    def ListCheckpoints(self, request, context):
-        c1 = service_pb2.Checkpoint(
-            id=self._fake.uuid4(), epoch=23, experiment_id=self._fake.uuid4()
-        )
-        c2 = service_pb2.Checkpoint(
-            id=self._fake.uuid4(), epoch=24, experiment_id=self._fake.uuid4()
-        )
-        resp = service_pb2.ListCheckpointsResponse(
-            checkpoints=[c1, c2],
-        )
-        return resp
 
     def ListExperiments(self, request, context):
         e1 = service_pb2.Experiment(
@@ -95,7 +79,9 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
     def UploadFile(self, request_iterator, context):
         for req in request_iterator:
             pass
-        return service_pb2.UploadFileResponse(file_id=self._fake.uuid4())
+        return service_pb2.UploadFileResponse(
+            file_id=self._fake.uuid4(), artifact_id=self._fake.uuid4()
+        )
 
     def DownloadFile(self, request, context):
         meta = service_pb2.FileMetadata(
@@ -103,7 +89,7 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
             parent_id=self._fake.uuid4(),
             file_type=service_pb2.CHECKPOINT,
             checksum=self._fake.uuid4(),
-            path="foo/bar",
+            src_path="foo/bar",
         )
         yield service_pb2.DownloadFileResponse(metadata=meta)
         artifact = str(
@@ -117,15 +103,16 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
                 yield service_pb2.DownloadFileResponse(chunks=data)
 
     def UpdateMetadata(self, req, context):
-        return service_pb2.UpdateMetadataResponse(updated_at=timestamp_pb2.Timestamp())
+        return service_pb2.UpdateMetadataResponse()
 
     def ListMetadata(self, request, context):
         payload = Value()
-        json_format.ParseDict({"key": "value"}, payload)
-        return service_pb2.ListMetadataResponse(metadata={"/tmp": payload})
+        value = json.dumps({"key": "value"})
+        metadata = service_pb2.Metadata(metadata={"/tmp": value})
+        return service_pb2.ListMetadataResponse(metadata=metadata)
 
     def TrackArtifacts(self, request, context):
-        return service_pb2.TrackArtifactsResponse(num_files_tracked=2)
+        return service_pb2.TrackArtifactsResponse(id=self._fake.uuid4())
 
     def ListModels(self, request, context):
         models = []
@@ -137,7 +124,6 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
                 namespace="langtech",
                 description="long description",
                 task="mytask",
-                files=[],
             )
         )
         resp = service_pb2.ListModelsResponse(models=models)
@@ -149,7 +135,7 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
     def GetMetrics(self, request, context):
         values = [service_pb2.MetricsValue(step=1, wallclock_time=500, f_val=0.45)]
         m = service_pb2.Metrics(key="foo", values=values)
-        return service_pb2.GetMetricsResponse(metrics=[m])
+        return service_pb2.GetMetricsResponse(metrics={"foo": m})
 
     def LogEvent(self, request, context):
         return service_pb2.LogEventResponse(
@@ -178,17 +164,25 @@ class MockModelStoreServicer(service_pb2_grpc.ModelStoreServicer):
                 parent_id=self._fake.uuid4(),
                 file_type=service_pb2.CHECKPOINT,
                 checksum=self._fake.uuid4(),
-                path="foo/bar",
+                src_path="foo/bar",
             ),
             service_pb2.FileMetadata(
                 id=self._fake.uuid4(),
                 parent_id=self._fake.uuid4(),
                 file_type=service_pb2.CHECKPOINT,
                 checksum=self._fake.uuid4(),
-                path="foo/lol",
+                src_path="foo/lol",
             ),
         ]
-        return service_pb2.ListArtifactsResponse(files=files)
+        artifacts = [
+            service_pb2.Artifact(
+                id=self._fake.uuid4(),
+                name="foo_astifact",
+                object_id=self._fake.uuid4(),
+                files=files,
+            )
+        ]
+        return service_pb2.ListArtifactsResponse(artifacts=artifacts)
 
 
 # We are really testing whether the client actually works against the current version
@@ -212,18 +206,6 @@ class TestModelBoxApi(unittest.TestCase):
         experiment = self.mbox.experiment("foo")
         self.assertNotEqual(experiment.id, "")
 
-    def test_create_checkpoint(self):
-        experiment = self.mbox.new_experiment(
-            TEST_MODEL_NAME,
-            TEST_OWNER,
-            TEST_NAMESPACE,
-            TEST_EXTERN_ID,
-            MLFramework.PYTORCH,
-        )
-        metrics = {"val_accu": 97.8, "train_accu": 98.8}
-        checkpoint = experiment.new_checkpoint(randrange(10000), metrics)
-        self.assertNotEqual(checkpoint.id, "")
-
     def test_create_model_version(self):
         model = self._create_model()
         model_version = model.new_model_version(
@@ -231,16 +213,10 @@ class TestModelBoxApi(unittest.TestCase):
             model.name,
             "mv_description",
             [],
-            {},
             ["prod"],
             MLFramework.PYTORCH,
         )
         self.assertNotEqual(model_version.id, "")
-
-    def test_list_checkpoints(self):
-        experiment = self._create_experiment()
-        checkpoints = experiment.checkpoints()
-        self.assertEqual(2, len(checkpoints))
 
     def test_list_experiments(self):
         resp = self.mbox.experiments("langtech")
@@ -253,35 +229,44 @@ class TestModelBoxApi(unittest.TestCase):
             namespace="langtech",
             task="asr",
             description="ASR for english",
-            metadata={"x": "y"},
         )
         self.assertNotEqual("", model.id)
 
-    def test_upload_artifact(self):
+    def test_upload_file(self):
         model = self._create_model()
         file_path = str(
             pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
         )
-        resp = model.upload_artifact(files=[file_path])
-        self.assertEqual(1, len(resp.artifact_ids))
+        try:
+            model.upload_file(
+                "checkpoint1", LocalFile.from_path('tests/test_artifact.txt')
+            )
+        except Exception as e:
+            self.fail(e)
 
     def test_download_artifact(self):
         model = self._create_model()
-        resp = model.download_artifact("random_id", "/tmp/lol")
-        self.assertNotEqual("", resp.id)
+        assets = model.artifacts
+        try:
+            assets[0].download("/tmp/lol")
+        except Exception as e:
+            self.fail(e)
 
-    def test_track_artifacts(self):
+    def test_track_file(self):
         model = self._create_model()
         file_path = str(
             pathlib.Path(__file__).parent.resolve().joinpath("test_artifact.txt")
         )
-        resp = model.track_artifacts(files=[file_path])
-        self.assertEqual(2, resp.num_artifacts_tracked)
+        try:
+            resp = model.track_file(artifact_name="artifactX", f=LocalFile.from_path(file_path))
+        except Exception as e:
+            self.fail(e)
 
     def test_list_artifacts(self):
         model = self._create_model()
         artifact_list = model.artifacts
-        self.assertEqual(2, len(artifact_list))
+        self.assertEqual(1, len(artifact_list))
+        self.assertEqual(2, len(artifact_list[0].assets))
 
     def test_list_models(self):
         resp = self.mbox.models("langtech")
@@ -299,8 +284,10 @@ class TestModelBoxApi(unittest.TestCase):
         resp = self._create_model().all_metrics()
 
     def test_metadata(self):
-        resp = self._create_model().update_metadata("foo", "bar")
-        self.assertNotEqual(resp.updated_at, 0)
+        try:
+            resp = self._create_model().update_metadata("foo", "bar")
+        except Exception as e:
+            self.fail(e)
 
     def test_list_metadata(self):
         resp = self._create_model().metadata()
@@ -321,15 +308,23 @@ class TestModelBoxApi(unittest.TestCase):
         events = experiment.events()
         self.assertEqual(2, len(events))
 
+
+    def test_file(self):
+        try:
+            f = LocalFile.from_path('./tests/test_artifact.txt')
+        except Exception as ex:
+            self.fail(ex)
+
     def _create_model(self):
-        return self.mbox.new_model(
+        model = self.mbox.new_model(
             name="asr_en",
             owner="owner@owner.org",
             namespace="langtech",
             task="asr",
             description="ASR for english",
-            metadata={"x": "y"},
         )
+        model.update_metadata("x", "y")
+        return model
 
     def _create_experiment(self):
         return self.mbox.new_experiment(

@@ -1,0 +1,20 @@
+[package]
+name = "modelbox-rpc-client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "modelbox_rpc_client"
+crate-type = ["cdylib"]
+
+[build-dependencies]
+tonic-build = "0.8.4"
+
+[dependencies]
+pyo3 = { version = "0.18.0", features = ["extension-module", "multiple-pymethods"] }
+tonic = "0.8"
+prost = "0.11"
+prost-types = "0.11.7"
+tokio = { version = "1.17", features = ["macros", "rt-multi-thread", "full"] }
+tokio-stream = {version = "^0.1", features = ["net"]}

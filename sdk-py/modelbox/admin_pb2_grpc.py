@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-from . import admin_pb2 as admin__pb2
+import admin_pb2 as admin__pb2
 
 
 class ModelBoxAdminStub(object):
@@ -34,6 +34,11 @@ class ModelBoxAdminStub(object):
                 '/modelbox.ModelBoxAdmin/UpdateActionStatus',
                 request_serializer=admin__pb2.UpdateActionStatusRequest.SerializeToString,
                 response_deserializer=admin__pb2.UpdateActionStatusResponse.FromString,
+                )
+        self.GetClusterMembers = channel.unary_unary(
+                '/modelbox.ModelBoxAdmin/GetClusterMembers',
+                request_serializer=admin__pb2.GetClusterMembersRequest.SerializeToString,
+                response_deserializer=admin__pb2.GetClusterMembersResponse.FromString,
                 )
 
 
@@ -70,6 +75,13 @@ class ModelBoxAdminServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetClusterMembers(self, request, context):
+        """Returns the list of servers in a cluster.
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_ModelBoxAdminServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -92,6 +104,11 @@ def add_ModelBoxAdminServicer_to_server(servicer, server):
                     servicer.UpdateActionStatus,
                     request_deserializer=admin__pb2.UpdateActionStatusRequest.FromString,
                     response_serializer=admin__pb2.UpdateActionStatusResponse.SerializeToString,
+            ),
+            'GetClusterMembers': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetClusterMembers,
+                    request_deserializer=admin__pb2.GetClusterMembersRequest.FromString,
+                    response_serializer=admin__pb2.GetClusterMembersResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -169,5 +186,22 @@ class ModelBoxAdmin(object):
         return grpc.experimental.unary_unary(request, target, '/modelbox.ModelBoxAdmin/UpdateActionStatus',
             admin__pb2.UpdateActionStatusRequest.SerializeToString,
             admin__pb2.UpdateActionStatusResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def GetClusterMembers(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/modelbox.ModelBoxAdmin/GetClusterMembers',
+            admin__pb2.GetClusterMembersRequest.SerializeToString,
+            admin__pb2.GetClusterMembersResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

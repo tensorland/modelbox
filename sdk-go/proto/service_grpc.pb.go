@@ -37,12 +37,6 @@ type ModelStoreClient interface {
 	ListExperiments(ctx context.Context, in *ListExperimentsRequest, opts ...grpc.CallOption) (*ListExperimentsResponse, error)
 	// Get Experiments
 	GetExperiment(ctx context.Context, in *GetExperimentRequest, opts ...grpc.CallOption) (*GetExperimentResponse, error)
-	// Uploads a new checkpoint for an experiment
-	CreateCheckpoint(ctx context.Context, in *CreateCheckpointRequest, opts ...grpc.CallOption) (*CreateCheckpointResponse, error)
-	// Lists all the checkpoints for an experiment
-	ListCheckpoints(ctx context.Context, in *ListCheckpointsRequest, opts ...grpc.CallOption) (*ListCheckpointsResponse, error)
-	// Gets a checkpoint from the modelstore for an experiment
-	GetCheckpoint(ctx context.Context, in *GetCheckpointRequest, opts ...grpc.CallOption) (*GetCheckpointResponse, error)
 	// UploadFile streams a files to ModelBox and stores the binaries to the condfigured storage
 	UploadFile(ctx context.Context, opts ...grpc.CallOption) (ModelStore_UploadFileClient, error)
 	// DownloadFile downloads a file from configured storage
@@ -67,12 +61,6 @@ type ModelStoreClient interface {
 	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(ctx context.Context, in *WatchNamespaceRequest, opts ...grpc.CallOption) (ModelStore_WatchNamespaceClient, error)
-	// Returns the list of servers in a cluster.
-	GetClusterMembers(ctx context.Context, in *GetClusterMembersRequest, opts ...grpc.CallOption) (*GetClusterMembersResponse, error)
-	// Create and attach an action to an experiment or a model.
-	CreateActions(ctx context.Context, in *CreateActionRequest, opts ...grpc.CallOption) (*CreateActionResponse, error)
-	// List actions attached to an experiment or a model.
-	ListActions(ctx context.Context, in *ListActionsRequest, opts ...grpc.CallOption) (*ListActionsResponse, error)
 }
 
 type modelStoreClient struct {
@@ -140,33 +128,6 @@ func (c *modelStoreClient) ListExperiments(ctx context.Context, in *ListExperime
 func (c *modelStoreClient) GetExperiment(ctx context.Context, in *GetExperimentRequest, opts ...grpc.CallOption) (*GetExperimentResponse, error) {
 	out := new(GetExperimentResponse)
 	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/GetExperiment", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *modelStoreClient) CreateCheckpoint(ctx context.Context, in *CreateCheckpointRequest, opts ...grpc.CallOption) (*CreateCheckpointResponse, error) {
-	out := new(CreateCheckpointResponse)
-	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/CreateCheckpoint", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *modelStoreClient) ListCheckpoints(ctx context.Context, in *ListCheckpointsRequest, opts ...grpc.CallOption) (*ListCheckpointsResponse, error) {
-	out := new(ListCheckpointsResponse)
-	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/ListCheckpoints", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *modelStoreClient) GetCheckpoint(ctx context.Context, in *GetCheckpointRequest, opts ...grpc.CallOption) (*GetCheckpointResponse, error) {
-	out := new(GetCheckpointResponse)
-	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/GetCheckpoint", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -343,33 +304,6 @@ func (x *modelStoreWatchNamespaceClient) Recv() (*WatchNamespaceResponse, error)
 	return m, nil
 }
 
-func (c *modelStoreClient) GetClusterMembers(ctx context.Context, in *GetClusterMembersRequest, opts ...grpc.CallOption) (*GetClusterMembersResponse, error) {
-	out := new(GetClusterMembersResponse)
-	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/GetClusterMembers", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *modelStoreClient) CreateActions(ctx context.Context, in *CreateActionRequest, opts ...grpc.CallOption) (*CreateActionResponse, error) {
-	out := new(CreateActionResponse)
-	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/CreateActions", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *modelStoreClient) ListActions(ctx context.Context, in *ListActionsRequest, opts ...grpc.CallOption) (*ListActionsResponse, error) {
-	out := new(ListActionsResponse)
-	err := c.cc.Invoke(ctx, "/modelbox.ModelStore/ListActions", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ModelStoreServer is the server API for ModelStore service.
 // All implementations must embed UnimplementedModelStoreServer
 // for forward compatibility
@@ -389,12 +323,6 @@ type ModelStoreServer interface {
 	ListExperiments(context.Context, *ListExperimentsRequest) (*ListExperimentsResponse, error)
 	// Get Experiments
 	GetExperiment(context.Context, *GetExperimentRequest) (*GetExperimentResponse, error)
-	// Uploads a new checkpoint for an experiment
-	CreateCheckpoint(context.Context, *CreateCheckpointRequest) (*CreateCheckpointResponse, error)
-	// Lists all the checkpoints for an experiment
-	ListCheckpoints(context.Context, *ListCheckpointsRequest) (*ListCheckpointsResponse, error)
-	// Gets a checkpoint from the modelstore for an experiment
-	GetCheckpoint(context.Context, *GetCheckpointRequest) (*GetCheckpointResponse, error)
 	// UploadFile streams a files to ModelBox and stores the binaries to the condfigured storage
 	UploadFile(ModelStore_UploadFileServer) error
 	// DownloadFile downloads a file from configured storage
@@ -419,12 +347,6 @@ type ModelStoreServer interface {
 	// Streams change events in any of objects such as experiments, models, etc, for a given namespace
 	// Response is a json representation of the new state of the obejct
 	WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error
-	// Returns the list of servers in a cluster.
-	GetClusterMembers(context.Context, *GetClusterMembersRequest) (*GetClusterMembersResponse, error)
-	// Create and attach an action to an experiment or a model.
-	CreateActions(context.Context, *CreateActionRequest) (*CreateActionResponse, error)
-	// List actions attached to an experiment or a model.
-	ListActions(context.Context, *ListActionsRequest) (*ListActionsResponse, error)
 	mustEmbedUnimplementedModelStoreServer()
 }
 
@@ -452,15 +374,6 @@ func (UnimplementedModelStoreServer) ListExperiments(context.Context, *ListExper
 }
 func (UnimplementedModelStoreServer) GetExperiment(context.Context, *GetExperimentRequest) (*GetExperimentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetExperiment not implemented")
-}
-func (UnimplementedModelStoreServer) CreateCheckpoint(context.Context, *CreateCheckpointRequest) (*CreateCheckpointResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateCheckpoint not implemented")
-}
-func (UnimplementedModelStoreServer) ListCheckpoints(context.Context, *ListCheckpointsRequest) (*ListCheckpointsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListCheckpoints not implemented")
-}
-func (UnimplementedModelStoreServer) GetCheckpoint(context.Context, *GetCheckpointRequest) (*GetCheckpointResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetCheckpoint not implemented")
 }
 func (UnimplementedModelStoreServer) UploadFile(ModelStore_UploadFileServer) error {
 	return status.Errorf(codes.Unimplemented, "method UploadFile not implemented")
@@ -494,15 +407,6 @@ func (UnimplementedModelStoreServer) ListEvents(context.Context, *ListEventsRequ
 }
 func (UnimplementedModelStoreServer) WatchNamespace(*WatchNamespaceRequest, ModelStore_WatchNamespaceServer) error {
 	return status.Errorf(codes.Unimplemented, "method WatchNamespace not implemented")
-}
-func (UnimplementedModelStoreServer) GetClusterMembers(context.Context, *GetClusterMembersRequest) (*GetClusterMembersResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetClusterMembers not implemented")
-}
-func (UnimplementedModelStoreServer) CreateActions(context.Context, *CreateActionRequest) (*CreateActionResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateActions not implemented")
-}
-func (UnimplementedModelStoreServer) ListActions(context.Context, *ListActionsRequest) (*ListActionsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListActions not implemented")
 }
 func (UnimplementedModelStoreServer) mustEmbedUnimplementedModelStoreServer() {}
 
@@ -639,60 +543,6 @@ func _ModelStore_GetExperiment_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ModelStoreServer).GetExperiment(ctx, req.(*GetExperimentRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ModelStore_CreateCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateCheckpointRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ModelStoreServer).CreateCheckpoint(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/modelbox.ModelStore/CreateCheckpoint",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelStoreServer).CreateCheckpoint(ctx, req.(*CreateCheckpointRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ModelStore_ListCheckpoints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListCheckpointsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ModelStoreServer).ListCheckpoints(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/modelbox.ModelStore/ListCheckpoints",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelStoreServer).ListCheckpoints(ctx, req.(*ListCheckpointsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ModelStore_GetCheckpoint_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetCheckpointRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ModelStoreServer).GetCheckpoint(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/modelbox.ModelStore/GetCheckpoint",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelStoreServer).GetCheckpoint(ctx, req.(*GetCheckpointRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -909,60 +759,6 @@ func (x *modelStoreWatchNamespaceServer) Send(m *WatchNamespaceResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _ModelStore_GetClusterMembers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetClusterMembersRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ModelStoreServer).GetClusterMembers(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/modelbox.ModelStore/GetClusterMembers",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelStoreServer).GetClusterMembers(ctx, req.(*GetClusterMembersRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ModelStore_CreateActions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateActionRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ModelStoreServer).CreateActions(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/modelbox.ModelStore/CreateActions",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelStoreServer).CreateActions(ctx, req.(*CreateActionRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _ModelStore_ListActions_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ListActionsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ModelStoreServer).ListActions(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/modelbox.ModelStore/ListActions",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ModelStoreServer).ListActions(ctx, req.(*ListActionsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ModelStore_ServiceDesc is the grpc.ServiceDesc for ModelStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -999,18 +795,6 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _ModelStore_GetExperiment_Handler,
 		},
 		{
-			MethodName: "CreateCheckpoint",
-			Handler:    _ModelStore_CreateCheckpoint_Handler,
-		},
-		{
-			MethodName: "ListCheckpoints",
-			Handler:    _ModelStore_ListCheckpoints_Handler,
-		},
-		{
-			MethodName: "GetCheckpoint",
-			Handler:    _ModelStore_GetCheckpoint_Handler,
-		},
-		{
 			MethodName: "UpdateMetadata",
 			Handler:    _ModelStore_UpdateMetadata_Handler,
 		},
@@ -1041,18 +825,6 @@ var ModelStore_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListEvents",
 			Handler:    _ModelStore_ListEvents_Handler,
-		},
-		{
-			MethodName: "GetClusterMembers",
-			Handler:    _ModelStore_GetClusterMembers_Handler,
-		},
-		{
-			MethodName: "CreateActions",
-			Handler:    _ModelStore_CreateActions_Handler,
-		},
-		{
-			MethodName: "ListActions",
-			Handler:    _ModelStore_ListActions_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

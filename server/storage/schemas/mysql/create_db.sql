@@ -1,3 +1,0 @@
-CREATE DATABASE IF NOT EXISTS modelbox;
-
-USE modelbox;

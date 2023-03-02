@@ -1,0 +1,12 @@
+[package]
+name = "entity"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sea-orm = { version = "^0", features=["debug-print", "runtime-tokio-rustls", "sqlx-postgres", "sqlx-sqlite", "with-time", "with-json", "mock"] }
+sea-query = "0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0.38"
+time = { version = "0.3", features = ["macros"] }

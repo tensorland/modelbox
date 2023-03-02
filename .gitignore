@@ -20,3 +20,7 @@ modelbox.egg-info
 *.pt
 
 tutorials/lid_quartznet*
+*.yaml
+modelbox
+.env
+

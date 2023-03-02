@@ -17,7 +17,7 @@ from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__
 from google.protobuf import struct_pb2 as google_dot_protobuf_dot_struct__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rservice.proto\x12\x08modelbox\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\"9\n\x15WatchNamespaceRequest\x12\x11\n\tnamespace\x18\x01 \x01(\t\x12\r\n\x05since\x18\x02 \x01(\x04\"g\n\x16WatchNamespaceResponse\x12$\n\x05\x65vent\x18\x01 \x01(\x0e\x32\x15.modelbox.ChangeEvent\x12\'\n\x07payload\x18\x02 \x01(\x0b\x32\x16.google.protobuf.Value\">\n\x07Metrics\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x06values\x18\x02 \x03(\x0b\x32\x16.modelbox.MetricsValue\"v\n\x0cMetricsValue\x12\x0c\n\x04step\x18\x01 \x01(\x04\x12\x16\n\x0ewallclock_time\x18\x02 \x01(\x04\x12\x0f\n\x05\x66_val\x18\x05 \x01(\x02H\x00\x12\x12\n\x08s_tensor\x18\x06 \x01(\tH\x00\x12\x12\n\x08\x62_tensor\x18\x07 \x01(\x0cH\x00\x42\x07\n\x05value\"Z\n\x11LogMetricsRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\x12\x0b\n\x03key\x18\x02 \x01(\t\x12%\n\x05value\x18\x03 \x01(\x0b\x32\x16.modelbox.MetricsValue\"\x14\n\x12LogMetricsResponse\"&\n\x11GetMetricsRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\"8\n\x12GetMetricsResponse\x12\"\n\x07metrics\x18\x01 \x03(\x0b\x32\x11.modelbox.Metrics\">\n\x15TrackArtifactsRequest\x12%\n\x05\x66iles\x18\x01 \x03(\x0b\x32\x16.modelbox.FileMetadata\"c\n\x16TrackArtifactsResponse\x12\x19\n\x11num_files_tracked\x18\x01 \x01(\x05\x12.\n\ncreated_at\x18\n \x01(\x0b\x32\x1a.google.protobuf.Timestamp\")\n\x14ListArtifactsRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\">\n\x15ListArtifactsResponse\x12%\n\x05\x66iles\x18\x01 \x03(\x0b\x32\x16.modelbox.FileMetadata\"\xd4\x01\n\x0c\x46ileMetadata\x12\n\n\x02id\x18\x01 \x01(\t\x12\x11\n\tparent_id\x18\x02 \x01(\t\x12%\n\tfile_type\x18\x03 \x01(\x0e\x32\x12.modelbox.FileType\x12\x10\n\x08\x63hecksum\x18\x04 \x01(\t\x12\x0c\n\x04path\x18\x05 \x01(\t\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"&\n\x13\x44ownloadFileRequest\x12\x0f\n\x07\x66ile_id\x18\x01 \x01(\t\"d\n\x14\x44ownloadFileResponse\x12*\n\x08metadata\x18\x01 \x01(\x0b\x32\x16.modelbox.FileMetadataH\x00\x12\x10\n\x06\x63hunks\x18\x02 \x01(\x0cH\x00\x42\x0e\n\x0cstream_frame\"a\n\x11UploadFileRequest\x12*\n\x08metadata\x18\x01 \x01(\x0b\x32\x16.modelbox.FileMetadataH\x00\x12\x10\n\x06\x63hunks\x18\x02 \x01(\x0cH\x00\x42\x0e\n\x0cstream_frame\"%\n\x12UploadFileResponse\x12\x0f\n\x07\x66ile_id\x18\x01 \x01(\t\"\xa9\x02\n\nCheckpoint\x12\n\n\x02id\x18\x01 \x01(\t\x12\r\n\x05\x65poch\x18\x02 \x01(\x04\x12\x15\n\rexperiment_id\x18\x03 \x01(\t\x12%\n\x05\x66iles\x18\x04 \x03(\x0b\x32\x16.modelbox.FileMetadata\x12\x32\n\x07metrics\x18\x05 \x03(\x0b\x32!.modelbox.Checkpoint.MetricsEntry\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x1a.\n\x0cMetricsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02:\x02\x38\x01\"\xfd\x01\n\x17\x43reateCheckpointRequest\x12\x15\n\rexperiment_id\x18\x01 \x01(\t\x12\r\n\x05\x65poch\x18\x02 \x01(\x04\x12%\n\x05\x66iles\x18\x03 \x03(\x0b\x32\x16.modelbox.FileMetadata\x12?\n\x07metrics\x18\x04 \x03(\x0b\x32..modelbox.CreateCheckpointRequest.MetricsEntry\x12$\n\x08metadata\x18\x05 \x01(\x0b\x32\x12.modelbox.Metadata\x1a.\n\x0cMetricsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x02:\x02\x38\x01\"\x91\x01\n\x18\x43reateCheckpointResponse\x12\x15\n\rcheckpoint_id\x18\x01 \x01(\t\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"<\n\x14GetCheckpointRequest\x12\x15\n\rexperiment_id\x18\x01 \x01(\t\x12\r\n\x05\x65poch\x18\x02 \x01(\x04\"A\n\x15GetCheckpointResponse\x12(\n\ncheckpoint\x18\x01 \x01(\x0b\x32\x14.modelbox.Checkpoint\"/\n\x16ListCheckpointsRequest\x12\x15\n\rexperiment_id\x18\x01 \x01(\t\"D\n\x17ListCheckpointsResponse\x12)\n\x0b\x63heckpoints\x18\x01 \x03(\x0b\x32\x14.modelbox.Checkpoint\"\xed\x01\n\x05Model\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05owner\x18\x03 \x01(\t\x12\x11\n\tnamespace\x18\x04 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x05 \x01(\t\x12\x0c\n\x04task\x18\x06 \x01(\t\x12%\n\x05\x66iles\x18\t \x03(\x0b\x32\x16.modelbox.FileMetadata\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\xb4\x01\n\x12\x43reateModelRequest\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05owner\x18\x03 \x01(\t\x12\x11\n\tnamespace\x18\x04 \x01(\t\x12\x0c\n\x04task\x18\x05 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x06 \x01(\t\x12$\n\x08metadata\x18\x07 \x01(\x0b\x32\x12.modelbox.Metadata\x12%\n\x05\x66iles\x18\x08 \x03(\x0b\x32\x16.modelbox.FileMetadata\"\x81\x01\n\x13\x43reateModelResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\xcc\x02\n\x0cModelVersion\x12\n\n\x02id\x18\x01 \x01(\t\x12\x10\n\x08model_id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0f\n\x07version\x18\x04 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x05 \x01(\t\x12%\n\x05\x66iles\x18\x06 \x03(\x0b\x32\x16.modelbox.FileMetadata\x12$\n\x08metadata\x18\x07 \x01(\x0b\x32\x12.modelbox.Metadata\x12(\n\tframework\x18\x08 \x01(\x0e\x32\x15.modelbox.MLFramework\x12\x13\n\x0bunique_tags\x18\t \x03(\t\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\xea\x01\n\x19\x43reateModelVersionRequest\x12\r\n\x05model\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0f\n\x07version\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\x12%\n\x05\x66iles\x18\x05 \x03(\x0b\x32\x16.modelbox.FileMetadata\x12$\n\x08metadata\x18\x06 \x01(\x0b\x32\x12.modelbox.Metadata\x12(\n\tframework\x18\x07 \x01(\x0e\x32\x15.modelbox.MLFramework\x12\x13\n\x0bunique_tags\x18\x08 \x03(\t\"\x93\x01\n\x1a\x43reateModelVersionResponse\x12\x15\n\rmodel_version\x18\x01 \x01(\t\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\xe7\x01\n\nExperiment\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\tnamespace\x18\x03 \x01(\t\x12\r\n\x05owner\x18\x04 \x01(\t\x12(\n\tframework\x18\x05 \x01(\x0e\x32\x15.modelbox.MLFramework\x12\x13\n\x0b\x65xternal_id\x18\x07 \x01(\t\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\xbc\x01\n\x17\x43reateExperimentRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05owner\x18\x02 \x01(\t\x12\x11\n\tnamespace\x18\x03 \x01(\t\x12(\n\tframework\x18\x04 \x01(\x0e\x32\x15.modelbox.MLFramework\x12\x0c\n\x04task\x18\x05 \x01(\t\x12$\n\x08metadata\x18\x06 \x01(\x0b\x32\x12.modelbox.Metadata\x12\x13\n\x0b\x65xternal_id\x18\x07 \x01(\t\"\xac\x01\n\x18\x43reateExperimentResponse\x12\x15\n\rexperiment_id\x18\x01 \x01(\t\x12\x19\n\x11\x65xperiment_exists\x18\x02 \x01(\x08\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"+\n\x16ListExperimentsRequest\x12\x11\n\tnamespace\x18\x01 \x01(\t\"D\n\x17ListExperimentsResponse\x12)\n\x0b\x65xperiments\x18\x01 \x03(\x0b\x32\x14.modelbox.Experiment\")\n\x18ListModelVersionsRequest\x12\r\n\x05model\x18\x01 \x01(\t\"C\n\x19ListModelVersionsResponse\x12&\n\x06models\x18\x01 \x01(\x0b\x32\x16.modelbox.ModelVersion\"&\n\x11ListModelsRequest\x12\x11\n\tnamespace\x18\x01 \x01(\t\"5\n\x12ListModelsResponse\x12\x1f\n\x06models\x18\x01 \x03(\x0b\x32\x0f.modelbox.Model\"\x87\x01\n\x08Metadata\x12\x32\n\x08metadata\x18\x01 \x03(\x0b\x32 .modelbox.Metadata.MetadataEntry\x1aG\n\rMetadataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12%\n\x05value\x18\x02 \x01(\x0b\x32\x16.google.protobuf.Value:\x02\x38\x01\"P\n\x15UpdateMetadataRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\x12$\n\x08metadata\x18\x02 \x01(\x0b\x32\x12.modelbox.Metadata\"b\n\x16UpdateMetadataResponse\x12\x18\n\x10num_keys_written\x18\x01 \x01(\x05\x12.\n\nupdated_at\x18\x05 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"(\n\x13ListMetadataRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\"\x9f\x01\n\x14ListMetadataResponse\x12>\n\x08metadata\x18\x01 \x03(\x0b\x32,.modelbox.ListMetadataResponse.MetadataEntry\x1aG\n\rMetadataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12%\n\x05value\x18\x02 \x01(\x0b\x32\x16.google.protobuf.Value:\x02\x38\x01\"\x1b\n\x0b\x45ventSource\x12\x0c\n\x04name\x18\x01 \x01(\t\"\x96\x01\n\x05\x45vent\x12\x0c\n\x04name\x18\x02 \x01(\t\x12%\n\x06source\x18\x03 \x01(\x0b\x32\x15.modelbox.EventSource\x12\x32\n\x0ewallclock_time\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12$\n\x08metadata\x18\x05 \x01(\x0b\x32\x12.modelbox.Metadata\"D\n\x0fLogEventRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\x12\x1e\n\x05\x65vent\x18\x02 \x01(\x0b\x32\x0f.modelbox.Event\"B\n\x10LogEventResponse\x12.\n\ncreated_at\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"Q\n\x11ListEventsRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\x12)\n\x05since\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"5\n\x12ListEventsResponse\x12\x1f\n\x06\x65vents\x18\x01 \x03(\x0b\x32\x0f.modelbox.Event\"\"\n\x14GetExperimentRequest\x12\n\n\x02id\x18\x01 \x01(\t\"A\n\x15GetExperimentResponse\x12(\n\nexperiment\x18\x01 \x01(\x0b\x32\x14.modelbox.Experiment\"\x1a\n\x18GetClusterMembersRequest\"S\n\rClusterMember\x12\n\n\x02id\x18\x01 \x01(\t\x12\x11\n\thost_name\x18\x02 \x01(\t\x12\x10\n\x08rpc_addr\x18\x03 \x01(\t\x12\x11\n\thttp_addr\x18\x04 \x01(\t\"E\n\x19GetClusterMembersResponse\x12(\n\x07members\x18\x01 \x03(\x0b\x32\x17.modelbox.ClusterMember\"\xff\x01\n\x13\x43reateActionRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x11\n\tobject_id\x18\x02 \x01(\t\x12\x13\n\x0bobject_type\x18\x03 \x01(\t\x12\x0c\n\x04\x61rch\x18\x04 \x01(\t\x12\x39\n\x06params\x18\x05 \x03(\x0b\x32).modelbox.CreateActionRequest.ParamsEntry\x12\"\n\x07trigger\x18\x06 \x01(\x0b\x32\x11.modelbox.Trigger\x1a\x45\n\x0bParamsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12%\n\x05value\x18\x02 \x01(\x0b\x32\x16.google.protobuf.Value:\x02\x38\x01\"\x1c\n\x07Trigger\x12\x11\n\tpredicate\x18\x01 \x01(\t\"F\n\x14\x43reateActionResponse\x12.\n\ncreated_at\x18\n \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"L\n\x06\x41\x63tion\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12(\n\x06states\x18\x03 \x03(\x0b\x32\x18.modelbox.ActionInstance\"\x10\n\x0e\x41\x63tionInstance\"\'\n\x12ListActionsRequest\x12\x11\n\tobject_id\x18\x01 \x01(\t\"8\n\x13ListActionsResponse\x12!\n\x07\x61\x63tions\x18\x01 \x03(\x0b\x32\x10.modelbox.Action*Q\n\x0b\x43hangeEvent\x12\x1a\n\x16\x43HANGE_EVENT_UNDEFINED\x10\x00\x12\x12\n\x0eOBJECT_CREATED\x10\x01\x12\x12\n\x0eOBJECT_UPDATED\x10\x02*_\n\x08\x46ileType\x12\r\n\tUNDEFINED\x10\x00\x12\t\n\x05MODEL\x10\x01\x12\x0e\n\nCHECKPOINT\x10\x02\x12\x08\n\x04TEXT\x10\x03\x12\t\n\x05IMAGE\x10\x04\x12\t\n\x05\x41UDIO\x10\x05\x12\t\n\x05VIDEO\x10\x06*2\n\x0bMLFramework\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x0b\n\x07PYTORCH\x10\x01\x12\t\n\x05KERAS\x10\x02\x32\xc0\x0f\n\nModelStore\x12J\n\x0b\x43reateModel\x12\x1c.modelbox.CreateModelRequest\x1a\x1d.modelbox.CreateModelResponse\x12G\n\nListModels\x12\x1b.modelbox.ListModelsRequest\x1a\x1c.modelbox.ListModelsResponse\x12_\n\x12\x43reateModelVersion\x12#.modelbox.CreateModelVersionRequest\x1a$.modelbox.CreateModelVersionResponse\x12\\\n\x11ListModelVersions\x12\".modelbox.ListModelVersionsRequest\x1a#.modelbox.ListModelVersionsResponse\x12Y\n\x10\x43reateExperiment\x12!.modelbox.CreateExperimentRequest\x1a\".modelbox.CreateExperimentResponse\x12V\n\x0fListExperiments\x12 .modelbox.ListExperimentsRequest\x1a!.modelbox.ListExperimentsResponse\x12P\n\rGetExperiment\x12\x1e.modelbox.GetExperimentRequest\x1a\x1f.modelbox.GetExperimentResponse\x12Y\n\x10\x43reateCheckpoint\x12!.modelbox.CreateCheckpointRequest\x1a\".modelbox.CreateCheckpointResponse\x12V\n\x0fListCheckpoints\x12 .modelbox.ListCheckpointsRequest\x1a!.modelbox.ListCheckpointsResponse\x12P\n\rGetCheckpoint\x12\x1e.modelbox.GetCheckpointRequest\x1a\x1f.modelbox.GetCheckpointResponse\x12I\n\nUploadFile\x12\x1b.modelbox.UploadFileRequest\x1a\x1c.modelbox.UploadFileResponse(\x01\x12O\n\x0c\x44ownloadFile\x12\x1d.modelbox.DownloadFileRequest\x1a\x1e.modelbox.DownloadFileResponse0\x01\x12S\n\x0eUpdateMetadata\x12\x1f.modelbox.UpdateMetadataRequest\x1a .modelbox.UpdateMetadataResponse\x12M\n\x0cListMetadata\x12\x1d.modelbox.ListMetadataRequest\x1a\x1e.modelbox.ListMetadataResponse\x12S\n\x0eTrackArtifacts\x12\x1f.modelbox.TrackArtifactsRequest\x1a .modelbox.TrackArtifactsResponse\x12P\n\rListArtifacts\x12\x1e.modelbox.ListArtifactsRequest\x1a\x1f.modelbox.ListArtifactsResponse\x12G\n\nLogMetrics\x12\x1b.modelbox.LogMetricsRequest\x1a\x1c.modelbox.LogMetricsResponse\x12G\n\nGetMetrics\x12\x1b.modelbox.GetMetricsRequest\x1a\x1c.modelbox.GetMetricsResponse\x12\x41\n\x08LogEvent\x12\x19.modelbox.LogEventRequest\x1a\x1a.modelbox.LogEventResponse\x12G\n\nListEvents\x12\x1b.modelbox.ListEventsRequest\x1a\x1c.modelbox.ListEventsResponse\x12U\n\x0eWatchNamespace\x12\x1f.modelbox.WatchNamespaceRequest\x1a .modelbox.WatchNamespaceResponse0\x01\x12\\\n\x11GetClusterMembers\x12\".modelbox.GetClusterMembersRequest\x1a#.modelbox.GetClusterMembersResponse\x12N\n\rCreateActions\x12\x1d.modelbox.CreateActionRequest\x1a\x1e.modelbox.CreateActionResponse\x12J\n\x0bListActions\x12\x1c.modelbox.ListActionsRequest\x1a\x1d.modelbox.ListActionsResponseB-Z+github.com/tensorland/modelbox/sdk-go/protob\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\rservice.proto\x12\x08modelbox\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\"9\n\x15WatchNamespaceRequest\x12\x11\n\tnamespace\x18\x01 \x01(\t\x12\r\n\x05since\x18\x02 \x01(\x04\"g\n\x16WatchNamespaceResponse\x12$\n\x05\x65vent\x18\x01 \x01(\x0e\x32\x15.modelbox.ChangeEvent\x12\'\n\x07payload\x18\x02 \x01(\x0b\x32\x16.google.protobuf.Value\">\n\x07Metrics\x12\x0b\n\x03key\x18\x01 \x01(\t\x12&\n\x06values\x18\x02 \x03(\x0b\x32\x16.modelbox.MetricsValue\"v\n\x0cMetricsValue\x12\x0c\n\x04step\x18\x01 \x01(\x04\x12\x16\n\x0ewallclock_time\x18\x02 \x01(\x04\x12\x0f\n\x05\x66_val\x18\x05 \x01(\x02H\x00\x12\x12\n\x08s_tensor\x18\x06 \x01(\tH\x00\x12\x12\n\x08\x62_tensor\x18\x07 \x01(\x0cH\x00\x42\x07\n\x05value\"Z\n\x11LogMetricsRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\x12\x0b\n\x03key\x18\x02 \x01(\t\x12%\n\x05value\x18\x03 \x01(\x0b\x32\x16.modelbox.MetricsValue\"\x14\n\x12LogMetricsResponse\"&\n\x11GetMetricsRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\"\x93\x01\n\x12GetMetricsResponse\x12:\n\x07metrics\x18\x01 \x03(\x0b\x32).modelbox.GetMetricsResponse.MetricsEntry\x1a\x41\n\x0cMetricsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12 \n\x05value\x18\x02 \x01(\x0b\x32\x11.modelbox.Metrics:\x02\x38\x01\"_\n\x15TrackArtifactsRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x11\n\tobject_id\x18\x02 \x01(\t\x12%\n\x05\x66iles\x18\x03 \x03(\x0b\x32\x16.modelbox.FileMetadata\"$\n\x16TrackArtifactsResponse\x12\n\n\x02id\x18\x01 \x01(\t\")\n\x14ListArtifactsRequest\x12\x11\n\tobject_id\x18\x01 \x01(\t\">\n\x15ListArtifactsResponse\x12%\n\tartifacts\x18\x01 \x03(\x0b\x32\x12.modelbox.Artifact\"\xed\x01\n\x0c\x46ileMetadata\x12\n\n\x02id\x18\x01 \x01(\t\x12\x11\n\tparent_id\x18\x02 \x01(\t\x12%\n\tfile_type\x18\x03 \x01(\x0e\x32\x12.modelbox.FileType\x12\x10\n\x08\x63hecksum\x18\x04 \x01(\t\x12\x10\n\x08src_path\x18\x05 \x01(\t\x12\x13\n\x0bupload_path\x18\x06 \x01(\t\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"&\n\x13\x44ownloadFileRequest\x12\x0f\n\x07\x66ile_id\x18\x01 \x01(\t\"d\n\x14\x44ownloadFileResponse\x12*\n\x08metadata\x18\x01 \x01(\x0b\x32\x16.modelbox.FileMetadataH\x00\x12\x10\n\x06\x63hunks\x18\x02 \x01(\x0cH\x00\x42\x0e\n\x0cstream_frame\"g\n\x11UploadFileRequest\x12\x30\n\x08metadata\x18\x01 \x01(\x0b\x32\x1c.modelbox.UploadFileMetadataH\x00\x12\x10\n\x06\x63hunks\x18\x02 \x01(\x0cH\x00\x42\x0e\n\x0cstream_frame\":\n\x12UploadFileResponse\x12\x0f\n\x07\x66ile_id\x18\x01 \x01(\t\x12\x13\n\x0b\x61rtifact_id\x18\x02 \x01(\t\"h\n\x12UploadFileMetadata\x12\x15\n\rartifact_name\x18\x01 \x01(\t\x12\x11\n\tobject_id\x18\x02 \x01(\t\x12(\n\x08metadata\x18\x03 \x01(\x0b\x32\x16.modelbox.FileMetadata\"^\n\x08\x41rtifact\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\tobject_id\x18\x03 \x01(\t\x12%\n\x05\x66iles\x18\x04 \x03(\x0b\x32\x16.modelbox.FileMetadata\"\xc6\x01\n\x05Model\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05owner\x18\x03 \x01(\t\x12\x11\n\tnamespace\x18\x04 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x05 \x01(\t\x12\x0c\n\x04task\x18\x06 \x01(\t\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"g\n\x12\x43reateModelRequest\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\r\n\x05owner\x18\x03 \x01(\t\x12\x11\n\tnamespace\x18\x04 \x01(\t\x12\x0c\n\x04task\x18\x05 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x06 \x01(\t\"\x91\x01\n\x13\x43reateModelResponse\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0e\n\x06\x65xists\x18\x02 \x01(\x08\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\xff\x01\n\x0cModelVersion\x12\n\n\x02id\x18\x01 \x01(\t\x12\x10\n\x08model_id\x18\x02 \x01(\t\x12\x0c\n\x04name\x18\x03 \x01(\t\x12\x0f\n\x07version\x18\x04 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x05 \x01(\t\x12(\n\tframework\x18\x08 \x01(\x0e\x32\x15.modelbox.MLFramework\x12\x13\n\x0bunique_tags\x18\t \x03(\t\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\xb0\x01\n\x19\x43reateModelVersionRequest\x12\r\n\x05model\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0f\n\x07version\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x04 \x01(\t\x12\x11\n\tnamespace\x18\x05 \x01(\t\x12(\n\tframework\x18\x08 \x01(\x0e\x32\x15.modelbox.MLFramework\x12\x13\n\x0bunique_tags\x18\t \x03(\t\"\xa3\x01\n\x1a\x43reateModelVersionResponse\x12\x15\n\rmodel_version\x18\x01 \x01(\t\x12\x0e\n\x06\x65xists\x18\x02 \x01(\x08\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\xe7\x01\n\nExperiment\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x11\n\tnamespace\x18\x03 \x01(\t\x12\r\n\x05owner\x18\x04 \x01(\t\x12(\n\tframework\x18\x05 \x01(\x0e\x32\x15.modelbox.MLFramework\x12\x13\n\x0b\x65xternal_id\x18\x07 \x01(\t\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"\x96\x01\n\x17\x43reateExperimentRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05owner\x18\x02 \x01(\t\x12\x11\n\tnamespace\x18\x03 \x01(\t\x12(\n\tframework\x18\x04 \x01(\x0e\x32\x15.modelbox.MLFramework\x12\x0c\n\x04task\x18\x05 \x01(\t\x12\x13\n\x0b\x65xternal_id\x18\x07 \x01(\t\"\xac\x01\n\x18\x43reateExperimentResponse\x12\x15\n\rexperiment_id\x18\x01 \x01(\t\x12\x19\n\x11\x65xperiment_exists\x18\x02 \x01(\x08\x12.\n\ncreated_at\x18\x14 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12.\n\nupdated_at\x18\x15 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"+\n\x16ListExperimentsRequest\x12\x11\n\tnamespace\x18\x01 \x01(\t\"D\n\x17ListExperimentsResponse\x12)\n\x0b\x65xperiments\x18\x01 \x03(\x0b\x32\x14.modelbox.Experiment\")\n\x18ListModelVersionsRequest\x12\r\n\x05model\x18\x01 \x01(\t\"K\n\x19ListModelVersionsResponse\x12.\n\x0emodel_versions\x18\x01 \x03(\x0b\x32\x16.modelbox.ModelVersion\"&\n\x11ListModelsRequest\x12\x11\n\tnamespace\x18\x01 \x01(\t\"5\n\x12ListModelsResponse\x12\x1f\n\x06models\x18\x01 \x03(\x0b\x32\x0f.modelbox.Model\"o\n\x08Metadata\x12\x32\n\x08metadata\x18\x01 \x03(\x0b\x32 .modelbox.Metadata.MetadataEntry\x1a/\n\rMetadataEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"P\n\x15UpdateMetadataRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\x12$\n\x08metadata\x18\x02 \x01(\x0b\x32\x12.modelbox.Metadata\"\x18\n\x16UpdateMetadataResponse\"(\n\x13ListMetadataRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\"<\n\x14ListMetadataResponse\x12$\n\x08metadata\x18\x01 \x01(\x0b\x32\x12.modelbox.Metadata\"\x1b\n\x0b\x45ventSource\x12\x0c\n\x04name\x18\x01 \x01(\t\"\x96\x01\n\x05\x45vent\x12\x0c\n\x04name\x18\x02 \x01(\t\x12%\n\x06source\x18\x03 \x01(\x0b\x32\x15.modelbox.EventSource\x12\x32\n\x0ewallclock_time\x18\x04 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12$\n\x08metadata\x18\x05 \x01(\x0b\x32\x12.modelbox.Metadata\"D\n\x0fLogEventRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\x12\x1e\n\x05\x65vent\x18\x02 \x01(\x0b\x32\x0f.modelbox.Event\"B\n\x10LogEventResponse\x12.\n\ncreated_at\x18\x01 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"Q\n\x11ListEventsRequest\x12\x11\n\tparent_id\x18\x01 \x01(\t\x12)\n\x05since\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\"5\n\x12ListEventsResponse\x12\x1f\n\x06\x65vents\x18\x01 \x03(\x0b\x32\x0f.modelbox.Event\"\"\n\x14GetExperimentRequest\x12\n\n\x02id\x18\x01 \x01(\t\"A\n\x15GetExperimentResponse\x12(\n\nexperiment\x18\x01 \x01(\x0b\x32\x14.modelbox.Experiment*Q\n\x0b\x43hangeEvent\x12\x1a\n\x16\x43HANGE_EVENT_UNDEFINED\x10\x00\x12\x12\n\x0eOBJECT_CREATED\x10\x01\x12\x12\n\x0eOBJECT_UPDATED\x10\x02*_\n\x08\x46ileType\x12\r\n\tUNDEFINED\x10\x00\x12\t\n\x05MODEL\x10\x01\x12\x0e\n\nCHECKPOINT\x10\x02\x12\x08\n\x04TEXT\x10\x03\x12\t\n\x05IMAGE\x10\x04\x12\t\n\x05\x41UDIO\x10\x05\x12\t\n\x05VIDEO\x10\x06*2\n\x0bMLFramework\x12\x0b\n\x07UNKNOWN\x10\x00\x12\x0b\n\x07PYTORCH\x10\x01\x12\t\n\x05KERAS\x10\x02\x32\xc1\x0b\n\nModelStore\x12J\n\x0b\x43reateModel\x12\x1c.modelbox.CreateModelRequest\x1a\x1d.modelbox.CreateModelResponse\x12G\n\nListModels\x12\x1b.modelbox.ListModelsRequest\x1a\x1c.modelbox.ListModelsResponse\x12_\n\x12\x43reateModelVersion\x12#.modelbox.CreateModelVersionRequest\x1a$.modelbox.CreateModelVersionResponse\x12\\\n\x11ListModelVersions\x12\".modelbox.ListModelVersionsRequest\x1a#.modelbox.ListModelVersionsResponse\x12Y\n\x10\x43reateExperiment\x12!.modelbox.CreateExperimentRequest\x1a\".modelbox.CreateExperimentResponse\x12V\n\x0fListExperiments\x12 .modelbox.ListExperimentsRequest\x1a!.modelbox.ListExperimentsResponse\x12P\n\rGetExperiment\x12\x1e.modelbox.GetExperimentRequest\x1a\x1f.modelbox.GetExperimentResponse\x12I\n\nUploadFile\x12\x1b.modelbox.UploadFileRequest\x1a\x1c.modelbox.UploadFileResponse(\x01\x12O\n\x0c\x44ownloadFile\x12\x1d.modelbox.DownloadFileRequest\x1a\x1e.modelbox.DownloadFileResponse0\x01\x12S\n\x0eUpdateMetadata\x12\x1f.modelbox.UpdateMetadataRequest\x1a .modelbox.UpdateMetadataResponse\x12M\n\x0cListMetadata\x12\x1d.modelbox.ListMetadataRequest\x1a\x1e.modelbox.ListMetadataResponse\x12S\n\x0eTrackArtifacts\x12\x1f.modelbox.TrackArtifactsRequest\x1a .modelbox.TrackArtifactsResponse\x12P\n\rListArtifacts\x12\x1e.modelbox.ListArtifactsRequest\x1a\x1f.modelbox.ListArtifactsResponse\x12G\n\nLogMetrics\x12\x1b.modelbox.LogMetricsRequest\x1a\x1c.modelbox.LogMetricsResponse\x12G\n\nGetMetrics\x12\x1b.modelbox.GetMetricsRequest\x1a\x1c.modelbox.GetMetricsResponse\x12\x41\n\x08LogEvent\x12\x19.modelbox.LogEventRequest\x1a\x1a.modelbox.LogEventResponse\x12G\n\nListEvents\x12\x1b.modelbox.ListEventsRequest\x1a\x1c.modelbox.ListEventsResponse\x12U\n\x0eWatchNamespace\x12\x1f.modelbox.WatchNamespaceRequest\x1a .modelbox.WatchNamespaceResponse0\x01\x42-Z+github.com/tensorland/modelbox/sdk-go/protob\x06proto3')
 
 _CHANGEEVENT = DESCRIPTOR.enum_types_by_name['ChangeEvent']
 ChangeEvent = enum_type_wrapper.EnumTypeWrapper(_CHANGEEVENT)
@@ -48,6 +48,7 @@ _LOGMETRICSREQUEST = DESCRIPTOR.message_types_by_name['LogMetricsRequest']
 _LOGMETRICSRESPONSE = DESCRIPTOR.message_types_by_name['LogMetricsResponse']
 _GETMETRICSREQUEST = DESCRIPTOR.message_types_by_name['GetMetricsRequest']
 _GETMETRICSRESPONSE = DESCRIPTOR.message_types_by_name['GetMetricsResponse']
+_GETMETRICSRESPONSE_METRICSENTRY = _GETMETRICSRESPONSE.nested_types_by_name['MetricsEntry']
 _TRACKARTIFACTSREQUEST = DESCRIPTOR.message_types_by_name['TrackArtifactsRequest']
 _TRACKARTIFACTSRESPONSE = DESCRIPTOR.message_types_by_name['TrackArtifactsResponse']
 _LISTARTIFACTSREQUEST = DESCRIPTOR.message_types_by_name['ListArtifactsRequest']
@@ -57,15 +58,8 @@ _DOWNLOADFILEREQUEST = DESCRIPTOR.message_types_by_name['DownloadFileRequest']
 _DOWNLOADFILERESPONSE = DESCRIPTOR.message_types_by_name['DownloadFileResponse']
 _UPLOADFILEREQUEST = DESCRIPTOR.message_types_by_name['UploadFileRequest']
 _UPLOADFILERESPONSE = DESCRIPTOR.message_types_by_name['UploadFileResponse']
-_CHECKPOINT = DESCRIPTOR.message_types_by_name['Checkpoint']
-_CHECKPOINT_METRICSENTRY = _CHECKPOINT.nested_types_by_name['MetricsEntry']
-_CREATECHECKPOINTREQUEST = DESCRIPTOR.message_types_by_name['CreateCheckpointRequest']
-_CREATECHECKPOINTREQUEST_METRICSENTRY = _CREATECHECKPOINTREQUEST.nested_types_by_name['MetricsEntry']
-_CREATECHECKPOINTRESPONSE = DESCRIPTOR.message_types_by_name['CreateCheckpointResponse']
-_GETCHECKPOINTREQUEST = DESCRIPTOR.message_types_by_name['GetCheckpointRequest']
-_GETCHECKPOINTRESPONSE = DESCRIPTOR.message_types_by_name['GetCheckpointResponse']
-_LISTCHECKPOINTSREQUEST = DESCRIPTOR.message_types_by_name['ListCheckpointsRequest']
-_LISTCHECKPOINTSRESPONSE = DESCRIPTOR.message_types_by_name['ListCheckpointsResponse']
+_UPLOADFILEMETADATA = DESCRIPTOR.message_types_by_name['UploadFileMetadata']
+_ARTIFACT = DESCRIPTOR.message_types_by_name['Artifact']
 _MODEL = DESCRIPTOR.message_types_by_name['Model']
 _CREATEMODELREQUEST = DESCRIPTOR.message_types_by_name['CreateModelRequest']
 _CREATEMODELRESPONSE = DESCRIPTOR.message_types_by_name['CreateModelResponse']
@@ -87,7 +81,6 @@ _UPDATEMETADATAREQUEST = DESCRIPTOR.message_types_by_name['UpdateMetadataRequest
 _UPDATEMETADATARESPONSE = DESCRIPTOR.message_types_by_name['UpdateMetadataResponse']
 _LISTMETADATAREQUEST = DESCRIPTOR.message_types_by_name['ListMetadataRequest']
 _LISTMETADATARESPONSE = DESCRIPTOR.message_types_by_name['ListMetadataResponse']
-_LISTMETADATARESPONSE_METADATAENTRY = _LISTMETADATARESPONSE.nested_types_by_name['MetadataEntry']
 _EVENTSOURCE = DESCRIPTOR.message_types_by_name['EventSource']
 _EVENT = DESCRIPTOR.message_types_by_name['Event']
 _LOGEVENTREQUEST = DESCRIPTOR.message_types_by_name['LogEventRequest']
@@ -96,17 +89,6 @@ _LISTEVENTSREQUEST = DESCRIPTOR.message_types_by_name['ListEventsRequest']
 _LISTEVENTSRESPONSE = DESCRIPTOR.message_types_by_name['ListEventsResponse']
 _GETEXPERIMENTREQUEST = DESCRIPTOR.message_types_by_name['GetExperimentRequest']
 _GETEXPERIMENTRESPONSE = DESCRIPTOR.message_types_by_name['GetExperimentResponse']
-_GETCLUSTERMEMBERSREQUEST = DESCRIPTOR.message_types_by_name['GetClusterMembersRequest']
-_CLUSTERMEMBER = DESCRIPTOR.message_types_by_name['ClusterMember']
-_GETCLUSTERMEMBERSRESPONSE = DESCRIPTOR.message_types_by_name['GetClusterMembersResponse']
-_CREATEACTIONREQUEST = DESCRIPTOR.message_types_by_name['CreateActionRequest']
-_CREATEACTIONREQUEST_PARAMSENTRY = _CREATEACTIONREQUEST.nested_types_by_name['ParamsEntry']
-_TRIGGER = DESCRIPTOR.message_types_by_name['Trigger']
-_CREATEACTIONRESPONSE = DESCRIPTOR.message_types_by_name['CreateActionResponse']
-_ACTION = DESCRIPTOR.message_types_by_name['Action']
-_ACTIONINSTANCE = DESCRIPTOR.message_types_by_name['ActionInstance']
-_LISTACTIONSREQUEST = DESCRIPTOR.message_types_by_name['ListActionsRequest']
-_LISTACTIONSRESPONSE = DESCRIPTOR.message_types_by_name['ListActionsResponse']
 WatchNamespaceRequest = _reflection.GeneratedProtocolMessageType('WatchNamespaceRequest', (_message.Message,), {
   'DESCRIPTOR' : _WATCHNAMESPACEREQUEST,
   '__module__' : 'service_pb2'
@@ -157,11 +139,19 @@ GetMetricsRequest = _reflection.GeneratedProtocolMessageType('GetMetricsRequest'
 _sym_db.RegisterMessage(GetMetricsRequest)
 
 GetMetricsResponse = _reflection.GeneratedProtocolMessageType('GetMetricsResponse', (_message.Message,), {
+
+  'MetricsEntry' : _reflection.GeneratedProtocolMessageType('MetricsEntry', (_message.Message,), {
+    'DESCRIPTOR' : _GETMETRICSRESPONSE_METRICSENTRY,
+    '__module__' : 'service_pb2'
+    # @@protoc_insertion_point(class_scope:modelbox.GetMetricsResponse.MetricsEntry)
+    })
+  ,
   'DESCRIPTOR' : _GETMETRICSRESPONSE,
   '__module__' : 'service_pb2'
   # @@protoc_insertion_point(class_scope:modelbox.GetMetricsResponse)
   })
 _sym_db.RegisterMessage(GetMetricsResponse)
+_sym_db.RegisterMessage(GetMetricsResponse.MetricsEntry)
 
 TrackArtifactsRequest = _reflection.GeneratedProtocolMessageType('TrackArtifactsRequest', (_message.Message,), {
   'DESCRIPTOR' : _TRACKARTIFACTSREQUEST,
@@ -226,70 +216,19 @@ UploadFileResponse = _reflection.GeneratedProtocolMessageType('UploadFileRespons
   })
 _sym_db.RegisterMessage(UploadFileResponse)
 
-Checkpoint = _reflection.GeneratedProtocolMessageType('Checkpoint', (_message.Message,), {
-
-  'MetricsEntry' : _reflection.GeneratedProtocolMessageType('MetricsEntry', (_message.Message,), {
-    'DESCRIPTOR' : _CHECKPOINT_METRICSENTRY,
-    '__module__' : 'service_pb2'
-    # @@protoc_insertion_point(class_scope:modelbox.Checkpoint.MetricsEntry)
-    })
-  ,
-  'DESCRIPTOR' : _CHECKPOINT,
+UploadFileMetadata = _reflection.GeneratedProtocolMessageType('UploadFileMetadata', (_message.Message,), {
+  'DESCRIPTOR' : _UPLOADFILEMETADATA,
   '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.Checkpoint)
+  # @@protoc_insertion_point(class_scope:modelbox.UploadFileMetadata)
   })
-_sym_db.RegisterMessage(Checkpoint)
-_sym_db.RegisterMessage(Checkpoint.MetricsEntry)
+_sym_db.RegisterMessage(UploadFileMetadata)
 
-CreateCheckpointRequest = _reflection.GeneratedProtocolMessageType('CreateCheckpointRequest', (_message.Message,), {
-
-  'MetricsEntry' : _reflection.GeneratedProtocolMessageType('MetricsEntry', (_message.Message,), {
-    'DESCRIPTOR' : _CREATECHECKPOINTREQUEST_METRICSENTRY,
-    '__module__' : 'service_pb2'
-    # @@protoc_insertion_point(class_scope:modelbox.CreateCheckpointRequest.MetricsEntry)
-    })
-  ,
-  'DESCRIPTOR' : _CREATECHECKPOINTREQUEST,
+Artifact = _reflection.GeneratedProtocolMessageType('Artifact', (_message.Message,), {
+  'DESCRIPTOR' : _ARTIFACT,
   '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.CreateCheckpointRequest)
+  # @@protoc_insertion_point(class_scope:modelbox.Artifact)
   })
-_sym_db.RegisterMessage(CreateCheckpointRequest)
-_sym_db.RegisterMessage(CreateCheckpointRequest.MetricsEntry)
-
-CreateCheckpointResponse = _reflection.GeneratedProtocolMessageType('CreateCheckpointResponse', (_message.Message,), {
-  'DESCRIPTOR' : _CREATECHECKPOINTRESPONSE,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.CreateCheckpointResponse)
-  })
-_sym_db.RegisterMessage(CreateCheckpointResponse)
-
-GetCheckpointRequest = _reflection.GeneratedProtocolMessageType('GetCheckpointRequest', (_message.Message,), {
-  'DESCRIPTOR' : _GETCHECKPOINTREQUEST,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.GetCheckpointRequest)
-  })
-_sym_db.RegisterMessage(GetCheckpointRequest)
-
-GetCheckpointResponse = _reflection.GeneratedProtocolMessageType('GetCheckpointResponse', (_message.Message,), {
-  'DESCRIPTOR' : _GETCHECKPOINTRESPONSE,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.GetCheckpointResponse)
-  })
-_sym_db.RegisterMessage(GetCheckpointResponse)
-
-ListCheckpointsRequest = _reflection.GeneratedProtocolMessageType('ListCheckpointsRequest', (_message.Message,), {
-  'DESCRIPTOR' : _LISTCHECKPOINTSREQUEST,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.ListCheckpointsRequest)
-  })
-_sym_db.RegisterMessage(ListCheckpointsRequest)
-
-ListCheckpointsResponse = _reflection.GeneratedProtocolMessageType('ListCheckpointsResponse', (_message.Message,), {
-  'DESCRIPTOR' : _LISTCHECKPOINTSRESPONSE,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.ListCheckpointsResponse)
-  })
-_sym_db.RegisterMessage(ListCheckpointsResponse)
+_sym_db.RegisterMessage(Artifact)
 
 Model = _reflection.GeneratedProtocolMessageType('Model', (_message.Message,), {
   'DESCRIPTOR' : _MODEL,
@@ -433,19 +372,11 @@ ListMetadataRequest = _reflection.GeneratedProtocolMessageType('ListMetadataRequ
 _sym_db.RegisterMessage(ListMetadataRequest)
 
 ListMetadataResponse = _reflection.GeneratedProtocolMessageType('ListMetadataResponse', (_message.Message,), {
-
-  'MetadataEntry' : _reflection.GeneratedProtocolMessageType('MetadataEntry', (_message.Message,), {
-    'DESCRIPTOR' : _LISTMETADATARESPONSE_METADATAENTRY,
-    '__module__' : 'service_pb2'
-    # @@protoc_insertion_point(class_scope:modelbox.ListMetadataResponse.MetadataEntry)
-    })
-  ,
   'DESCRIPTOR' : _LISTMETADATARESPONSE,
   '__module__' : 'service_pb2'
   # @@protoc_insertion_point(class_scope:modelbox.ListMetadataResponse)
   })
 _sym_db.RegisterMessage(ListMetadataResponse)
-_sym_db.RegisterMessage(ListMetadataResponse.MetadataEntry)
 
 EventSource = _reflection.GeneratedProtocolMessageType('EventSource', (_message.Message,), {
   'DESCRIPTOR' : _EVENTSOURCE,
@@ -503,105 +434,21 @@ GetExperimentResponse = _reflection.GeneratedProtocolMessageType('GetExperimentR
   })
 _sym_db.RegisterMessage(GetExperimentResponse)
 
-GetClusterMembersRequest = _reflection.GeneratedProtocolMessageType('GetClusterMembersRequest', (_message.Message,), {
-  'DESCRIPTOR' : _GETCLUSTERMEMBERSREQUEST,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.GetClusterMembersRequest)
-  })
-_sym_db.RegisterMessage(GetClusterMembersRequest)
-
-ClusterMember = _reflection.GeneratedProtocolMessageType('ClusterMember', (_message.Message,), {
-  'DESCRIPTOR' : _CLUSTERMEMBER,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.ClusterMember)
-  })
-_sym_db.RegisterMessage(ClusterMember)
-
-GetClusterMembersResponse = _reflection.GeneratedProtocolMessageType('GetClusterMembersResponse', (_message.Message,), {
-  'DESCRIPTOR' : _GETCLUSTERMEMBERSRESPONSE,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.GetClusterMembersResponse)
-  })
-_sym_db.RegisterMessage(GetClusterMembersResponse)
-
-CreateActionRequest = _reflection.GeneratedProtocolMessageType('CreateActionRequest', (_message.Message,), {
-
-  'ParamsEntry' : _reflection.GeneratedProtocolMessageType('ParamsEntry', (_message.Message,), {
-    'DESCRIPTOR' : _CREATEACTIONREQUEST_PARAMSENTRY,
-    '__module__' : 'service_pb2'
-    # @@protoc_insertion_point(class_scope:modelbox.CreateActionRequest.ParamsEntry)
-    })
-  ,
-  'DESCRIPTOR' : _CREATEACTIONREQUEST,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.CreateActionRequest)
-  })
-_sym_db.RegisterMessage(CreateActionRequest)
-_sym_db.RegisterMessage(CreateActionRequest.ParamsEntry)
-
-Trigger = _reflection.GeneratedProtocolMessageType('Trigger', (_message.Message,), {
-  'DESCRIPTOR' : _TRIGGER,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.Trigger)
-  })
-_sym_db.RegisterMessage(Trigger)
-
-CreateActionResponse = _reflection.GeneratedProtocolMessageType('CreateActionResponse', (_message.Message,), {
-  'DESCRIPTOR' : _CREATEACTIONRESPONSE,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.CreateActionResponse)
-  })
-_sym_db.RegisterMessage(CreateActionResponse)
-
-Action = _reflection.GeneratedProtocolMessageType('Action', (_message.Message,), {
-  'DESCRIPTOR' : _ACTION,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.Action)
-  })
-_sym_db.RegisterMessage(Action)
-
-ActionInstance = _reflection.GeneratedProtocolMessageType('ActionInstance', (_message.Message,), {
-  'DESCRIPTOR' : _ACTIONINSTANCE,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.ActionInstance)
-  })
-_sym_db.RegisterMessage(ActionInstance)
-
-ListActionsRequest = _reflection.GeneratedProtocolMessageType('ListActionsRequest', (_message.Message,), {
-  'DESCRIPTOR' : _LISTACTIONSREQUEST,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.ListActionsRequest)
-  })
-_sym_db.RegisterMessage(ListActionsRequest)
-
-ListActionsResponse = _reflection.GeneratedProtocolMessageType('ListActionsResponse', (_message.Message,), {
-  'DESCRIPTOR' : _LISTACTIONSRESPONSE,
-  '__module__' : 'service_pb2'
-  # @@protoc_insertion_point(class_scope:modelbox.ListActionsResponse)
-  })
-_sym_db.RegisterMessage(ListActionsResponse)
-
 _MODELSTORE = DESCRIPTOR.services_by_name['ModelStore']
 if _descriptor._USE_C_DESCRIPTORS == False:
 
   DESCRIPTOR._options = None
   DESCRIPTOR._serialized_options = b'Z+github.com/tensorland/modelbox/sdk-go/proto'
-  _CHECKPOINT_METRICSENTRY._options = None
-  _CHECKPOINT_METRICSENTRY._serialized_options = b'8\001'
-  _CREATECHECKPOINTREQUEST_METRICSENTRY._options = None
-  _CREATECHECKPOINTREQUEST_METRICSENTRY._serialized_options = b'8\001'
+  _GETMETRICSRESPONSE_METRICSENTRY._options = None
+  _GETMETRICSRESPONSE_METRICSENTRY._serialized_options = b'8\001'
   _METADATA_METADATAENTRY._options = None
   _METADATA_METADATAENTRY._serialized_options = b'8\001'
-  _LISTMETADATARESPONSE_METADATAENTRY._options = None
-  _LISTMETADATARESPONSE_METADATAENTRY._serialized_options = b'8\001'
-  _CREATEACTIONREQUEST_PARAMSENTRY._options = None
-  _CREATEACTIONREQUEST_PARAMSENTRY._serialized_options = b'8\001'
-  _CHANGEEVENT._serialized_start=6392
-  _CHANGEEVENT._serialized_end=6473
-  _FILETYPE._serialized_start=6475
-  _FILETYPE._serialized_end=6570
-  _MLFRAMEWORK._serialized_start=6572
-  _MLFRAMEWORK._serialized_end=6622
+  _CHANGEEVENT._serialized_start=4568
+  _CHANGEEVENT._serialized_end=4649
+  _FILETYPE._serialized_start=4651
+  _FILETYPE._serialized_end=4746
+  _MLFRAMEWORK._serialized_start=4748
+  _MLFRAMEWORK._serialized_end=4798
   _WATCHNAMESPACEREQUEST._serialized_start=90
   _WATCHNAMESPACEREQUEST._serialized_end=147
   _WATCHNAMESPACERESPONSE._serialized_start=149
@@ -616,126 +463,90 @@ if _descriptor._USE_C_DESCRIPTORS == False:
   _LOGMETRICSRESPONSE._serialized_end=550
   _GETMETRICSREQUEST._serialized_start=552
   _GETMETRICSREQUEST._serialized_end=590
-  _GETMETRICSRESPONSE._serialized_start=592
-  _GETMETRICSRESPONSE._serialized_end=648
-  _TRACKARTIFACTSREQUEST._serialized_start=650
-  _TRACKARTIFACTSREQUEST._serialized_end=712
-  _TRACKARTIFACTSRESPONSE._serialized_start=714
-  _TRACKARTIFACTSRESPONSE._serialized_end=813
-  _LISTARTIFACTSREQUEST._serialized_start=815
-  _LISTARTIFACTSREQUEST._serialized_end=856
-  _LISTARTIFACTSRESPONSE._serialized_start=858
-  _LISTARTIFACTSRESPONSE._serialized_end=920
-  _FILEMETADATA._serialized_start=923
-  _FILEMETADATA._serialized_end=1135
-  _DOWNLOADFILEREQUEST._serialized_start=1137
-  _DOWNLOADFILEREQUEST._serialized_end=1175
-  _DOWNLOADFILERESPONSE._serialized_start=1177
-  _DOWNLOADFILERESPONSE._serialized_end=1277
-  _UPLOADFILEREQUEST._serialized_start=1279
-  _UPLOADFILEREQUEST._serialized_end=1376
-  _UPLOADFILERESPONSE._serialized_start=1378
-  _UPLOADFILERESPONSE._serialized_end=1415
-  _CHECKPOINT._serialized_start=1418
-  _CHECKPOINT._serialized_end=1715
-  _CHECKPOINT_METRICSENTRY._serialized_start=1669
-  _CHECKPOINT_METRICSENTRY._serialized_end=1715
-  _CREATECHECKPOINTREQUEST._serialized_start=1718
-  _CREATECHECKPOINTREQUEST._serialized_end=1971
-  _CREATECHECKPOINTREQUEST_METRICSENTRY._serialized_start=1669
-  _CREATECHECKPOINTREQUEST_METRICSENTRY._serialized_end=1715
-  _CREATECHECKPOINTRESPONSE._serialized_start=1974
-  _CREATECHECKPOINTRESPONSE._serialized_end=2119
-  _GETCHECKPOINTREQUEST._serialized_start=2121
-  _GETCHECKPOINTREQUEST._serialized_end=2181
-  _GETCHECKPOINTRESPONSE._serialized_start=2183
-  _GETCHECKPOINTRESPONSE._serialized_end=2248
-  _LISTCHECKPOINTSREQUEST._serialized_start=2250
-  _LISTCHECKPOINTSREQUEST._serialized_end=2297
-  _LISTCHECKPOINTSRESPONSE._serialized_start=2299
-  _LISTCHECKPOINTSRESPONSE._serialized_end=2367
-  _MODEL._serialized_start=2370
-  _MODEL._serialized_end=2607
-  _CREATEMODELREQUEST._serialized_start=2610
-  _CREATEMODELREQUEST._serialized_end=2790
-  _CREATEMODELRESPONSE._serialized_start=2793
-  _CREATEMODELRESPONSE._serialized_end=2922
-  _MODELVERSION._serialized_start=2925
-  _MODELVERSION._serialized_end=3257
-  _CREATEMODELVERSIONREQUEST._serialized_start=3260
-  _CREATEMODELVERSIONREQUEST._serialized_end=3494
-  _CREATEMODELVERSIONRESPONSE._serialized_start=3497
-  _CREATEMODELVERSIONRESPONSE._serialized_end=3644
-  _EXPERIMENT._serialized_start=3647
-  _EXPERIMENT._serialized_end=3878
-  _CREATEEXPERIMENTREQUEST._serialized_start=3881
-  _CREATEEXPERIMENTREQUEST._serialized_end=4069
-  _CREATEEXPERIMENTRESPONSE._serialized_start=4072
-  _CREATEEXPERIMENTRESPONSE._serialized_end=4244
-  _LISTEXPERIMENTSREQUEST._serialized_start=4246
-  _LISTEXPERIMENTSREQUEST._serialized_end=4289
-  _LISTEXPERIMENTSRESPONSE._serialized_start=4291
-  _LISTEXPERIMENTSRESPONSE._serialized_end=4359
-  _LISTMODELVERSIONSREQUEST._serialized_start=4361
-  _LISTMODELVERSIONSREQUEST._serialized_end=4402
-  _LISTMODELVERSIONSRESPONSE._serialized_start=4404
-  _LISTMODELVERSIONSRESPONSE._serialized_end=4471
-  _LISTMODELSREQUEST._serialized_start=4473
-  _LISTMODELSREQUEST._serialized_end=4511
-  _LISTMODELSRESPONSE._serialized_start=4513
-  _LISTMODELSRESPONSE._serialized_end=4566
-  _METADATA._serialized_start=4569
-  _METADATA._serialized_end=4704
-  _METADATA_METADATAENTRY._serialized_start=4633
-  _METADATA_METADATAENTRY._serialized_end=4704
-  _UPDATEMETADATAREQUEST._serialized_start=4706
-  _UPDATEMETADATAREQUEST._serialized_end=4786
-  _UPDATEMETADATARESPONSE._serialized_start=4788
-  _UPDATEMETADATARESPONSE._serialized_end=4886
-  _LISTMETADATAREQUEST._serialized_start=4888
-  _LISTMETADATAREQUEST._serialized_end=4928
-  _LISTMETADATARESPONSE._serialized_start=4931
-  _LISTMETADATARESPONSE._serialized_end=5090
-  _LISTMETADATARESPONSE_METADATAENTRY._serialized_start=4633
-  _LISTMETADATARESPONSE_METADATAENTRY._serialized_end=4704
-  _EVENTSOURCE._serialized_start=5092
-  _EVENTSOURCE._serialized_end=5119
-  _EVENT._serialized_start=5122
-  _EVENT._serialized_end=5272
-  _LOGEVENTREQUEST._serialized_start=5274
-  _LOGEVENTREQUEST._serialized_end=5342
-  _LOGEVENTRESPONSE._serialized_start=5344
-  _LOGEVENTRESPONSE._serialized_end=5410
-  _LISTEVENTSREQUEST._serialized_start=5412
-  _LISTEVENTSREQUEST._serialized_end=5493
-  _LISTEVENTSRESPONSE._serialized_start=5495
-  _LISTEVENTSRESPONSE._serialized_end=5548
-  _GETEXPERIMENTREQUEST._serialized_start=5550
-  _GETEXPERIMENTREQUEST._serialized_end=5584
-  _GETEXPERIMENTRESPONSE._serialized_start=5586
-  _GETEXPERIMENTRESPONSE._serialized_end=5651
-  _GETCLUSTERMEMBERSREQUEST._serialized_start=5653
-  _GETCLUSTERMEMBERSREQUEST._serialized_end=5679
-  _CLUSTERMEMBER._serialized_start=5681
-  _CLUSTERMEMBER._serialized_end=5764
-  _GETCLUSTERMEMBERSRESPONSE._serialized_start=5766
-  _GETCLUSTERMEMBERSRESPONSE._serialized_end=5835
-  _CREATEACTIONREQUEST._serialized_start=5838
-  _CREATEACTIONREQUEST._serialized_end=6093
-  _CREATEACTIONREQUEST_PARAMSENTRY._serialized_start=6024
-  _CREATEACTIONREQUEST_PARAMSENTRY._serialized_end=6093
-  _TRIGGER._serialized_start=6095
-  _TRIGGER._serialized_end=6123
-  _CREATEACTIONRESPONSE._serialized_start=6125
-  _CREATEACTIONRESPONSE._serialized_end=6195
-  _ACTION._serialized_start=6197
-  _ACTION._serialized_end=6273
-  _ACTIONINSTANCE._serialized_start=6275
-  _ACTIONINSTANCE._serialized_end=6291
-  _LISTACTIONSREQUEST._serialized_start=6293
-  _LISTACTIONSREQUEST._serialized_end=6332
-  _LISTACTIONSRESPONSE._serialized_start=6334
-  _LISTACTIONSRESPONSE._serialized_end=6390
-  _MODELSTORE._serialized_start=6625
-  _MODELSTORE._serialized_end=8609
+  _GETMETRICSRESPONSE._serialized_start=593
+  _GETMETRICSRESPONSE._serialized_end=740
+  _GETMETRICSRESPONSE_METRICSENTRY._serialized_start=675
+  _GETMETRICSRESPONSE_METRICSENTRY._serialized_end=740
+  _TRACKARTIFACTSREQUEST._serialized_start=742
+  _TRACKARTIFACTSREQUEST._serialized_end=837
+  _TRACKARTIFACTSRESPONSE._serialized_start=839
+  _TRACKARTIFACTSRESPONSE._serialized_end=875
+  _LISTARTIFACTSREQUEST._serialized_start=877
+  _LISTARTIFACTSREQUEST._serialized_end=918
+  _LISTARTIFACTSRESPONSE._serialized_start=920
+  _LISTARTIFACTSRESPONSE._serialized_end=982
+  _FILEMETADATA._serialized_start=985
+  _FILEMETADATA._serialized_end=1222
+  _DOWNLOADFILEREQUEST._serialized_start=1224
+  _DOWNLOADFILEREQUEST._serialized_end=1262
+  _DOWNLOADFILERESPONSE._serialized_start=1264
+  _DOWNLOADFILERESPONSE._serialized_end=1364
+  _UPLOADFILEREQUEST._serialized_start=1366
+  _UPLOADFILEREQUEST._serialized_end=1469
+  _UPLOADFILERESPONSE._serialized_start=1471
+  _UPLOADFILERESPONSE._serialized_end=1529
+  _UPLOADFILEMETADATA._serialized_start=1531
+  _UPLOADFILEMETADATA._serialized_end=1635
+  _ARTIFACT._serialized_start=1637
+  _ARTIFACT._serialized_end=1731
+  _MODEL._serialized_start=1734
+  _MODEL._serialized_end=1932
+  _CREATEMODELREQUEST._serialized_start=1934
+  _CREATEMODELREQUEST._serialized_end=2037
+  _CREATEMODELRESPONSE._serialized_start=2040
+  _CREATEMODELRESPONSE._serialized_end=2185
+  _MODELVERSION._serialized_start=2188
+  _MODELVERSION._serialized_end=2443
+  _CREATEMODELVERSIONREQUEST._serialized_start=2446
+  _CREATEMODELVERSIONREQUEST._serialized_end=2622
+  _CREATEMODELVERSIONRESPONSE._serialized_start=2625
+  _CREATEMODELVERSIONRESPONSE._serialized_end=2788
+  _EXPERIMENT._serialized_start=2791
+  _EXPERIMENT._serialized_end=3022
+  _CREATEEXPERIMENTREQUEST._serialized_start=3025
+  _CREATEEXPERIMENTREQUEST._serialized_end=3175
+  _CREATEEXPERIMENTRESPONSE._serialized_start=3178
+  _CREATEEXPERIMENTRESPONSE._serialized_end=3350
+  _LISTEXPERIMENTSREQUEST._serialized_start=3352
+  _LISTEXPERIMENTSREQUEST._serialized_end=3395
+  _LISTEXPERIMENTSRESPONSE._serialized_start=3397
+  _LISTEXPERIMENTSRESPONSE._serialized_end=3465
+  _LISTMODELVERSIONSREQUEST._serialized_start=3467
+  _LISTMODELVERSIONSREQUEST._serialized_end=3508
+  _LISTMODELVERSIONSRESPONSE._serialized_start=3510
+  _LISTMODELVERSIONSRESPONSE._serialized_end=3585
+  _LISTMODELSREQUEST._serialized_start=3587
+  _LISTMODELSREQUEST._serialized_end=3625
+  _LISTMODELSRESPONSE._serialized_start=3627
+  _LISTMODELSRESPONSE._serialized_end=3680
+  _METADATA._serialized_start=3682
+  _METADATA._serialized_end=3793
+  _METADATA_METADATAENTRY._serialized_start=3746
+  _METADATA_METADATAENTRY._serialized_end=3793
+  _UPDATEMETADATAREQUEST._serialized_start=3795
+  _UPDATEMETADATAREQUEST._serialized_end=3875
+  _UPDATEMETADATARESPONSE._serialized_start=3877
+  _UPDATEMETADATARESPONSE._serialized_end=3901
+  _LISTMETADATAREQUEST._serialized_start=3903
+  _LISTMETADATAREQUEST._serialized_end=3943
+  _LISTMETADATARESPONSE._serialized_start=3945
+  _LISTMETADATARESPONSE._serialized_end=4005
+  _EVENTSOURCE._serialized_start=4007
+  _EVENTSOURCE._serialized_end=4034
+  _EVENT._serialized_start=4037
+  _EVENT._serialized_end=4187
+  _LOGEVENTREQUEST._serialized_start=4189
+  _LOGEVENTREQUEST._serialized_end=4257
+  _LOGEVENTRESPONSE._serialized_start=4259
+  _LOGEVENTRESPONSE._serialized_end=4325
+  _LISTEVENTSREQUEST._serialized_start=4327
+  _LISTEVENTSREQUEST._serialized_end=4408
+  _LISTEVENTSRESPONSE._serialized_start=4410
+  _LISTEVENTSRESPONSE._serialized_end=4463
+  _GETEXPERIMENTREQUEST._serialized_start=4465
+  _GETEXPERIMENTREQUEST._serialized_end=4499
+  _GETEXPERIMENTRESPONSE._serialized_start=4501
+  _GETEXPERIMENTRESPONSE._serialized_end=4566
+  _MODELSTORE._serialized_start=4801
+  _MODELSTORE._serialized_end=6274
 # @@protoc_insertion_point(module_scope)

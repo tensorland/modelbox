@@ -1,0 +1,9 @@
+[tasks.migration]
+install_crate = "sea-orm-cli"
+command = "sea-orm-cli"
+args = ["migrate", "up"]
+
+[tasks.entity]
+install_crate = "sea-orm-cli"
+command = "sea-orm-cli"
+args = ["generate", "entity", "--with-serde", "both", "--with-copy-enums","--date-time-crate", "time", "-l", "-o", "entity/src/"]

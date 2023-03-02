@@ -1,0 +1,33 @@
+[package]
+name = "modelbox"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+entity = {path = "entity"}
+migration = {path ="migration"}
+tokio = { version = "1.17", features = ["macros", "rt-multi-thread", "full"] }
+prost = "0.11.8"
+prost-types = "0.11.8"
+tokio-stream = "0.1.12"
+tonic = "^0.8"
+tonic-reflection = "0.6.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+clap = { version = "4.1.4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+thiserror = "1.0.38"
+time = { version = "0.3", features = ["macros"] }
+serde_json = "1.0.93"
+object_store = {version = "0.5.5", features = ["aws", "gcp"]}
+sea-orm = { version = "^0", features=["debug-print", "runtime-tokio-rustls", "sqlx-postgres", "sqlx-sqlite", "with-time", "with-json", "mock"] }
+sea-query = "0"
+
+[dev-dependencies]
+indoc = "2"
+
+[build-dependencies]
+tonic-build = "0.8.4"
